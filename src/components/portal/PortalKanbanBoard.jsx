@@ -58,15 +58,17 @@ function PortalKanbanCard({ task }) {
   const priority = PRIORITY_OPTIONS[task.priority]
   const stage = STAGE_OPTIONS[task.stage]
 
-  // Get first image thumbnail from attachments
-  const thumbnail = useMemo(() => {
-    if (!task.attachments || !Array.isArray(task.attachments)) return null
-    const imgItem = task.attachments.find((a) => {
+  // Get all image attachments
+  const imageAttachments = useMemo(() => {
+    if (!task.attachments || !Array.isArray(task.attachments)) return []
+    return task.attachments.filter((a) => {
       const url = a?.url || a?.src || ''
-      return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url) || url.startsWith('data:image')
+      return /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(url) || url.startsWith('data:image') || url.includes('/file/')
     })
-    return imgItem?.url || imgItem?.src || null
   }, [task.attachments])
+
+  const thumbnail = imageAttachments[0]?.url || imageAttachments[0]?.src || null
+  const extraCount = imageAttachments.length > 1 ? imageAttachments.length - 1 : 0
 
   // Format deadline
   const deadlineStr = useMemo(() => {
@@ -82,49 +84,63 @@ function PortalKanbanCard({ task }) {
 
   return (
     <div className="portal-kanban-card" role="article" aria-label={title}>
+      {/* Thumbnail with +N badge */}
       {thumbnail && (
-        <img
-          className="portal-kanban-card-thumb"
-          src={thumbnail}
-          alt=""
-          loading="lazy"
-        />
+        <div style={{ position: 'relative' }}>
+          <img
+            className="portal-kanban-card-thumb"
+            src={thumbnail}
+            alt=""
+            loading="lazy"
+          />
+          {extraCount > 0 && (
+            <span style={{
+              position: 'absolute',
+              bottom: '6px',
+              right: '6px',
+              background: 'rgba(0,0,0,0.75)',
+              color: '#fff',
+              fontSize: '0.65rem',
+              fontWeight: 700,
+              padding: '2px 6px',
+              borderRadius: '4px',
+            }}>
+              +{extraCount}
+            </span>
+          )}
+        </div>
       )}
+
+      {/* Title */}
       <div className="portal-kanban-card-title">{title}</div>
+
+      {/* Pills row */}
       <div className="portal-kanban-card-meta">
-        {task.client && (
-          <span
-            className="portal-pill"
-            style={{ '--pill-color': 'var(--text-muted)' }}
-          >
-            {task.client}
-          </span>
-        )}
         {priority && (
-          <span
-            className="portal-pill"
-            style={{ '--pill-color': priority.color }}
-          >
+          <span className="portal-pill" style={{ '--pill-color': priority.color }}>
             {priority.name}
           </span>
         )}
+        {task.client && (
+          <span className="portal-pill" style={{ '--pill-color': 'var(--text-muted)' }}>
+            As: {task.client}
+          </span>
+        )}
         {stage && (
-          <span
-            className="portal-pill"
-            style={{ '--pill-color': stage.color }}
-          >
+          <span className="portal-pill" style={{ '--pill-color': stage.color }}>
             {stage.name}
           </span>
         )}
-        {deadlineStr && (
-          <span
-            className="portal-pill"
-            style={{ '--pill-color': '#f87171' }}
-          >
+      </div>
+
+      {/* Deadline */}
+      {deadlineStr && (
+        <div style={{ marginTop: '0.3rem' }}>
+          <span className="portal-pill" style={{ '--pill-color': '#f87171' }}>
             📅 {deadlineStr}
           </span>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

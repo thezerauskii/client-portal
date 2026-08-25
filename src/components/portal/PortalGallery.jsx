@@ -4,15 +4,23 @@ import { supabase } from '../../lib/supabase.js'
 
 /**
  * Resolves the display URL for a portfolio item based on its backend type.
- * - 'r2': builds URL from VITE_R2_WORKER_URL + '/' + storageKey
- * - 'base64' or 'url': uses the url field directly
+ * Priority:
+ * 1. Direct http URL (works without auth)
+ * 2. R2 worker URL with /file/{storage_key} path
+ * 3. Fallback to url field
  */
 function resolveImageUrl(item) {
-  if (item.backend === 'r2' && item.storage_key) {
-    const workerUrl = import.meta.env.VITE_R2_WORKER_URL || ''
-    return `${workerUrl}/${item.storage_key}`
+  // If there's a direct url field (not base64), prefer it — works without auth
+  if (item.url && !item.url.startsWith('data:') && item.url.startsWith('http')) {
+    return item.url
   }
-  return item.url
+  // R2 backend — try the worker URL with /file/ path
+  if (item.backend === 'r2' && item.storage_key) {
+    const workerUrl = import.meta.env.VITE_R2_WORKER_URL || 'https://commission-manager-r2.commission-manager-studio.workers.dev'
+    return `${workerUrl}/file/${item.storage_key}`
+  }
+  // Fallback to url field
+  return item.url || ''
 }
 
 /**
@@ -135,12 +143,27 @@ export default function PortalGallery() {
     )
   }
 
-  // Error state
+  // Error state with debug info
   if (error) {
+    const isTableMissing = error.message?.includes('relation') && error.message?.includes('does not exist')
+    const isRLS = error.code === '42501' || error.message?.includes('permission denied')
+
     return (
       <div className="portal-empty-state">
         <span className="portal-empty-state-icon">⚠️</span>
-        <p className="portal-empty-state-text">Error al cargar el portafolio</p>
+        <p className="portal-empty-state-text">
+          {isTableMissing
+            ? 'La tabla de portafolio aún no está configurada para este artista.'
+            : isRLS
+              ? 'Sin permisos para ver el portafolio. Verifica las políticas RLS.'
+              : 'Error al cargar el portafolio'}
+        </p>
+        <div className="portal-debug-panel">
+          <p className="portal-debug-label">Debug info:</p>
+          <pre className="portal-debug-content">
+            {JSON.stringify({ code: error.code, message: error.message, hint: error.hint }, null, 2)}
+          </pre>
+        </div>
       </div>
     )
   }
@@ -151,6 +174,12 @@ export default function PortalGallery() {
       <div className="portal-empty-state">
         <span className="portal-empty-state-icon">🖼️</span>
         <p className="portal-empty-state-text">El portafolio está vacío</p>
+        <div className="portal-debug-panel">
+          <p className="portal-debug-label">Debug info:</p>
+          <pre className="portal-debug-content">
+            {JSON.stringify({ artistId, itemsFound: 0 }, null, 2)}
+          </pre>
+        </div>
       </div>
     )
   }
@@ -160,7 +189,7 @@ export default function PortalGallery() {
   return (
     <>
       {/* Responsive grid */}
-      <div className="portal-grid">
+      <div className="portal-grid portal-gallery-grid">
         {items.map((item, index) => (
           <div
             key={item.id}
@@ -182,8 +211,14 @@ export default function PortalGallery() {
               loading="lazy"
               className="portal-gallery-card-img"
               onError={(e) => {
-                e.target.style.display = 'none'
-                e.target.nextSibling && (e.target.nextSibling.style.display = 'flex')
+                // If the R2 URL failed, try fallback to direct url field
+                const fallbackUrl = item.url || ''
+                if (e.target.src !== fallbackUrl && fallbackUrl && fallbackUrl.startsWith('http')) {
+                  e.target.src = fallbackUrl
+                } else {
+                  e.target.style.display = 'none'
+                  if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'
+                }
               }}
             />
             <div className="portal-gallery-card-broken" style={{ display: 'none' }}>
@@ -192,9 +227,6 @@ export default function PortalGallery() {
             <div className="portal-gallery-card-overlay">
               {item.title && (
                 <span className="portal-gallery-card-title">{item.title}</span>
-              )}
-              {item.created_at && (
-                <span className="portal-gallery-card-date">{formatDate(item.created_at)}</span>
               )}
             </div>
           </div>

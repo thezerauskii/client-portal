@@ -1,223 +1,224 @@
-import React, { createContext, useContext } from 'react'
+import React, { useState, useEffect } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
+import { usePortalContext } from './PortalDataProvider.jsx'
+import { supabase, isSupabaseReady } from '../../lib/supabase.js'
 
-// Portal context — shared by PortalDataProvider and consumed by portal components
-const PortalContext = createContext(null)
-
-/**
- * Hook to consume portal data context.
- * Must be used inside PortalDataProvider/PortalLayout tree.
- */
-export function usePortalContext() {
-  const ctx = useContext(PortalContext)
-  if (!ctx) {
-    throw new Error('usePortalContext must be used within a PortalDataProvider')
-  }
-  return ctx
-}
-
-export { PortalContext }
-
-const NAV_TABS = [
-  { label: 'Comisiones', path: 'commissions' },
-  { label: 'Portafolio', path: 'portfolio' },
-  { label: 'Calendario', path: 'calendar' },
-  { label: 'Links', path: 'links' },
+/* ─── Navigation items for the portal sidebar ─── */
+const NAV_ITEMS = [
+  { id: 'commissions', path: 'commissions', label: 'Estudio de Comisiones', icon: CommissionsIcon },
+  { id: 'portfolio', path: 'portfolio', label: 'Galería de Portafolio', icon: PortfolioIcon },
+  { id: 'calendar', path: 'calendar', label: 'Calendario', icon: CalendarIcon },
+  { id: 'links', path: 'links', label: 'Medios de comunicación', icon: LinksIcon },
 ]
 
-export default function PortalLayout({ children }) {
-  const { slug } = useParams()
+/* ─── SVG Icons (matching Electron sidebarIcons style) ─── */
+function CommissionsIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2L2 7l10 5 10-5-10-5z" />
+      <path d="M2 17l10 5 10-5" />
+      <path d="M2 12l10 5 10-5" />
+    </svg>
+  )
+}
 
-  // Consume context — may be null during loading/error states from PortalDataProvider
-  const ctx = useContext(PortalContext)
-  const studioName = ctx?.studioName || 'Estudio'
-  const avatarUrl = ctx?.avatarUrl || null
-  const accentColor = ctx?.accentColor || null
+function PortfolioIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <polyline points="21 15 16 10 5 21" />
+    </svg>
+  )
+}
+
+function CalendarIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  )
+}
+
+function LinksIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+    </svg>
+  )
+}
+
+function HamburgerIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <line x1="3" y1="6" x2="21" y2="6" />
+      <line x1="3" y1="12" x2="21" y2="12" />
+      <line x1="3" y1="18" x2="21" y2="18" />
+    </svg>
+  )
+}
+
+function CloseIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  )
+}
+
+/* ─── Stats Bar component ─── */
+function StatsBar({ artistId }) {
+  const [stats, setStats] = useState({ active: 0, avgProgress: 0, inReview: 0 })
+
+  useEffect(() => {
+    if (!artistId || !isSupabaseReady()) return
+
+    async function fetchStats() {
+      try {
+        const { data: tasks } = await supabase
+          .from('tasks')
+          .select('status, progress')
+          .eq('user_id', artistId)
+
+        if (!tasks || tasks.length === 0) return
+
+        const active = tasks.filter(t => t.status !== 'completed' && t.status !== 'archived').length
+        const inReview = tasks.filter(t => t.status === 'review' || t.status === 'revision').length
+        const progressTasks = tasks.filter(t => typeof t.progress === 'number')
+        const avgProgress = progressTasks.length > 0
+          ? Math.round(progressTasks.reduce((sum, t) => sum + t.progress, 0) / progressTasks.length)
+          : 0
+
+        setStats({ active, avgProgress, inReview })
+      } catch {
+        // Silently fail — stats are non-critical
+      }
+    }
+
+    fetchStats()
+  }, [artistId])
 
   return (
-    <div style={styles.wrapper}>
-      {/* Header */}
-      <header style={styles.header}>
-        <div style={styles.headerInner}>
-          {/* Brand area: avatar + studio name */}
-          <div style={styles.brand}>
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={`${studioName} avatar`}
-                style={styles.avatar}
-              />
-            ) : (
-              <div style={styles.avatarPlaceholder} aria-hidden="true">
-                {studioName[0]?.toUpperCase() || '🎨'}
-              </div>
-            )}
-            <span style={styles.studioName}>{studioName}</span>
-          </div>
+    <div className="portal-stats-bar">
+      <span className="portal-stat">
+        <span className="portal-stat-value">{stats.active}</span>
+        <span className="portal-stat-label">activas</span>
+      </span>
+      <span className="portal-stat-divider" aria-hidden="true" />
+      <span className="portal-stat">
+        <span className="portal-stat-value">{stats.avgProgress}%</span>
+        <span className="portal-stat-label">avance</span>
+      </span>
+      <span className="portal-stat-divider" aria-hidden="true" />
+      <span className="portal-stat">
+        <span className="portal-stat-value">{stats.inReview}</span>
+        <span className="portal-stat-label">en revisión</span>
+      </span>
+    </div>
+  )
+}
 
-          {/* Navigation tabs */}
-          <nav style={styles.nav} aria-label="Portal navigation">
-            {NAV_TABS.map(tab => (
-              <NavLink
-                key={tab.path}
-                to={`/p/${slug}/${tab.path}`}
-                className={({ isActive }) =>
-                  isActive ? 'portal-nav-tab portal-nav-tab--active' : 'portal-nav-tab'
-                }
-                style={({ isActive }) => ({
-                  ...styles.navTab,
-                  ...(isActive ? styles.navTabActive : {}),
-                  ...(isActive && accentColor ? { color: accentColor, borderBottomColor: accentColor } : {}),
-                })}
-              >
-                {tab.label}
-              </NavLink>
-            ))}
-          </nav>
+/* ─── Main Layout ─── */
+export default function PortalLayout({ children }) {
+  const { slug } = useParams()
+  const { studioName, projectIcon, accentColor, artistId } = usePortalContext()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [slug])
+
+  const displayName = studioName || 'Estudio'
+
+  return (
+    <div className="portal-layout">
+      {/* ─── Header ─── */}
+      <header className="portal-layout-header">
+        <div className="portal-layout-header-inner">
+          <div className="portal-layout-header-brand">
+            <button
+              className="portal-layout-hamburger"
+              onClick={() => setMobileMenuOpen(o => !o)}
+              aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
+            </button>
+            <span className="portal-layout-header-icon" aria-hidden="true">
+              {projectIcon || '🎨'}
+            </span>
+            <div className="portal-layout-header-text">
+              <span className="portal-layout-header-eyebrow">ESTUDIO CREATIVO</span>
+              <span className="portal-layout-header-name">{displayName}</span>
+            </div>
+          </div>
+          <StatsBar artistId={artistId} />
         </div>
       </header>
 
-      {/* Main content */}
-      <main style={styles.content}>
-        <div style={styles.contentInner}>
-          {children}
-        </div>
-      </main>
+      {/* ─── Body: sidebar + content ─── */}
+      <div className="portal-layout-body">
+        {/* Sidebar */}
+        <aside
+          className={`portal-layout-sidebar ${mobileMenuOpen ? 'portal-layout-sidebar--open' : ''}`}
+          aria-label="Navegación del portal"
+        >
+          <nav className="portal-layout-sidebar-nav">
+            {NAV_ITEMS.map(item => {
+              const Icon = item.icon
+              return (
+                <NavLink
+                  key={item.id}
+                  to={`/p/${slug}/${item.path}`}
+                  className={({ isActive }) =>
+                    `portal-sidebar-item ${isActive ? 'portal-sidebar-item--active' : ''}`
+                  }
+                  style={({ isActive }) =>
+                    isActive && accentColor
+                      ? { '--sidebar-accent': accentColor }
+                      : undefined
+                  }
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <span className="portal-sidebar-item-icon">
+                    <Icon />
+                  </span>
+                  <span className="portal-sidebar-item-label">{item.label}</span>
+                </NavLink>
+              )
+            })}
+          </nav>
+        </aside>
 
-      {/* Footer */}
-      <footer style={styles.footer}>
-        <span style={styles.footerText}>
+        {/* Backdrop for mobile sidebar */}
+        {mobileMenuOpen && (
+          <div
+            className="portal-layout-backdrop"
+            onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
+          />
+        )}
+
+        {/* Main content */}
+        <main className="portal-layout-main">
+          {children}
+        </main>
+      </div>
+
+      {/* ─── Footer ─── */}
+      <footer className="portal-layout-footer">
+        <span>
           Powered by{' '}
-          <a
-            href="https://possumble.studio"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={styles.footerLink}
-          >
+          <a href="https://possumble.studio" target="_blank" rel="noopener noreferrer">
             Possumble Studio
           </a>
         </span>
       </footer>
     </div>
   )
-}
-
-// --- Inline styles (same pattern as existing project components) ---
-
-const styles = {
-  wrapper: {
-    display: 'flex',
-    flexDirection: 'column',
-    minHeight: '100vh',
-    background: 'var(--bg, #111113)',
-    color: 'var(--text, #e8e8ec)',
-  },
-
-  // Header
-  header: {
-    position: 'sticky',
-    top: 0,
-    zIndex: 50,
-    background: 'var(--surface, #1a1a1e)',
-    borderBottom: '1px solid var(--border, #2e2e36)',
-  },
-  headerInner: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: '1rem',
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '0.75rem 1.5rem',
-    flexWrap: 'wrap',
-  },
-
-  // Brand
-  brand: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.6rem',
-    flexShrink: 0,
-  },
-  avatar: {
-    width: '32px',
-    height: '32px',
-    borderRadius: '50%',
-    objectFit: 'cover',
-    border: '1px solid var(--border, #2e2e36)',
-  },
-  avatarPlaceholder: {
-    width: '32px',
-    height: '32px',
-    borderRadius: '50%',
-    background: 'var(--surface2, #222227)',
-    border: '1px solid var(--border, #2e2e36)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '0.85rem',
-    fontWeight: 700,
-    color: 'var(--text, #e8e8ec)',
-  },
-  studioName: {
-    fontSize: '0.9rem',
-    fontWeight: 700,
-    color: 'var(--text, #e8e8ec)',
-    whiteSpace: 'nowrap',
-  },
-
-  // Nav
-  nav: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.25rem',
-    overflowX: 'auto',
-  },
-  navTab: {
-    padding: '0.5rem 0.85rem',
-    fontSize: '0.78rem',
-    fontWeight: 500,
-    color: 'var(--text-muted, #888896)',
-    textDecoration: 'none',
-    borderRadius: 'var(--radius-sm, 7px)',
-    borderBottom: '2px solid transparent',
-    transition: 'color 130ms ease, background 130ms ease, border-color 130ms ease',
-    whiteSpace: 'nowrap',
-  },
-  navTabActive: {
-    color: 'var(--green, #22C55E)',
-    fontWeight: 600,
-    borderBottomColor: 'var(--green, #22C55E)',
-    background: 'rgba(34, 197, 94, 0.08)',
-  },
-
-  // Content
-  content: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  contentInner: {
-    flex: 1,
-    width: '100%',
-    maxWidth: '1200px',
-    margin: '0 auto',
-    padding: '1.5rem',
-  },
-
-  // Footer
-  footer: {
-    padding: '1.25rem 1.5rem',
-    borderTop: '1px solid var(--border, #2e2e36)',
-    textAlign: 'center',
-  },
-  footerText: {
-    fontSize: '0.72rem',
-    color: 'var(--text-dim, #555560)',
-  },
-  footerLink: {
-    color: 'var(--text-muted, #888896)',
-    textDecoration: 'none',
-    fontWeight: 500,
-  },
 }
