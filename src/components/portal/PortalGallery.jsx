@@ -1,23 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { usePortalContext } from './PortalDataProvider.jsx'
-import { supabase } from '../../lib/supabase.js'
 
 /**
- * Resolves the display URL for a portfolio item based on its backend type.
- * Uses R2 worker URL with /file/{storage_key} path.
+ * Resolves the display URL for a portfolio item.
+ * Items now carry a pre-built imageUrl from the R2 worker fetch.
  */
 function resolveImageUrl(item) {
-  // If there's a direct image_url (http link), use it
-  if (item.image_url && item.image_url.startsWith('http')) {
-    return item.image_url
-  }
-  // R2 backend — use the worker URL with /file/ path
-  if (item.storage_key) {
-    const workerUrl = import.meta.env.VITE_R2_WORKER_URL || 'https://commission-manager-r2.commission-manager-studio.workers.dev'
-    return `${workerUrl}/file/${item.storage_key}`
-  }
-  // Fallback to image_url even if not http (could be base64)
-  return item.image_url || ''
+  return item.imageUrl || ''
 }
 
 /**
@@ -36,9 +25,9 @@ function formatDate(dateStr) {
 /**
  * PortalGallery — Read-only portfolio grid with lightbox.
  *
- * Fetches portfolio_items from Supabase for the current artist,
+ * Fetches portfolio images directly from the R2 worker for the current artist,
  * displays them in a responsive CSS grid, and opens a lightbox
- * on click with full-size image, title, description, and arrow navigation.
+ * on click with full-size image, title, and arrow navigation.
  *
  * Keyboard: Escape to close, ArrowLeft/ArrowRight for prev/next.
  */
@@ -52,9 +41,9 @@ export default function PortalGallery() {
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
 
-  // Fetch portfolio items
+  // Fetch portfolio items from R2 worker
   useEffect(() => {
-    if (!artistId || !supabase) {
+    if (!artistId) {
       setLoading(false)
       return
     }
@@ -66,25 +55,43 @@ export default function PortalGallery() {
       setError(null)
 
       try {
-        const { data, error: queryError } = await supabase
-          .from('portfolio_items')
-          .select('id, title, description, client, tags, image_url, year, featured, storage_key, backend, created_at')
-          .eq('user_id', artistId)
-          .order('sort_order', { ascending: true })
+        const workerUrl = import.meta.env.VITE_R2_WORKER_URL || 'https://commission-manager-r2.commission-manager-studio.workers.dev'
+        const res = await fetch(`${workerUrl}/public/portfolio/${artistId}`)
 
         if (cancelled) return
 
-        if (queryError) {
-          setError(queryError)
+        if (!res.ok) {
+          const errText = await res.text()
+          setError({ message: `R2 worker error: ${res.status} — ${errText}` })
           setLoading(false)
           return
         }
 
-        setItems(data || [])
+        const data = await res.json()
+
+        if (!data.ok || !data.objects || data.objects.length === 0) {
+          setItems([])
+          setLoading(false)
+          return
+        }
+
+        // Build items from R2 objects
+        const portfolioItems = data.objects.map(obj => {
+          const fileName = obj.key.split('/').pop() || ''
+          const title = fileName.replace(/^\d+_[a-z0-9]+_?/i, '').replace(/\.[^.]+$/, '').replace(/[_-]/g, ' ').trim() || fileName
+          return {
+            id: obj.key,
+            title: title,
+            imageUrl: `${workerUrl}/file/${obj.key}`,
+            uploaded: obj.uploaded,
+          }
+        })
+
+        setItems(portfolioItems)
         setLoading(false)
       } catch (err) {
         if (!cancelled) {
-          setError(err)
+          setError({ message: err.message || 'Error connecting to R2' })
           setLoading(false)
         }
       }
@@ -140,25 +147,16 @@ export default function PortalGallery() {
     )
   }
 
-  // Error state with debug info
+  // Error state
   if (error) {
-    const isTableMissing = error.message?.includes('relation') && error.message?.includes('does not exist')
-    const isRLS = error.code === '42501' || error.message?.includes('permission denied')
-
     return (
       <div className="portal-empty-state">
         <span className="portal-empty-state-icon">⚠️</span>
-        <p className="portal-empty-state-text">
-          {isTableMissing
-            ? 'La tabla de portafolio aún no está configurada para este artista.'
-            : isRLS
-              ? 'Sin permisos para ver el portafolio. Verifica las políticas RLS.'
-              : 'Error al cargar el portafolio'}
-        </p>
+        <p className="portal-empty-state-text">Error al cargar el portafolio</p>
         <div className="portal-debug-panel">
           <p className="portal-debug-label">Debug info:</p>
           <pre className="portal-debug-content">
-            {JSON.stringify({ code: error.code, message: error.message, hint: error.hint }, null, 2)}
+            {JSON.stringify({ message: error.message }, null, 2)}
           </pre>
         </div>
       </div>
@@ -208,11 +206,6 @@ export default function PortalGallery() {
               loading="lazy"
               className="portal-gallery-card-img"
               onError={(e) => {
-                // Try image_url as fallback if we were using storage_key
-                if (item.image_url && e.target.src !== item.image_url) {
-                  e.target.src = item.image_url
-                  return
-                }
                 e.target.style.display = 'none'
                 if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'
               }}
@@ -271,14 +264,9 @@ export default function PortalGallery() {
               alt={currentItem.title || ''}
               className="portal-lightbox-img"
             />
-            {(currentItem.title || currentItem.description) && (
+            {currentItem.title && (
               <div className="portal-lightbox-info">
-                {currentItem.title && (
-                  <h3 className="portal-lightbox-title">{currentItem.title}</h3>
-                )}
-                {currentItem.description && (
-                  <p className="portal-lightbox-description">{currentItem.description}</p>
-                )}
+                <h3 className="portal-lightbox-title">{currentItem.title}</h3>
               </div>
             )}
           </div>
