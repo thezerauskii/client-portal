@@ -290,6 +290,7 @@
   min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--col-accent, var(--border));
   border-radius: var(--radius);
   display: flex;
   flex-direction: column;

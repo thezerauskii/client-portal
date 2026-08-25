@@ -418,7 +418,7 @@ export default function PortalKanbanBoard() {
       {/* Kanban Board */}
       <div className="portal-kanban" role="region" aria-label="Tablero de comisiones">
         {columnData.map((col) => (
-          <div className="portal-kanban-column" key={col.id}>
+          <div className="portal-kanban-column" key={col.id} style={{ '--col-accent': col.color }}>
             {/* Column Header */}
             <div className="portal-kanban-column-header">
               <span
