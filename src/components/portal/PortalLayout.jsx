@@ -164,92 +164,95 @@ export default function PortalLayout({ children }) {
         />
       )}
 
-      {/* ─── Banner Header ─── */}
-      <header className="portal-layout-header">
-        {/* Banner image */}
-        <div
-          className="portal-banner"
-          style={projectBannerUrl ? { backgroundImage: `url(${projectBannerUrl})` } : undefined}
-        >
-          <div className="portal-banner-overlay" />
-          <div className="portal-banner-content">
-            <button
-              className="portal-layout-hamburger"
-              onClick={() => setMobileMenuOpen(o => !o)}
-              aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-              aria-expanded={mobileMenuOpen}
-            >
-              {mobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
-            </button>
-            <div className="portal-banner-text">
-              <h1 className="portal-banner-title">{displayName}</h1>
-              {projectSubtitle && (
-                <p className="portal-banner-subtitle">{projectSubtitle}</p>
-              )}
-            </div>
-            <StatsBar artistId={artistId} />
-          </div>
+      {/* ─── Sidebar (full height) ─── */}
+      <aside
+        className={`portal-layout-sidebar ${mobileMenuOpen ? 'portal-layout-sidebar--open' : ''}`}
+        aria-label="Navegación del portal"
+      >
+        <div className="portal-sidebar-brand">
+          <img src="/logo-possum.svg" alt="" className="portal-sidebar-logo" />
+          <span className="portal-sidebar-brand-name">Possumble</span>
         </div>
-      </header>
+        <nav className="portal-layout-sidebar-nav">
+          {NAV_ITEMS.map(item => {
+            const Icon = item.icon
+            return (
+              <NavLink
+                key={item.id}
+                to={`/p/${slug}/${item.path}`}
+                className={({ isActive }) =>
+                  `portal-sidebar-item ${isActive ? 'portal-sidebar-item--active' : ''}`
+                }
+                style={({ isActive }) =>
+                  isActive && accentColor
+                    ? { '--sidebar-accent': accentColor }
+                    : undefined
+                }
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <span className="portal-sidebar-item-icon">
+                  <Icon />
+                </span>
+                <span className="portal-sidebar-item-label">{item.label}</span>
+              </NavLink>
+            )
+          })}
+        </nav>
+      </aside>
 
-      {/* ─── Body: sidebar + content ─── */}
-      <div className="portal-layout-body">
-        {/* Sidebar */}
-        <aside
-          className={`portal-layout-sidebar ${mobileMenuOpen ? 'portal-layout-sidebar--open' : ''}`}
-          aria-label="Navegación del portal"
-        >
-          <nav className="portal-layout-sidebar-nav">
-            {NAV_ITEMS.map(item => {
-              const Icon = item.icon
-              return (
-                <NavLink
-                  key={item.id}
-                  to={`/p/${slug}/${item.path}`}
-                  className={({ isActive }) =>
-                    `portal-sidebar-item ${isActive ? 'portal-sidebar-item--active' : ''}`
-                  }
-                  style={({ isActive }) =>
-                    isActive && accentColor
-                      ? { '--sidebar-accent': accentColor }
-                      : undefined
-                  }
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <span className="portal-sidebar-item-icon">
-                    <Icon />
-                  </span>
-                  <span className="portal-sidebar-item-label">{item.label}</span>
-                </NavLink>
-              )
-            })}
-          </nav>
-        </aside>
+      {/* Backdrop for mobile sidebar */}
+      {mobileMenuOpen && (
+        <div
+          className="portal-layout-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
-        {/* Backdrop for mobile sidebar */}
-        {mobileMenuOpen && (
+      {/* ─── Right side: banner + content + footer ─── */}
+      <div className="portal-layout-right">
+        {/* Banner Header */}
+        <header className="portal-layout-header">
           <div
-            className="portal-layout-backdrop"
-            onClick={() => setMobileMenuOpen(false)}
-            aria-hidden="true"
-          />
-        )}
+            className="portal-banner"
+            style={projectBannerUrl ? { backgroundImage: `url(${projectBannerUrl})` } : undefined}
+          >
+            <div className="portal-banner-overlay" />
+            <div className="portal-banner-content">
+              <button
+                className="portal-layout-hamburger"
+                onClick={() => setMobileMenuOpen(o => !o)}
+                aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+                aria-expanded={mobileMenuOpen}
+              >
+                {mobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
+              </button>
+              <div className="portal-banner-text">
+                <h1 className="portal-banner-title">{displayName}</h1>
+                {projectSubtitle && (
+                  <p className="portal-banner-subtitle">{projectSubtitle}</p>
+                )}
+              </div>
+              <StatsBar artistId={artistId} />
+            </div>
+          </div>
+        </header>
 
         {/* Main content */}
         <main className="portal-layout-main">
           {children}
         </main>
-      </div>
 
-      {/* ─── Footer ─── */}
-      <footer className="portal-layout-footer">
-        <span>
-          Powered by{' '}
-          <a href="https://possumble.studio" target="_blank" rel="noopener noreferrer">
-            Possumble Studio
-          </a>
-        </span>
-      </footer>
+        {/* Footer */}
+        <footer className="portal-layout-footer">
+          <span>
+            Powered by{' '}
+            <a href="https://possumble.studio" target="_blank" rel="noopener noreferrer">
+              Possumble Studio
+            </a>
+          </span>
+        </footer>
+      </div>
     </div>
   )
 }

@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Fondo transparente — sin cuadrado de fondo -->
+  
+  <!-- Círculo principal (gris oscuro deslavado, como tu azul deslavado pero en gris) -->
+  <circle cx="256" cy="256" r="240" fill="#2a2a32"/>
+  
+  <!-- Possum body — forma principal redondeada -->
+  <path d="M220 340 
+    C180 330, 160 290, 165 260 
+    C170 230, 185 200, 210 185 
+    C235 170, 260 175, 275 190 
+    C290 205, 295 225, 290 250 
+    C285 275, 270 310, 260 330 
+    C250 350, 235 350, 220 340 Z" 
+    fill="#f0f0f0" stroke="#1a1a24" stroke-width="5"/>
+  
+  <!-- Possum head -->
+  <ellipse cx="310" cy="230" rx="45" ry="40" fill="#f0f0f0" stroke="#1a1a24" stroke-width="4.5"/>
+  
+  <!-- Snout / nose area -->
+  <ellipse cx="340" cy="242" rx="20" ry="15" fill="#e8e8e8" stroke="#1a1a24" stroke-width="3"/>
+  
+  <!-- Nose -->
+  <ellipse cx="352" cy="240" rx="6" ry="5" fill="#1a1a24"/>
+  
+  <!-- Eye -->
+  <ellipse cx="315" cy="222" rx="7" ry="8" fill="#1a1a24"/>
+  <!-- Eye highlight -->
+  <circle cx="317" cy="220" r="2.5" fill="#ffffff"/>
+  
+  <!-- Left ear (far) -->
+  <ellipse cx="285" cy="195" rx="14" ry="20" fill="#f0f0f0" stroke="#1a1a24" stroke-width="4" transform="rotate(-15 285 195)"/>
+  <ellipse cx="285" cy="195" rx="7" ry="12" fill="#ffb3c1" transform="rotate(-15 285 195)"/>
+  
+  <!-- Right ear (near) -->
+  <ellipse cx="320" cy="192" rx="14" ry="20" fill="#f0f0f0" stroke="#1a1a24" stroke-width="4" transform="rotate(10 320 192)"/>
+  <ellipse cx="320" cy="192" rx="7" ry="12" fill="#ffb3c1" transform="rotate(10 320 192)"/>
+  
+  <!-- Front legs -->
+  <path d="M270 310 C275 325, 280 340, 290 350 C295 355, 300 352, 298 345 C295 335, 288 320, 285 305" 
+    fill="#f0f0f0" stroke="#1a1a24" stroke-width="4"/>
+  <path d="M250 320 C252 335, 255 350, 260 360 C263 365, 268 362, 267 355 C264 345, 258 330, 255 315" 
+    fill="#f0f0f0" stroke="#1a1a24" stroke-width="4"/>
+  
+  <!-- Hind leg -->
+  <path d="M195 320 C185 335, 180 350, 185 365 C188 372, 195 370, 197 363 C200 350, 198 335, 200 320" 
+    fill="#f0f0f0" stroke="#1a1a24" stroke-width="4"/>
+  
+  <!-- Tail — long, curving, pink -->
+  <path d="M175 310 
+    C155 330, 150 360, 170 380 
+    C190 400, 230 405, 270 390 
+    C310 375, 340 355, 360 340 
+    C375 328, 370 318, 355 322 
+    C340 328, 310 345, 270 360 
+    C230 375, 195 370, 185 355 
+    C175 340, 180 320, 190 310" 
+    fill="#ffb3c1" stroke="#1a1a24" stroke-width="4" stroke-linecap="round"/>
+  
+  <!-- Tail tip curl -->
+  <path d="M360 340 C370 335, 378 330, 375 322 C372 315, 362 318, 355 322" 
+    fill="#ffb3c1" stroke="#1a1a24" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Whiskers -->
+  <line x1="345" y1="237" x2="375" y2="232" stroke="#1a1a24" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="345" y1="242" x2="378" y2="244" stroke="#1a1a24" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="345" y1="247" x2="374" y2="254" stroke="#1a1a24" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
