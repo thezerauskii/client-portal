@@ -368,6 +368,162 @@
   border: 1px solid var(--border);
 }
 
+/* ====== CARD GALLERY (Xbox 360-style stacked carousel) ====== */
+.portal-card-gallery {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 800px;
+}
+
+.portal-card-gallery-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  cursor: pointer;
+}
+
+.portal-card-gallery-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface, #1a1a1e);
+  border: 1px solid var(--border, #2e2e36);
+  color: var(--text, #e8e8ec);
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10000;
+  transition: background 130ms ease;
+}
+
+.portal-card-gallery-close:hover {
+  background: var(--surface2, #222227);
+}
+
+.portal-card-gallery-stack {
+  position: relative;
+  width: 60vw;
+  max-width: 700px;
+  height: 70vh;
+  max-height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  transform-style: preserve-3d;
+}
+
+.portal-card-gallery-item {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 400ms cubic-bezier(0.25, 0.8, 0.25, 1),
+              opacity 400ms ease,
+              filter 400ms ease;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.portal-card-gallery-item--active {
+  cursor: default;
+}
+
+.portal-card-gallery-item img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+}
+
+.portal-card-gallery-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface, #1a1a1e);
+  border: 1px solid var(--border, #2e2e36);
+  color: var(--text, #e8e8ec);
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10000;
+  transition: background 130ms ease;
+  line-height: 1;
+}
+
+.portal-card-gallery-nav:hover {
+  background: var(--surface2, #222227);
+}
+
+.portal-card-gallery-nav--prev {
+  left: 1.5rem;
+}
+
+.portal-card-gallery-nav--next {
+  right: 1.5rem;
+}
+
+.portal-card-gallery-info {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 10000;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.portal-card-gallery-name {
+  color: #fff;
+  font-weight: 600;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .portal-card-gallery-stack {
+    width: 85vw;
+    height: 50vh;
+  }
+
+  .portal-card-gallery-nav {
+    width: 36px;
+    height: 36px;
+    font-size: 1.2rem;
+  }
+
+  .portal-card-gallery-nav--prev { left: 0.5rem; }
+  .portal-card-gallery-nav--next { right: 0.5rem; }
+}
+
 /* ====== FILTER INPUT ====== */
 .portal-filter-input {
   width: 100%;

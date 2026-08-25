@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { usePortalContext } from './PortalDataProvider.jsx'
 import { supabase, isSupabaseReady } from '../../lib/supabase.js'
 
@@ -51,9 +51,83 @@ function PortalClientFilter({ value, onChange }) {
   )
 }
 
+// ─── CardGallery (Xbox 360 style stacked carousel) ──────────────────────────
+
+function CardGallery({ images, startIndex, onClose }) {
+  const [current, setCurrent] = useState(startIndex || 0)
+
+  const goNext = useCallback(() => {
+    setCurrent(prev => (prev + 1) % images.length)
+  }, [images.length])
+
+  const goPrev = useCallback(() => {
+    setCurrent(prev => (prev - 1 + images.length) % images.length)
+  }, [images.length])
+
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === 'Escape') onClose()
+      if (e.key === 'ArrowRight') goNext()
+      if (e.key === 'ArrowLeft') goPrev()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose, goNext, goPrev])
+
+  if (!images || images.length === 0) return null
+
+  return (
+    <div className="portal-card-gallery" role="dialog" aria-modal="true" aria-label="Visor de imágenes">
+      <div className="portal-card-gallery-backdrop" onClick={onClose} />
+      <button className="portal-card-gallery-close" onClick={onClose} aria-label="Cerrar">✕</button>
+
+      {/* Stacked cards container */}
+      <div className="portal-card-gallery-stack">
+        {images.map((img, i) => {
+          const offset = i - current
+          const absOffset = Math.abs(offset)
+          if (absOffset > 2) return null // Only render nearby cards
+
+          const style = {
+            transform: `translateX(${offset * 60}%) scale(${1 - absOffset * 0.12}) translateZ(${-absOffset * 80}px)`,
+            opacity: absOffset === 0 ? 1 : 0.5 - absOffset * 0.15,
+            zIndex: images.length - absOffset,
+            filter: absOffset > 0 ? `blur(${absOffset}px)` : 'none',
+          }
+
+          return (
+            <div
+              key={img.url || i}
+              className={`portal-card-gallery-item ${offset === 0 ? 'portal-card-gallery-item--active' : ''}`}
+              style={style}
+              onClick={offset !== 0 ? () => setCurrent(i) : undefined}
+            >
+              <img src={img.url || img.src} alt={img.name || ''} />
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Nav arrows */}
+      {images.length > 1 && (
+        <>
+          <button className="portal-card-gallery-nav portal-card-gallery-nav--prev" onClick={goPrev} aria-label="Anterior">‹</button>
+          <button className="portal-card-gallery-nav portal-card-gallery-nav--next" onClick={goNext} aria-label="Siguiente">›</button>
+        </>
+      )}
+
+      {/* Info bar */}
+      <div className="portal-card-gallery-info">
+        <span>{current + 1} / {images.length}</span>
+        {images[current]?.name && <span className="portal-card-gallery-name">{images[current].name}</span>}
+      </div>
+    </div>
+  )
+}
+
 // ─── PortalKanbanCard ───────────────────────────────────────────────────────
 
-function PortalKanbanCard({ task }) {
+function PortalKanbanCard({ task, onViewImages }) {
   const title = task.text || 'Comisión'
   const priority = PRIORITY_OPTIONS[task.priority]
   const stage = STAGE_OPTIONS[task.stage]
@@ -84,9 +158,15 @@ function PortalKanbanCard({ task }) {
 
   return (
     <div className="portal-kanban-card" role="article" aria-label={title}>
-      {/* Thumbnail with +N badge */}
+      {/* Thumbnail with +N badge — clickable to open gallery */}
       {thumbnail && (
-        <div style={{ position: 'relative' }}>
+        <div
+          style={{ position: 'relative', cursor: 'pointer' }}
+          onClick={(e) => { e.stopPropagation(); onViewImages(imageAttachments, 0) }}
+          role="button"
+          tabIndex={0}
+          aria-label={`Ver ${imageAttachments.length} imagen${imageAttachments.length > 1 ? 'es' : ''}`}
+        >
           <img
             className="portal-kanban-card-thumb"
             src={thumbnail}
@@ -154,6 +234,17 @@ export default function PortalKanbanBoard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [filterText, setFilterText] = useState('')
+  const [galleryImages, setGalleryImages] = useState(null)
+  const [galleryStart, setGalleryStart] = useState(0)
+
+  const openGallery = useCallback((images, startIdx) => {
+    setGalleryImages(images)
+    setGalleryStart(startIdx || 0)
+  }, [])
+
+  const closeGallery = useCallback(() => {
+    setGalleryImages(null)
+  }, [])
 
   // Fetch all tasks and kanban_config on mount
   useEffect(() => {
@@ -317,6 +408,7 @@ export default function PortalKanbanBoard() {
   }
 
   return (
+    <>
     <div className="portal-kanban-wrapper">
       {/* Client Filter */}
       <div style={{ marginBottom: '1rem' }}>
@@ -353,7 +445,7 @@ export default function PortalKanbanBoard() {
                 </div>
               ) : (
                 col.tasks.map((task) => (
-                  <PortalKanbanCard key={task.id} task={task} />
+                  <PortalKanbanCard key={task.id} task={task} onViewImages={openGallery} />
                 ))
               )}
             </div>
@@ -370,5 +462,11 @@ export default function PortalKanbanBoard() {
         </div>
       )}
     </div>
+
+    {/* Card gallery overlay */}
+    {galleryImages && (
+      <CardGallery images={galleryImages} startIndex={galleryStart} onClose={closeGallery} />
+    )}
+    </>
   )
 }
