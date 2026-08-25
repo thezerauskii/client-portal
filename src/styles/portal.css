@@ -564,8 +564,8 @@
   }
 
   .portal-gallery-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
+    column-count: 2;
+    column-gap: 4px;
   }
 
   .portal-kanban {
@@ -611,6 +611,18 @@
   }
 }
 
+@media (min-width: 768px) and (max-width: 1199px) {
+  .portal-gallery-grid {
+    column-count: 3;
+  }
+}
+
+@media (min-width: 1200px) {
+  .portal-gallery-grid {
+    column-count: 5;
+  }
+}
+
 /* Large desktop */
 @media (min-width: 1200px) {
   .portal-content {
@@ -621,9 +633,8 @@
 
 /* ====== GALLERY ====== */
 .portal-gallery-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 4px;
+  column-count: 4;
+  column-gap: 4px;
 }
 
 .portal-gallery-card {
@@ -634,16 +645,17 @@
   border: none;
   border-radius: var(--radius-sm, 6px);
   background: var(--surface2);
+  break-inside: avoid;
+  margin-bottom: 4px;
+  display: inline-block;
+  width: 100%;
 }
 
 .portal-gallery-card-img {
   width: 100%;
   height: auto;
-  min-height: 120px;
-  max-height: 300px;
-  object-fit: cover;
   display: block;
-  transition: transform 200ms ease;
+  transition: transform 200ms ease, opacity 200ms ease;
 }
 
 .portal-gallery-card:hover .portal-gallery-card-img {
