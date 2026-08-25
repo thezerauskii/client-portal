@@ -7,12 +7,17 @@ import { supabase } from '../../lib/supabase.js'
  * Uses R2 worker URL with /file/{storage_key} path.
  */
 function resolveImageUrl(item) {
+  // If there's a direct image_url (http link), use it
+  if (item.image_url && item.image_url.startsWith('http')) {
+    return item.image_url
+  }
   // R2 backend — use the worker URL with /file/ path
   if (item.storage_key) {
     const workerUrl = import.meta.env.VITE_R2_WORKER_URL || 'https://commission-manager-r2.commission-manager-studio.workers.dev'
     return `${workerUrl}/file/${item.storage_key}`
   }
-  return ''
+  // Fallback to image_url even if not http (could be base64)
+  return item.image_url || ''
 }
 
 /**
@@ -63,7 +68,7 @@ export default function PortalGallery() {
       try {
         const { data, error: queryError } = await supabase
           .from('portfolio_items')
-          .select('id, title, description, tags, storage_key, backend, created_at')
+          .select('id, title, description, client, tags, image_url, year, featured, storage_key, backend, created_at')
           .eq('user_id', artistId)
           .order('sort_order', { ascending: true })
 
@@ -203,6 +208,11 @@ export default function PortalGallery() {
               loading="lazy"
               className="portal-gallery-card-img"
               onError={(e) => {
+                // Try image_url as fallback if we were using storage_key
+                if (item.image_url && e.target.src !== item.image_url) {
+                  e.target.src = item.image_url
+                  return
+                }
                 e.target.style.display = 'none'
                 if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'
               }}
