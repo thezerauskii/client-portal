@@ -4,23 +4,15 @@ import { supabase } from '../../lib/supabase.js'
 
 /**
  * Resolves the display URL for a portfolio item based on its backend type.
- * Priority:
- * 1. Direct http URL (works without auth)
- * 2. R2 worker URL with /file/{storage_key} path
- * 3. Fallback to url field
+ * Uses R2 worker URL with /file/{storage_key} path.
  */
 function resolveImageUrl(item) {
-  // If there's a direct url field (not base64), prefer it — works without auth
-  if (item.url && !item.url.startsWith('data:') && item.url.startsWith('http')) {
-    return item.url
-  }
-  // R2 backend — try the worker URL with /file/ path
-  if (item.backend === 'r2' && item.storage_key) {
+  // R2 backend — use the worker URL with /file/ path
+  if (item.storage_key) {
     const workerUrl = import.meta.env.VITE_R2_WORKER_URL || 'https://commission-manager-r2.commission-manager-studio.workers.dev'
     return `${workerUrl}/file/${item.storage_key}`
   }
-  // Fallback to url field
-  return item.url || ''
+  return ''
 }
 
 /**
@@ -71,7 +63,7 @@ export default function PortalGallery() {
       try {
         const { data, error: queryError } = await supabase
           .from('portfolio_items')
-          .select('id, url, title, description, tags, storage_key, backend, created_at')
+          .select('id, title, description, tags, storage_key, backend, created_at')
           .eq('user_id', artistId)
           .order('sort_order', { ascending: true })
 
@@ -211,14 +203,8 @@ export default function PortalGallery() {
               loading="lazy"
               className="portal-gallery-card-img"
               onError={(e) => {
-                // If the R2 URL failed, try fallback to direct url field
-                const fallbackUrl = item.url || ''
-                if (e.target.src !== fallbackUrl && fallbackUrl && fallbackUrl.startsWith('http')) {
-                  e.target.src = fallbackUrl
-                } else {
-                  e.target.style.display = 'none'
-                  if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'
-                }
+                e.target.style.display = 'none'
+                if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex'
               }}
             />
             <div className="portal-gallery-card-broken" style={{ display: 'none' }}>

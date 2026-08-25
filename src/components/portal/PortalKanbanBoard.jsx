@@ -228,56 +228,48 @@ export default function PortalKanbanBoard() {
     })
   }, [commissionTasks, filterText])
 
-  // Build columns from sections that have children OR are listed in kanban_config
+  // Build columns: ALWAYS include fixed sections + custom sections from config
   const columnData = useMemo(() => {
     const colorOverrides = kanbanConfig?.color_overrides || {}
     const labelOverrides = kanbanConfig?.label_overrides || {}
     const orderOverrides = kanbanConfig?.order_overrides || {}
-    const customSections = kanbanConfig?.custom_sections
+    const customSections = kanbanConfig?.custom_sections || []
 
-    // Build a map of section tasks by ID for quick lookup
+    // Fixed sections that always exist (as task parents in the DB)
+    const FIXED_SECTIONS = [
+      { id: '6d74847d-beda-45fb-ac99-63c52212dfec', defaultLabel: 'Backlog y Proyectos', defaultColor: '#6B7280' },
+      { id: 'd02c3d13-e87b-4b43-83b6-7407e689a32e', defaultLabel: 'comisiones en progreso', defaultColor: '#F59E0B' },
+      { id: 'b5f9edcb-6fd0-4f89-a15d-9eb710ae37a0', defaultLabel: 'En Revisión', defaultColor: '#FACC15' },
+      { id: '02ee79a6-abd7-436f-938b-4386c520e203', defaultLabel: 'Comisiones Nuevas', defaultColor: '#60A5FA' },
+    ]
+
+    // Build section map from tasks (sections are tasks with no parent_id)
     const sectionMap = new Map(sectionTasks.map((s) => [s.id, s]))
 
-    // Determine which section IDs to show as columns
-    let sectionIds = []
-
-    if (Array.isArray(customSections) && customSections.length > 0) {
-      // kanban_config has an explicit list of sections — use that order
-      sectionIds = customSections.map((s) => s.id)
-    } else {
-      // Fallback: show all sections that have at least one commission child
-      const parentIds = new Set(commissionTasks.map((t) => t.parent_id))
-      sectionIds = sectionTasks
-        .filter((s) => parentIds.has(s.id))
-        .map((s) => s.id)
-    }
+    // Combine: fixed sections first, then custom sections that aren't duplicates
+    const fixedIds = new Set(FIXED_SECTIONS.map(s => s.id))
+    const allSectionDefs = [
+      ...FIXED_SECTIONS,
+      ...customSections
+        .filter(cs => !fixedIds.has(cs.id))
+        .map(cs => ({ id: cs.id, defaultLabel: cs.label || cs.name || 'Sin nombre', defaultColor: cs.color || '#7c6af7' }))
+    ]
 
     // Build column data
-    return sectionIds.map((sectionId) => {
-      const section = sectionMap.get(sectionId)
-      const customSection = Array.isArray(customSections)
-        ? customSections.find((s) => s.id === sectionId)
-        : null
+    return allSectionDefs.map((def) => {
+      const section = sectionMap.get(def.id)
 
-      // Column label: overrides > section task text > custom_sections label > fallback
-      const label =
-        labelOverrides[sectionId] ||
-        section?.text ||
-        customSection?.label ||
-        customSection?.name ||
-        'Sin nombre'
+      // Label: overrides > section task text > default
+      const label = labelOverrides[def.id] || section?.text || def.defaultLabel
 
-      // Column color: overrides > custom_sections color > default
-      const color =
-        colorOverrides[sectionId] ||
-        customSection?.color ||
-        '#7c6af7'
+      // Color: overrides > default
+      const color = colorOverrides[def.id] || def.defaultColor
 
       // Tasks for this column
-      const columnTasks = filteredCommissions.filter((t) => t.parent_id === sectionId)
+      const columnTasks = filteredCommissions.filter((t) => t.parent_id === def.id)
 
       // Apply order_overrides if available
-      const orderList = orderOverrides[sectionId]
+      const orderList = orderOverrides[def.id]
       if (Array.isArray(orderList) && orderList.length > 0) {
         const orderMap = new Map(orderList.map((id, i) => [id, i]))
         columnTasks.sort((a, b) => {
@@ -287,9 +279,9 @@ export default function PortalKanbanBoard() {
         })
       }
 
-      return { id: sectionId, label, color, tasks: columnTasks }
+      return { id: def.id, label, color, tasks: columnTasks }
     })
-  }, [sectionTasks, commissionTasks, filteredCommissions, kanbanConfig])
+  }, [sectionTasks, filteredCommissions, kanbanConfig])
 
   // ─── Render ─────────────────────────────────────────────────────────────────
 
