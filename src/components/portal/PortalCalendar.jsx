@@ -51,7 +51,7 @@ export default function PortalCalendar() {
         .select('id, text, client, deadline, priority, stage')
         .eq('user_id', artistId)
         .not('deadline', 'is', null)
-        .eq('archived', false)
+        .or('archived.is.null,archived.eq.false')
 
       if (queryError) {
         setError(queryError)

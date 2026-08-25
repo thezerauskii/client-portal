@@ -158,7 +158,7 @@ export default function PortalKanbanBoard() {
             .from('tasks')
             .select('id, text, parent_id, priority, stage, client, client_email, deadline, note, attachments, checklist')
             .eq('user_id', artistId)
-            .eq('archived', false),
+            .or('archived.is.null,archived.eq.false'),
           supabase
             .from('kanban_config')
             .select('*')

@@ -28,7 +28,7 @@ export default function PortalLanding() {
           .from('tasks')
           .select('id', { count: 'exact', head: true })
           .eq('user_id', artistId)
-          .eq('archived', false),
+          .or('archived.is.null,archived.eq.false'),
         supabase
           .from('portfolio_items')
           .select('id', { count: 'exact', head: true })
