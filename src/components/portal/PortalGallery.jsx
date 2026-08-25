@@ -188,7 +188,7 @@ export default function PortalGallery() {
         {items.map((item, index) => (
           <div
             key={item.id}
-            className="portal-card portal-gallery-card"
+            className="portal-gallery-card"
             onClick={() => openLightbox(index)}
             role="button"
             tabIndex={0}
