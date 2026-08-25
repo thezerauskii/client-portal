@@ -4,13 +4,6 @@ import { supabase, isSupabaseReady } from '../../lib/supabase.js'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const DEFAULT_SECTIONS = [
-  { id: 'backlog', label: '📋 Backlog y Proyectos', color: '#7c6af7' },
-  { id: 'active', label: '🎨 Comisiones en progreso', color: '#34d399' },
-  { id: 'review', label: '🔍 En Revisión', color: '#fbbf24' },
-  { id: 'new', label: '✨ Comisiones Nuevas', color: '#60a5fa' },
-]
-
 const PRIORITY_OPTIONS = {
   ok: { name: 'Todo en orden', color: '#22C55E' },
   low: { name: 'Prioridad baja', color: '#60A5FA' },
@@ -140,13 +133,13 @@ function PortalKanbanCard({ task }) {
 
 export default function PortalKanbanBoard() {
   const { artistId } = usePortalContext()
-  const [tasks, setTasks] = useState([])
+  const [allTasks, setAllTasks] = useState([])
   const [kanbanConfig, setKanbanConfig] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [filterText, setFilterText] = useState('')
 
-  // Fetch tasks and kanban_config on mount
+  // Fetch all tasks and kanban_config on mount
   useEffect(() => {
     if (!artistId || !isSupabaseReady()) {
       setLoading(false)
@@ -163,7 +156,7 @@ export default function PortalKanbanBoard() {
         const [tasksRes, configRes] = await Promise.all([
           supabase
             .from('tasks')
-            .select('id, text, priority, stage, client, client_email, deadline, note, attachments, checklist, section_id')
+            .select('id, text, parent_id, priority, stage, client, client_email, deadline, note, attachments, checklist')
             .eq('user_id', artistId)
             .eq('archived', false),
           supabase
@@ -181,7 +174,7 @@ export default function PortalKanbanBoard() {
           return
         }
 
-        setTasks(tasksRes.data || [])
+        setAllTasks(tasksRes.data || [])
 
         // kanban_config might not exist yet — that's ok, use defaults
         if (configRes.data) {
@@ -201,52 +194,74 @@ export default function PortalKanbanBoard() {
     return () => { cancelled = true }
   }, [artistId])
 
-  // Build columns from kanban_config custom_sections + default sections
-  const columns = useMemo(() => {
-    const customSections = kanbanConfig?.custom_sections
-    const colorOverrides = kanbanConfig?.color_overrides || {}
-    const labelOverrides = kanbanConfig?.label_overrides || {}
+  // Separate section tasks (no parent_id) from commission tasks (have parent_id)
+  const { sectionTasks, commissionTasks } = useMemo(() => {
+    const sections = allTasks.filter((t) => !t.parent_id)
+    const commissions = allTasks.filter((t) => t.parent_id)
+    return { sectionTasks: sections, commissionTasks: commissions }
+  }, [allTasks])
 
-    // Use custom sections if available, otherwise defaults
-    let sections = DEFAULT_SECTIONS
-    if (Array.isArray(customSections) && customSections.length > 0) {
-      sections = customSections.map((s) => ({
-        id: s.id,
-        label: labelOverrides[s.id] || s.label || s.name || s.id,
-        color: colorOverrides[s.id] || s.color || '#7c6af7',
-      }))
-    } else {
-      // Apply overrides to defaults
-      sections = DEFAULT_SECTIONS.map((s) => ({
-        ...s,
-        label: labelOverrides[s.id] || s.label,
-        color: colorOverrides[s.id] || s.color,
-      }))
-    }
-
-    return sections
-  }, [kanbanConfig])
-
-  // Filter tasks by client name or email (case-insensitive)
-  const filteredTasks = useMemo(() => {
-    if (!filterText.trim()) return tasks
+  // Filter commission tasks by client name or email (case-insensitive)
+  const filteredCommissions = useMemo(() => {
+    if (!filterText.trim()) return commissionTasks
     const q = filterText.toLowerCase().trim()
-    return tasks.filter((t) => {
+    return commissionTasks.filter((t) => {
       const client = (t.client || '').toLowerCase()
       const email = (t.client_email || '').toLowerCase()
       return client.includes(q) || email.includes(q)
     })
-  }, [tasks, filterText])
+  }, [commissionTasks, filterText])
 
-  // Group tasks into columns by section_id, apply order_overrides
+  // Build columns from sections that have children OR are listed in kanban_config
   const columnData = useMemo(() => {
+    const colorOverrides = kanbanConfig?.color_overrides || {}
+    const labelOverrides = kanbanConfig?.label_overrides || {}
     const orderOverrides = kanbanConfig?.order_overrides || {}
+    const customSections = kanbanConfig?.custom_sections
 
-    return columns.map((col) => {
-      const columnTasks = filteredTasks.filter((t) => t.section_id === col.id)
+    // Build a map of section tasks by ID for quick lookup
+    const sectionMap = new Map(sectionTasks.map((s) => [s.id, s]))
 
-      // Apply order_overrides: if there's an ordered list of task IDs for this column, use it
-      const orderList = orderOverrides[col.id]
+    // Determine which section IDs to show as columns
+    let sectionIds = []
+
+    if (Array.isArray(customSections) && customSections.length > 0) {
+      // kanban_config has an explicit list of sections — use that order
+      sectionIds = customSections.map((s) => s.id)
+    } else {
+      // Fallback: show all sections that have at least one commission child
+      const parentIds = new Set(commissionTasks.map((t) => t.parent_id))
+      sectionIds = sectionTasks
+        .filter((s) => parentIds.has(s.id))
+        .map((s) => s.id)
+    }
+
+    // Build column data
+    return sectionIds.map((sectionId) => {
+      const section = sectionMap.get(sectionId)
+      const customSection = Array.isArray(customSections)
+        ? customSections.find((s) => s.id === sectionId)
+        : null
+
+      // Column label: overrides > section task text > custom_sections label > fallback
+      const label =
+        labelOverrides[sectionId] ||
+        section?.text ||
+        customSection?.label ||
+        customSection?.name ||
+        'Sin nombre'
+
+      // Column color: overrides > custom_sections color > default
+      const color =
+        colorOverrides[sectionId] ||
+        customSection?.color ||
+        '#7c6af7'
+
+      // Tasks for this column
+      const columnTasks = filteredCommissions.filter((t) => t.parent_id === sectionId)
+
+      // Apply order_overrides if available
+      const orderList = orderOverrides[sectionId]
       if (Array.isArray(orderList) && orderList.length > 0) {
         const orderMap = new Map(orderList.map((id, i) => [id, i]))
         columnTasks.sort((a, b) => {
@@ -256,9 +271,9 @@ export default function PortalKanbanBoard() {
         })
       }
 
-      return { ...col, tasks: columnTasks }
+      return { id: sectionId, label, color, tasks: columnTasks }
     })
-  }, [columns, filteredTasks, kanbanConfig])
+  }, [sectionTasks, commissionTasks, filteredCommissions, kanbanConfig])
 
   // ─── Render ─────────────────────────────────────────────────────────────────
 
@@ -282,7 +297,7 @@ export default function PortalKanbanBoard() {
     )
   }
 
-  if (tasks.length === 0) {
+  if (commissionTasks.length === 0) {
     return (
       <div className="portal-empty-state">
         <span className="portal-empty-state-icon">📭</span>
@@ -343,7 +358,7 @@ export default function PortalKanbanBoard() {
       </div>
 
       {/* No results after filtering */}
-      {filterText.trim() && filteredTasks.length === 0 && (
+      {filterText.trim() && filteredCommissions.length === 0 && (
         <div className="portal-empty-state" style={{ marginTop: '1rem' }}>
           <span className="portal-empty-state-text">
             No se encontraron comisiones para "{filterText}"
