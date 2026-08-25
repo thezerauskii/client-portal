@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { usePortalContext } from './PortalDataProvider.jsx'
 
 /**
@@ -26,9 +26,10 @@ function formatDate(dateStr) {
  * PortalGallery — Read-only portfolio grid with lightbox.
  *
  * Fetches portfolio images directly from the R2 worker for the current artist,
- * displays them in a responsive CSS grid, and opens a lightbox
- * on click with full-size image, title, and arrow navigation.
+ * displays them in a responsive masonry grid (CSS columns), and opens a lightbox
+ * on click with full-size image + info panel beside it.
  *
+ * Includes tag filter bar when tags are available.
  * Keyboard: Escape to close, ArrowLeft/ArrowRight for prev/next.
  */
 export default function PortalGallery() {
@@ -36,6 +37,7 @@ export default function PortalGallery() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [activeTag, setActiveTag] = useState(null)
 
   // Lightbox state
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -82,6 +84,8 @@ export default function PortalGallery() {
           return {
             id: obj.key,
             title: title,
+            description: obj.description || '',
+            tags: obj.tags || [],
             imageUrl: `${workerUrl}/file/${obj.key}`,
             uploaded: obj.uploaded,
           }
@@ -101,6 +105,13 @@ export default function PortalGallery() {
     return () => { cancelled = true }
   }, [artistId])
 
+  // Tags
+  const allTags = useMemo(() => [...new Set(items.flatMap(i => i.tags || []))], [items])
+  const filteredItems = useMemo(() => {
+    if (!activeTag) return items
+    return items.filter(i => i.tags?.includes(activeTag))
+  }, [items, activeTag])
+
   // Lightbox handlers
   const openLightbox = useCallback((index) => {
     setLightboxIndex(index)
@@ -112,12 +123,12 @@ export default function PortalGallery() {
   }, [])
 
   const goNext = useCallback(() => {
-    setLightboxIndex((prev) => (prev + 1) % items.length)
-  }, [items.length])
+    setLightboxIndex((prev) => (prev + 1) % filteredItems.length)
+  }, [filteredItems.length])
 
   const goPrev = useCallback(() => {
-    setLightboxIndex((prev) => (prev - 1 + items.length) % items.length)
-  }, [items.length])
+    setLightboxIndex((prev) => (prev - 1 + filteredItems.length) % filteredItems.length)
+  }, [filteredItems.length])
 
   // Keyboard navigation for lightbox
   useEffect(() => {
@@ -169,23 +180,38 @@ export default function PortalGallery() {
       <div className="portal-empty-state">
         <span className="portal-empty-state-icon">🖼️</span>
         <p className="portal-empty-state-text">El portafolio está vacío</p>
-        <div className="portal-debug-panel">
-          <p className="portal-debug-label">Debug info:</p>
-          <pre className="portal-debug-content">
-            {JSON.stringify({ artistId, itemsFound: 0 }, null, 2)}
-          </pre>
-        </div>
       </div>
     )
   }
 
-  const currentItem = items[lightboxIndex]
+  const currentItem = filteredItems[lightboxIndex]
 
   return (
     <>
-      {/* Responsive grid */}
-      <div className="portal-grid portal-gallery-grid">
-        {items.map((item, index) => (
+      {/* Tag filter bar */}
+      {allTags.length > 0 && (
+        <div className="portal-gallery-tags">
+          <button
+            className={`portal-gallery-tag ${!activeTag ? 'portal-gallery-tag--active' : ''}`}
+            onClick={() => setActiveTag(null)}
+          >
+            Todas
+          </button>
+          {allTags.map(tag => (
+            <button
+              key={tag}
+              className={`portal-gallery-tag ${activeTag === tag ? 'portal-gallery-tag--active' : ''}`}
+              onClick={() => setActiveTag(tag === activeTag ? null : tag)}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Masonry grid */}
+      <div className="portal-gallery-grid">
+        {filteredItems.map((item, index) => (
           <div
             key={item.id}
             className="portal-gallery-card"
@@ -217,6 +243,13 @@ export default function PortalGallery() {
               {item.title && (
                 <span className="portal-gallery-card-title">{item.title}</span>
               )}
+              {item.tags?.length > 0 && (
+                <div className="portal-gallery-card-tags">
+                  {item.tags.slice(0, 3).map(tag => (
+                    <span key={tag} className="portal-gallery-card-tag">{tag}</span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -238,7 +271,7 @@ export default function PortalGallery() {
           </button>
 
           {/* Navigation arrows */}
-          {items.length > 1 && (
+          {filteredItems.length > 1 && (
             <>
               <button
                 className="portal-lightbox-nav portal-lightbox-nav--prev"
@@ -257,18 +290,32 @@ export default function PortalGallery() {
             </>
           )}
 
-          {/* Image + info */}
-          <div className="portal-lightbox-content">
+          {/* Image + info panel side by side */}
+          <div className="portal-lightbox-content portal-lightbox-content--split">
             <img
               src={resolveImageUrl(currentItem)}
               alt={currentItem.title || ''}
               className="portal-lightbox-img"
             />
-            {currentItem.title && (
-              <div className="portal-lightbox-info">
-                <h3 className="portal-lightbox-title">{currentItem.title}</h3>
-              </div>
-            )}
+            <div className="portal-lightbox-panel">
+              <h3 className="portal-lightbox-title">{currentItem.title || 'Sin título'}</h3>
+              {currentItem.description && (
+                <p className="portal-lightbox-description">{currentItem.description}</p>
+              )}
+              {currentItem.uploaded && (
+                <p className="portal-lightbox-date">{formatDate(currentItem.uploaded)}</p>
+              )}
+              {currentItem.tags?.length > 0 && (
+                <div className="portal-lightbox-tags">
+                  {currentItem.tags.map(tag => (
+                    <span key={tag} className="portal-lightbox-tag">{tag}</span>
+                  ))}
+                </div>
+              )}
+              <p className="portal-lightbox-counter">
+                {lightboxIndex + 1} / {filteredItems.length}
+              </p>
+            </div>
           </div>
         </div>
       )}
