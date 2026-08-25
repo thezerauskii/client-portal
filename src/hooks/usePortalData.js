@@ -15,6 +15,8 @@ export function usePortalData(slug) {
     studioName: '',
     projectIcon: null,
     accentColor: null,
+    theme: 'default',
+    cyberpunkAccentColor: '#f472b6',
     socialLinks: {},
     platformConnections: {},
   })
@@ -42,7 +44,7 @@ export function usePortalData(slug) {
     try {
       const { data: profile, error: queryError } = await supabase
         .from('profiles')
-        .select('id, project_name, project_icon, accent_color, social_links, platform_connections')
+        .select('id, project_name, project_icon, accent_color, theme, cyberpunk_accent_color, social_links, platform_connections')
         .eq('public_slug', slug)
         .single()
 
@@ -62,6 +64,8 @@ export function usePortalData(slug) {
         studioName: profile.project_name || '',
         projectIcon: profile.project_icon || null,
         accentColor: profile.accent_color || null,
+        theme: profile.theme || 'default',
+        cyberpunkAccentColor: profile.cyberpunk_accent_color || '#f472b6',
         socialLinks: profile.social_links || {},
         platformConnections: profile.platform_connections || {},
       })

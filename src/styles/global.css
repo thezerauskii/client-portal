@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap');
 @import './portal.css';
 
 /* ============================================
@@ -87,4 +88,72 @@ img {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ====== THEME: Default ====== */
+.theme-default {
+  --glow-color: transparent;
+  --card-hover-border: var(--border-light);
+  --header-border: var(--border);
+}
+
+/* ====== THEME: Cyberpunk ====== */
+.theme-cyberpunk {
+  --glow-color: rgba(244, 114, 182, 0.15);
+  --card-hover-border: var(--accent);
+  --header-border: var(--accent);
+}
+
+.theme-cyberpunk .portal-header {
+  border-bottom-color: var(--accent);
+}
+
+.theme-cyberpunk .portal-kanban-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px var(--glow-color);
+}
+
+.theme-cyberpunk .portal-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px var(--glow-color);
+}
+
+.theme-cyberpunk .portal-nav-tab--active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  background: rgba(244, 114, 182, 0.08);
+}
+
+.theme-cyberpunk .portal-kanban-column-header {
+  border-bottom-color: var(--accent);
+}
+
+.theme-cyberpunk .portal-calendar-cell--today {
+  box-shadow: inset 0 0 0 1px var(--accent);
+  background: rgba(244, 114, 182, 0.05);
+}
+
+.theme-cyberpunk .portal-filter-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 8px var(--glow-color);
+}
+
+.theme-cyberpunk .portal-platform-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px var(--glow-color);
+}
+
+.theme-cyberpunk .portal-lightbox-close:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Cyberpunk font override for headings */
+.theme-cyberpunk h1,
+.theme-cyberpunk h2,
+.theme-cyberpunk h3,
+.theme-cyberpunk .portal-kanban-column-title,
+.theme-cyberpunk .portal-header-name,
+.theme-cyberpunk .portal-calendar-title {
+  font-family: 'Share Tech Mono', monospace;
 }
