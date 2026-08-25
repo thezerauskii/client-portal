@@ -19,6 +19,9 @@ export function usePortalData(slug) {
     cyberpunkAccentColor: '#f472b6',
     socialLinks: {},
     platformConnections: {},
+    projectBannerUrl: null,
+    projectSubtitle: '',
+    globalBgUrl: null,
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -44,7 +47,7 @@ export function usePortalData(slug) {
     try {
       const { data: profile, error: queryError } = await supabase
         .from('profiles')
-        .select('id, project_name, project_icon, accent_color, theme, cyberpunk_accent_color, social_links, platform_connections')
+        .select('id, project_name, project_icon, accent_color, theme, cyberpunk_accent_color, social_links, platform_connections, project_banner_url, project_subtitle, global_bg_url')
         .eq('public_slug', slug)
         .single()
 
@@ -68,6 +71,9 @@ export function usePortalData(slug) {
         cyberpunkAccentColor: profile.cyberpunk_accent_color || '#f472b6',
         socialLinks: profile.social_links || {},
         platformConnections: profile.platform_connections || {},
+        projectBannerUrl: profile.project_banner_url || null,
+        projectSubtitle: profile.project_subtitle || '',
+        globalBgUrl: profile.global_bg_url || null,
       })
       setLoading(false)
     } catch (err) {

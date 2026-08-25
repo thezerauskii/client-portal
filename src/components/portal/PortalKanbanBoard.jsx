@@ -237,10 +237,10 @@ export default function PortalKanbanBoard() {
 
     // Fixed sections that always exist (as task parents in the DB)
     const FIXED_SECTIONS = [
-      { id: '6d74847d-beda-45fb-ac99-63c52212dfec', defaultLabel: 'Backlog y Proyectos', defaultColor: '#6B7280' },
-      { id: 'd02c3d13-e87b-4b43-83b6-7407e689a32e', defaultLabel: 'comisiones en progreso', defaultColor: '#F59E0B' },
-      { id: 'b5f9edcb-6fd0-4f89-a15d-9eb710ae37a0', defaultLabel: 'En Revisión', defaultColor: '#FACC15' },
-      { id: '02ee79a6-abd7-436f-938b-4386c520e203', defaultLabel: 'Comisiones Nuevas', defaultColor: '#60A5FA' },
+      { id: '6d74847d-beda-45fb-ac99-63c52212dfec', defaultLabel: 'Backlog y Proyectos', defaultColor: '#6B7280', emoji: '📋' },
+      { id: 'd02c3d13-e87b-4b43-83b6-7407e689a32e', defaultLabel: 'comisiones en progreso', defaultColor: '#F59E0B', emoji: '🎨' },
+      { id: 'b5f9edcb-6fd0-4f89-a15d-9eb710ae37a0', defaultLabel: 'En Revisión', defaultColor: '#FACC15', emoji: '🔍' },
+      { id: '02ee79a6-abd7-436f-938b-4386c520e203', defaultLabel: 'Comisiones Nuevas', defaultColor: '#60A5FA', emoji: '✨' },
     ]
 
     // Build section map from tasks (sections are tasks with no parent_id)
@@ -252,7 +252,7 @@ export default function PortalKanbanBoard() {
       ...FIXED_SECTIONS,
       ...customSections
         .filter(cs => !fixedIds.has(cs.id))
-        .map(cs => ({ id: cs.id, defaultLabel: cs.label || cs.name || 'Sin nombre', defaultColor: cs.color || '#7c6af7' }))
+        .map(cs => ({ id: cs.id, defaultLabel: cs.label || cs.name || 'Sin nombre', defaultColor: cs.color || '#7c6af7', emoji: cs.emoji || '📌' }))
     ]
 
     // Build column data
@@ -279,7 +279,7 @@ export default function PortalKanbanBoard() {
         })
       }
 
-      return { id: def.id, label, color, tasks: columnTasks }
+      return { id: def.id, label, color, emoji: def.emoji, tasks: columnTasks }
     })
   }, [sectionTasks, filteredCommissions, kanbanConfig])
 
@@ -330,15 +330,11 @@ export default function PortalKanbanBoard() {
             {/* Column Header */}
             <div className="portal-kanban-column-header">
               <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  background: col.color,
-                  flexShrink: 0,
-                }}
+                style={{ fontSize: '1rem', flexShrink: 0 }}
                 aria-hidden="true"
-              />
+              >
+                {col.emoji}
+              </span>
               <span className="portal-kanban-column-title">{col.label}</span>
               <span className="portal-kanban-column-count">{col.tasks.length}</span>
             </div>

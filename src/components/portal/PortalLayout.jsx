@@ -77,20 +77,38 @@ function StatsBar({ artistId }) {
   useEffect(() => {
     if (!artistId || !isSupabaseReady()) return
 
+    // Stage to progress mapping (matches Electron)
+    const STAGE_PROGRESS = {
+      new: 0,
+      sketch: 20,
+      lineart: 40,
+      base: 60,
+      shade: 80,
+      review: 90,
+      delivered: 100,
+    }
+
+    // "En Revisión" section ID from kanban config
+    const REVIEW_SECTION_ID = 'b5f9edcb-6fd0-4f89-a15d-9eb710ae37a0'
+
     async function fetchStats() {
       try {
         const { data: tasks } = await supabase
           .from('tasks')
-          .select('status, progress')
+          .select('id, parent_id, stage')
           .eq('user_id', artistId)
+          .or('archived.is.null,archived.eq.false')
 
         if (!tasks || tasks.length === 0) return
 
-        const active = tasks.filter(t => t.status !== 'completed' && t.status !== 'archived').length
-        const inReview = tasks.filter(t => t.status === 'review' || t.status === 'revision').length
-        const progressTasks = tasks.filter(t => typeof t.progress === 'number')
-        const avgProgress = progressTasks.length > 0
-          ? Math.round(progressTasks.reduce((sum, t) => sum + t.progress, 0) / progressTasks.length)
+        // Commissions = tasks with parent_id (not sections)
+        const commissions = tasks.filter(t => t.parent_id)
+        const active = commissions.length
+        const inReview = commissions.filter(t => t.parent_id === REVIEW_SECTION_ID).length
+
+        // Average progress based on stage
+        const avgProgress = active > 0
+          ? Math.round(commissions.reduce((sum, t) => sum + (STAGE_PROGRESS[t.stage] || 0), 0) / active)
           : 0
 
         setStats({ active, avgProgress, inReview })
@@ -104,20 +122,20 @@ function StatsBar({ artistId }) {
 
   return (
     <div className="portal-stats-bar">
-      <span className="portal-stat">
+      <div className="portal-stat">
         <span className="portal-stat-value">{stats.active}</span>
-        <span className="portal-stat-label">activas</span>
-      </span>
+        <span className="portal-stat-label">COMISIONES ACTIVAS</span>
+      </div>
       <span className="portal-stat-divider" aria-hidden="true" />
-      <span className="portal-stat">
+      <div className="portal-stat">
         <span className="portal-stat-value">{stats.avgProgress}%</span>
-        <span className="portal-stat-label">avance</span>
-      </span>
+        <span className="portal-stat-label">AVANCE PROMEDIO</span>
+      </div>
       <span className="portal-stat-divider" aria-hidden="true" />
-      <span className="portal-stat">
+      <div className="portal-stat">
         <span className="portal-stat-value">{stats.inReview}</span>
-        <span className="portal-stat-label">en revisión</span>
-      </span>
+        <span className="portal-stat-label">EN REVISIÓN</span>
+      </div>
     </div>
   )
 }
@@ -125,7 +143,7 @@ function StatsBar({ artistId }) {
 /* ─── Main Layout ─── */
 export default function PortalLayout({ children }) {
   const { slug } = useParams()
-  const { studioName, projectIcon, accentColor, artistId } = usePortalContext()
+  const { studioName, projectIcon, accentColor, artistId, projectBannerUrl, projectSubtitle, globalBgUrl } = usePortalContext()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // Close mobile menu on route change
@@ -137,10 +155,24 @@ export default function PortalLayout({ children }) {
 
   return (
     <div className="portal-layout">
-      {/* ─── Header ─── */}
+      {/* ─── Background image (global_bg_url) ─── */}
+      {globalBgUrl && (
+        <div
+          className="portal-layout-bg"
+          style={{ backgroundImage: `url(${globalBgUrl})` }}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* ─── Banner Header ─── */}
       <header className="portal-layout-header">
-        <div className="portal-layout-header-inner">
-          <div className="portal-layout-header-brand">
+        {/* Banner image */}
+        <div
+          className="portal-banner"
+          style={projectBannerUrl ? { backgroundImage: `url(${projectBannerUrl})` } : undefined}
+        >
+          <div className="portal-banner-overlay" />
+          <div className="portal-banner-content">
             <button
               className="portal-layout-hamburger"
               onClick={() => setMobileMenuOpen(o => !o)}
@@ -149,15 +181,14 @@ export default function PortalLayout({ children }) {
             >
               {mobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
             </button>
-            <span className="portal-layout-header-icon" aria-hidden="true">
-              {projectIcon || '🎨'}
-            </span>
-            <div className="portal-layout-header-text">
-              <span className="portal-layout-header-eyebrow">ESTUDIO CREATIVO</span>
-              <span className="portal-layout-header-name">{displayName}</span>
+            <div className="portal-banner-text">
+              <h1 className="portal-banner-title">{displayName}</h1>
+              {projectSubtitle && (
+                <p className="portal-banner-subtitle">{projectSubtitle}</p>
+              )}
             </div>
+            <StatsBar artistId={artistId} />
           </div>
-          <StatsBar artistId={artistId} />
         </div>
       </header>
 
