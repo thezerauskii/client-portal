@@ -30,7 +30,7 @@ export function usePortalData(slug) {
     }
 
     if (!isSupabaseReady()) {
-      setError(new Error('Supabase is not configured'))
+      setError(new Error(`Supabase not configured. VITE_SUPABASE_URL=${import.meta.env.VITE_SUPABASE_URL || 'undefined'}, ANON_KEY=${import.meta.env.VITE_SUPABASE_ANON_KEY ? 'present' : 'undefined'}`))
       setLoading(false)
       return
     }
