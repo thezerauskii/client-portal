@@ -114,14 +114,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Validate that this set belongs to the artist's configured sets
-    const artistSets: string[] = profile.telegram_sticker_sets || []
-    if (!artistSets.includes(setName)) {
-      return new Response(JSON.stringify({ error: 'Sticker set not found in artist configuration' }), {
-        status: 403,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
+    // Allow fetching any public sticker set (visitors can add their own sets)
 
     try {
       const telegramRes = await fetch(

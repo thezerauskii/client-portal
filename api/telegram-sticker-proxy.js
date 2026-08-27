@@ -76,11 +76,8 @@ export default async function handler(req, res) {
   if (action === 'getStickerSet') {
     if (!setName) return res.status(400).json({ error: 'Missing param: setName' })
 
-    // Validate set belongs to artist
-    const artistSets = profile.telegram_sticker_sets || []
-    if (!artistSets.includes(setName)) {
-      return res.status(403).json({ error: 'Sticker set not found in artist configuration' })
-    }
+    // Note: We allow fetching any public sticker set — not just those in the artist's config.
+    // This lets portal visitors add their own sets to place stickers from.
 
     try {
       const telegramRes = await fetch(
