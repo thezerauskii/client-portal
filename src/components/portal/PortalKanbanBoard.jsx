@@ -492,6 +492,16 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
             {stage.name}
           </span>
         )}
+        {task.nsfw_access_code && (
+          <span className="portal-pill" style={{ '--pill-color': '#a855f7' }}>
+            Privada
+          </span>
+        )}
+        {task.is_nsfw && (
+          <span className="portal-pill" style={{ '--pill-color': '#ef4444' }}>
+            NSFW
+          </span>
+        )}
       </div>
 
       {/* Deadline */}

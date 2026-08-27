@@ -213,9 +213,8 @@
   border-color: rgba(239, 68, 68, 0.2);
 }
 
-/* Hide title/pills for private cards */
-.portal-kanban-card--private .portal-kanban-card-title,
-.portal-kanban-card--private .portal-kanban-card-meta {
+/* Hide title for private cards but show pills with blur */
+.portal-kanban-card--private .portal-kanban-card-title {
   filter: blur(4px);
   pointer-events: none;
   user-select: none;
