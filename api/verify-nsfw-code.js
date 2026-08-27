@@ -98,10 +98,9 @@ export default async function handler(req, res) {
     // 2. Find task by nsfw_access_code AND user_id
     const { data: task, error: taskError } = await supabase
       .from('tasks')
-      .select('id, text, attachments, stage, deadline, reactions')
+      .select('id, text, attachments, stage, deadline, reactions, is_nsfw')
       .eq('nsfw_access_code', code)
       .eq('user_id', artistId)
-      .eq('is_nsfw', true)
       .single()
 
     if (taskError || !task) {

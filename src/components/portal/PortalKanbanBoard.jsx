@@ -131,7 +131,7 @@ function CardGallery({ images, startIndex, onClose }) {
 
 // ─── PortalCardImage (handles NSFW blur / Private heavy blur) ────────────────
 
-function PortalCardImage({ task, thumbnail, imageAttachments, extraCount, placingSticker, editMode, onViewImages, localReactions, onRemoveSticker, onPlaceConfirm, onPlaceCancel, onMoveConfirm, onEditCancel, showConfetti }) {
+function PortalCardImage({ task, thumbnail, imageAttachments, extraCount, placingSticker, editMode, onViewImages, localReactions, onRemoveSticker, onPlaceConfirm, onPlaceCancel, onMoveConfirm, onEditCancel, showConfetti, onUnlockClick }) {
   const [revealed, setRevealed] = useState(false)
   const isPrivate = !!task.nsfw_access_code
   const isNsfw = !!task.is_nsfw && !isPrivate
@@ -148,7 +148,10 @@ function PortalCardImage({ task, thumbnail, imageAttachments, extraCount, placin
       setRevealed(true)
       return
     }
-    if (isPrivate && !revealed) return // Can't click to reveal private
+    if (isPrivate && !revealed) {
+      if (onUnlockClick) onUnlockClick()
+      return
+    }
     onViewImages(imageAttachments, 0)
   }
 
@@ -238,6 +241,7 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
   const [placingSticker, setPlacingSticker] = useState(null) // sticker being placed
   const [editMode, setEditMode] = useState(false) // reposition mode
   const [showConfetti, setShowConfetti] = useState(false)
+  const [showCardUnlock, setShowCardUnlock] = useState(false)
   const pickerBtnRef = useRef(null)
   const { placeSticker, removeSticker } = useStickerProxy(artistId)
 
@@ -404,6 +408,7 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
           onMoveConfirm={handleMoveConfirm}
           onEditCancel={handleEditCancel}
           showConfetti={showConfetti}
+          onUnlockClick={() => setShowCardUnlock(true)}
         />
       )}
 
@@ -487,6 +492,11 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
             📅 {deadlineStr}
           </span>
         </div>
+      )}
+
+      {/* Inline unlock modal for private cards */}
+      {showCardUnlock && (
+        <NsfwUnlockModal artistSlug={window.location.pathname.split('/p/')[1]?.split('/')[0] || ''} onClose={() => setShowCardUnlock(false)} />
       )}
     </div>
   )
