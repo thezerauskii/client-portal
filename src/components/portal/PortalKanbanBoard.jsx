@@ -684,27 +684,8 @@ export default function PortalKanbanBoard() {
       onClick={() => setShowNsfwModal(true)}
       title="Desbloquear comisión privada con código"
       aria-label="Desbloquear comisión privada"
-      style={{
-        position: 'absolute',
-        top: '0',
-        right: '0',
-        zIndex: 50,
-        background: '#ffffff',
-        border: 'none',
-        borderRadius: '10px',
-        width: '44px',
-        height: '44px',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.25)',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-      }}
-      onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.35)' }}
-      onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.25)' }}
     >
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e2d6ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
       </svg>
     </button>
