@@ -129,6 +129,104 @@ function CardGallery({ images, startIndex, onClose }) {
   )
 }
 
+// ─── PortalCardImage (handles NSFW blur / Private heavy blur) ────────────────
+
+function PortalCardImage({ task, thumbnail, imageAttachments, extraCount, placingSticker, editMode, onViewImages, localReactions, onRemoveSticker, onPlaceConfirm, onPlaceCancel, onMoveConfirm, onEditCancel, showConfetti }) {
+  const [revealed, setRevealed] = useState(false)
+  const isPrivate = !!task.nsfw_access_code
+  const isNsfw = !!task.is_nsfw && !isPrivate
+
+  // Private: heavy blur, needs code to unlock (handled externally)
+  // NSFW: light blur, click to reveal (spoiler-style)
+  const blurAmount = isPrivate ? '20px' : isNsfw ? '8px' : '0px'
+  const showBlur = (isPrivate || isNsfw) && !revealed
+
+  function handleClick(e) {
+    e.stopPropagation()
+    if (placingSticker || editMode) return
+    if (isNsfw && !revealed) {
+      setRevealed(true)
+      return
+    }
+    if (isPrivate && !revealed) return // Can't click to reveal private
+    onViewImages(imageAttachments, 0)
+  }
+
+  return (
+    <div
+      style={{ position: 'relative', cursor: (placingSticker || editMode) ? 'default' : 'pointer' }}
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      aria-label={isPrivate ? 'Comisión privada — necesita código' : `Ver ${imageAttachments.length} imagen${imageAttachments.length > 1 ? 'es' : ''}`}
+    >
+      <img
+        className="portal-kanban-card-thumb"
+        src={thumbnail}
+        alt=""
+        loading="lazy"
+        style={showBlur ? { filter: `blur(${blurAmount})`, transition: 'filter 0.3s ease' } : { transition: 'filter 0.3s ease' }}
+      />
+
+      {/* NSFW spoiler overlay — click to reveal */}
+      {isNsfw && !revealed && (
+        <div className="portal-card-blur-overlay portal-card-blur-overlay--nsfw">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+          <span>Click para revelar</span>
+        </div>
+      )}
+
+      {/* Private heavy blur overlay — needs code */}
+      {isPrivate && !revealed && (
+        <div className="portal-card-blur-overlay portal-card-blur-overlay--private">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          <span>Desbloquear</span>
+        </div>
+      )}
+
+      {/* Normal hover overlay */}
+      {!placingSticker && !editMode && !showBlur && (
+        <div className="portal-kanban-card-thumb-hover">
+          <span>Ver historial de cambios</span>
+        </div>
+      )}
+
+      {extraCount > 0 && !showBlur && (
+        <span style={{
+          position: 'absolute',
+          bottom: '6px',
+          right: '6px',
+          background: 'rgba(0,0,0,0.75)',
+          color: '#fff',
+          fontSize: '0.65rem',
+          fontWeight: 700,
+          padding: '2px 6px',
+          borderRadius: '4px',
+        }}>
+          +{extraCount}
+        </span>
+      )}
+
+      {/* Sticker overlay */}
+      <PortalStickerOverlay
+        reactions={localReactions}
+        onRemoveSticker={onRemoveSticker}
+        placingSticker={placingSticker}
+        onPlaceConfirm={onPlaceConfirm}
+        onPlaceCancel={onPlaceCancel}
+        editMode={editMode}
+        onMoveConfirm={onMoveConfirm}
+        onEditCancel={onEditCancel}
+      />
+      {showConfetti && <div className="portal-sticker-confetti" />}
+    </div>
+  )
+}
+
 // ─── PortalKanbanCard ───────────────────────────────────────────────────────
 
 function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets }) {
@@ -288,61 +386,25 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
   }, [task.deadline])
 
   return (
-    <div className="portal-kanban-card" role="article" aria-label={title}>
+    <div className={`portal-kanban-card${task.nsfw_access_code ? ' portal-kanban-card--private' : ''}${task.is_nsfw ? ' portal-kanban-card--nsfw' : ''}`} role="article" aria-label={title}>
       {/* Thumbnail with +N badge — clickable to open gallery */}
       {thumbnail && (
-        <div
-          style={{ position: 'relative', cursor: (placingSticker || editMode) ? 'default' : 'pointer' }}
-          onClick={(e) => {
-            e.stopPropagation()
-            // Don't open gallery when placing or editing stickers
-            if (placingSticker || editMode) return
-            onViewImages(imageAttachments, 0)
-          }}
-          role="button"
-          tabIndex={0}
-          aria-label={`Ver ${imageAttachments.length} imagen${imageAttachments.length > 1 ? 'es' : ''}`}
-        >
-          <img
-            className="portal-kanban-card-thumb"
-            src={thumbnail}
-            alt=""
-            loading="lazy"
-          />
-          {/* Hover overlay — "Ver historial de cambios" */}
-          {!placingSticker && !editMode && (
-            <div className="portal-kanban-card-thumb-hover">
-              <span>Ver historial de cambios</span>
-            </div>
-          )}
-          {extraCount > 0 && (
-            <span style={{
-              position: 'absolute',
-              bottom: '6px',
-              right: '6px',
-              background: 'rgba(0,0,0,0.75)',
-              color: '#fff',
-              fontSize: '0.65rem',
-              fontWeight: 700,
-              padding: '2px 6px',
-              borderRadius: '4px',
-            }}>
-              +{extraCount}
-            </span>
-          )}
-          {/* Sticker overlay */}
-          <PortalStickerOverlay
-            reactions={localReactions}
-            onRemoveSticker={handleRemoveSticker}
-            placingSticker={placingSticker}
-            onPlaceConfirm={handlePlaceConfirm}
-            onPlaceCancel={handlePlaceCancel}
-            editMode={editMode}
-            onMoveConfirm={handleMoveConfirm}
-            onEditCancel={handleEditCancel}
-          />
-          {showConfetti && <div className="portal-sticker-confetti" />}
-        </div>
+        <PortalCardImage
+          task={task}
+          thumbnail={thumbnail}
+          imageAttachments={imageAttachments}
+          extraCount={extraCount}
+          placingSticker={placingSticker}
+          editMode={editMode}
+          onViewImages={onViewImages}
+          localReactions={localReactions}
+          onRemoveSticker={handleRemoveSticker}
+          onPlaceConfirm={handlePlaceConfirm}
+          onPlaceCancel={handlePlaceCancel}
+          onMoveConfirm={handleMoveConfirm}
+          onEditCancel={handleEditCancel}
+          showConfetti={showConfetti}
+        />
       )}
 
       {/* Sticker overlay — show even if no thumbnail */}
@@ -472,10 +534,9 @@ export default function PortalKanbanBoard() {
         const [tasksRes, configRes] = await Promise.all([
           supabase
             .from('tasks')
-            .select('id, text, parent_id, priority, stage, client, client_email, deadline, note, attachments, checklist, reactions')
+            .select('id, text, parent_id, priority, stage, client, client_email, deadline, note, attachments, checklist, reactions, is_nsfw, nsfw_access_code')
             .eq('user_id', artistId)
-            .or('archived.is.null,archived.eq.false')
-            .or('is_nsfw.is.null,is_nsfw.eq.false'),
+            .or('archived.is.null,archived.eq.false'),
           supabase
             .from('kanban_config')
             .select('*')
