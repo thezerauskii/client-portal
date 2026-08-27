@@ -139,7 +139,7 @@ export default function NsfwUnlockModal({ artistSlug, onClose }) {
             cursor: 'pointer',
             lineHeight: 1,
           }}
-        >✕</button>
+        ><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
 
         {status !== 'success' ? (
           <>
@@ -150,7 +150,7 @@ export default function NsfwUnlockModal({ artistSlug, onClose }) {
               fontWeight: 600,
               color: 'var(--text, #eee)',
             }}>
-              🔑 Desbloquear comision privada
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{display:'inline',verticalAlign:'middle',marginRight:'6px'}}><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 0-7.78 7.78 5.5 5.5 0 0 0 7.78-7.78zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>Desbloquear comision privada
             </h3>
             <p style={{
               margin: '0 0 20px',
@@ -282,7 +282,7 @@ export default function NsfwUnlockModal({ artistSlug, onClose }) {
               color: 'var(--text, #eee)',
               textAlign: 'center',
             }}>
-              🔓 Comision desbloqueada
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{display:'inline',verticalAlign:'middle',marginRight:'6px'}}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>Comision desbloqueada
             </h3>
             <NsfwCommissionCard task={task} />
           </div>

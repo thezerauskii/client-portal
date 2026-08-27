@@ -162,7 +162,7 @@ export default function PortalGallery() {
   if (error) {
     return (
       <div className="portal-empty-state">
-        <span className="portal-empty-state-icon">⚠️</span>
+        <span className="portal-empty-state-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
         <p className="portal-empty-state-text">Error al cargar el portafolio</p>
         <div className="portal-debug-panel">
           <p className="portal-debug-label">Debug info:</p>
@@ -178,7 +178,7 @@ export default function PortalGallery() {
   if (items.length === 0) {
     return (
       <div className="portal-empty-state">
-        <span className="portal-empty-state-icon">🖼️</span>
+        <span className="portal-empty-state-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>
         <p className="portal-empty-state-text">El portafolio está vacío</p>
       </div>
     )
@@ -237,7 +237,7 @@ export default function PortalGallery() {
               }}
             />
             <div className="portal-gallery-card-broken" style={{ display: 'none' }}>
-              <span>🖼️</span>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
             </div>
             <div className="portal-gallery-card-overlay">
               {item.title && (
@@ -267,7 +267,7 @@ export default function PortalGallery() {
             onClick={closeLightbox}
             aria-label="Cerrar"
           >
-            ✕
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
 
           {/* Navigation arrows */}

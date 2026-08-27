@@ -154,6 +154,7 @@
   }
 
   .portal-nsfw-unlock-btn {
+    top: auto;
     bottom: 12px;
     right: 12px;
     padding: 8px 12px;

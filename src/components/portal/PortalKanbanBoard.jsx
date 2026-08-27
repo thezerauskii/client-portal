@@ -3,6 +3,7 @@ import { usePortalContext } from './PortalDataProvider.jsx'
 import { supabase, isSupabaseReady } from '../../lib/supabase.js'
 import { useStickerProxy } from '../../hooks/useStickerProxy.js'
 import PortalStickerOverlay from './PortalStickerOverlay.jsx'
+import { getSectionIcon, IconCalendar, IconWarning, IconMailbox } from './PortalIcons.jsx'
 import PortalStickerPicker from './PortalStickerPicker.jsx'
 import NsfwUnlockModal from './NsfwUnlockModal.jsx'
 
@@ -83,7 +84,7 @@ function CardGallery({ images, startIndex, onClose }) {
   return (
     <div className="portal-card-gallery" role="dialog" aria-modal="true" aria-label="Visor de imágenes">
       <div className="portal-card-gallery-backdrop" onClick={onClose} />
-      <button className="portal-card-gallery-close" onClick={onClose} aria-label="Cerrar">✕</button>
+      <button className="portal-card-gallery-close" onClick={onClose} aria-label="Cerrar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
 
       {/* Stacked cards container */}
       <div className="portal-card-gallery-stack">
@@ -507,8 +508,8 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
       {/* Deadline */}
       {deadlineStr && (
         <div style={{ marginTop: '0.3rem' }}>
-          <span className="portal-pill" style={{ '--pill-color': '#f87171' }}>
-            📅 {deadlineStr}
+          <span className="portal-pill" style={{ '--pill-color': '#f87171', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+            <IconCalendar size={11} /> {deadlineStr}
           </span>
         </div>
       )}
@@ -628,10 +629,10 @@ export default function PortalKanbanBoard() {
 
     // Fixed sections that always exist (as task parents in the DB)
     const FIXED_SECTIONS = [
-      { id: '6d74847d-beda-45fb-ac99-63c52212dfec', defaultLabel: 'Backlog y Proyectos', defaultColor: '#6B7280', emoji: '📋' },
-      { id: 'd02c3d13-e87b-4b43-83b6-7407e689a32e', defaultLabel: 'comisiones en progreso', defaultColor: '#F59E0B', emoji: '🎨' },
-      { id: 'b5f9edcb-6fd0-4f89-a15d-9eb710ae37a0', defaultLabel: 'En Revisión', defaultColor: '#FACC15', emoji: '🔍' },
-      { id: '02ee79a6-abd7-436f-938b-4386c520e203', defaultLabel: 'Comisiones Nuevas', defaultColor: '#60A5FA', emoji: '✨' },
+      { id: '6d74847d-beda-45fb-ac99-63c52212dfec', defaultLabel: 'Backlog y Proyectos', defaultColor: '#6B7280', emoji: null },
+      { id: 'd02c3d13-e87b-4b43-83b6-7407e689a32e', defaultLabel: 'comisiones en progreso', defaultColor: '#F59E0B', emoji: null },
+      { id: 'b5f9edcb-6fd0-4f89-a15d-9eb710ae37a0', defaultLabel: 'En Revisión', defaultColor: '#FACC15', emoji: null },
+      { id: '02ee79a6-abd7-436f-938b-4386c520e203', defaultLabel: 'Comisiones Nuevas', defaultColor: '#60A5FA', emoji: null },
     ]
 
     // Build section map from tasks (sections are tasks with no parent_id)
@@ -643,7 +644,7 @@ export default function PortalKanbanBoard() {
       ...FIXED_SECTIONS,
       ...customSections
         .filter(cs => !fixedIds.has(cs.id))
-        .map(cs => ({ id: cs.id, defaultLabel: cs.label || cs.name || 'Sin nombre', defaultColor: cs.color || '#7c6af7', emoji: cs.emoji || '📌' }))
+        .map(cs => ({ id: cs.id, defaultLabel: cs.label || cs.name || 'Sin nombre', defaultColor: cs.color || '#7c6af7', emoji: null }))
     ]
 
     // Build column data
@@ -688,7 +689,7 @@ export default function PortalKanbanBoard() {
   if (error) {
     return (
       <div className="portal-empty-state">
-        <span className="portal-empty-state-icon">⚠️</span>
+        <span className="portal-empty-state-icon"><IconWarning size={24} /></span>
         <span className="portal-empty-state-text">
           No se pudieron cargar las comisiones. Intenta recargar la página.
         </span>
@@ -699,7 +700,7 @@ export default function PortalKanbanBoard() {
   if (commissionTasks.length === 0) {
     return (
       <div className="portal-empty-state">
-        <span className="portal-empty-state-icon">📭</span>
+        <span className="portal-empty-state-icon"><IconMailbox size={24} /></span>
         <span className="portal-empty-state-text">
           No hay comisiones activas actualmente
         </span>
@@ -722,10 +723,10 @@ export default function PortalKanbanBoard() {
             {/* Column Header */}
             <div className="portal-kanban-column-header">
               <span
-                style={{ fontSize: '1rem', flexShrink: 0 }}
+                style={{ fontSize: '1rem', flexShrink: 0, display: 'inline-flex', alignItems: 'center' }}
                 aria-hidden="true"
               >
-                {col.emoji}
+                {getSectionIcon(col.id)}
               </span>
               <span className="portal-kanban-column-title">{col.label}</span>
               <span className="portal-kanban-column-count">{col.tasks.length}</span>

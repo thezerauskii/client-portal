@@ -65,7 +65,7 @@ export default function NsfwBlurImage({ src, alt = '' }) {
             alignItems: 'center',
             gap: '4px',
           }}>
-            🔞 Click para revelar
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{display:'inline',verticalAlign:'middle',marginRight:'3px'}}><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Click para revelar
           </span>
         </div>
       )}

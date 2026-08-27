@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { usePortalContext } from '../../components/portal/PortalDataProvider.jsx'
 import { supabase } from '../../lib/supabase.js'
+import { IconBrush, IconImage, IconCalendar, IconLink } from '../../components/portal/PortalIcons.jsx'
 
 /**
  * Portal landing page — /p/:slug
@@ -52,7 +53,7 @@ export default function PortalLanding() {
     {
       key: 'commissions',
       title: 'Comisiones',
-      icon: '🎨',
+      icon: <IconBrush size={20} />,
       path: `/p/${slug}/commissions`,
       stat: commissionCount,
       statLabel: 'activas',
@@ -60,7 +61,7 @@ export default function PortalLanding() {
     {
       key: 'portfolio',
       title: 'Portafolio',
-      icon: '🖼️',
+      icon: <IconImage size={20} />,
       path: `/p/${slug}/portfolio`,
       stat: portfolioCount,
       statLabel: 'obras',
@@ -68,7 +69,7 @@ export default function PortalLanding() {
     {
       key: 'calendar',
       title: 'Calendario',
-      icon: '📅',
+      icon: <IconCalendar size={20} />,
       path: `/p/${slug}/calendar`,
       stat: null,
       statLabel: null,
@@ -76,7 +77,7 @@ export default function PortalLanding() {
     {
       key: 'links',
       title: 'Links',
-      icon: '🔗',
+      icon: <IconLink size={20} />,
       path: `/p/${slug}/links`,
       stat: null,
       statLabel: null,
@@ -95,7 +96,7 @@ export default function PortalLanding() {
           />
         ) : (
           <div style={{ ...styles.heroIconPlaceholder, borderColor: accent }}>
-            {studioName?.[0]?.toUpperCase() || '🎨'}
+            {studioName?.[0]?.toUpperCase() || 'P'}
           </div>
         )}
         <h1 style={styles.heroTitle}>{studioName}</h1>
