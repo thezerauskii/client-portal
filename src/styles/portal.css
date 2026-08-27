@@ -369,6 +369,13 @@
   border: 1px solid var(--border);
 }
 
+@media (max-width: 767px) {
+  .portal-kanban-card-thumb {
+    height: 240px;
+    object-fit: cover;
+  }
+}
+
 .portal-kanban-card-thumb-hover {
   position: absolute;
   inset: 0;

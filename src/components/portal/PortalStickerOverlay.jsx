@@ -140,7 +140,7 @@ function StickerChip({ stickerKey, val, index, onRemove, draggable, containerRef
       aria-label={val.emoji ? `Sticker ${val.emoji}` : 'Sticker'}
     >
       {renderMedia()}
-      {hovered && onRemove && !draggable && (
+      {onRemove && !draggable && (
         <button
           className="portal-sticker-delete"
           onClick={(e) => { e.stopPropagation(); onRemove(stickerKey) }}

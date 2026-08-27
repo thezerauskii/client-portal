@@ -30,8 +30,8 @@
 }
 
 .portal-sticker-chip {
-  width: 52px;
-  height: 52px;
+  width: 64px;
+  height: 64px;
   pointer-events: auto;
   cursor: default;
   transition: transform 0.15s ease, filter 0.15s ease;
@@ -66,25 +66,26 @@
   position: absolute;
   top: -4px;
   right: -4px;
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   background: rgba(239, 68, 68, 0.9);
   color: #fff;
   border: none;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  transition: opacity 0.15s ease;
+  opacity: 0.7;
+  transition: opacity 0.15s ease, transform 0.1s ease;
   padding: 0;
 }
 
-.portal-sticker-chip--hovered .portal-sticker-delete {
+.portal-sticker-delete:hover {
   opacity: 1;
+  transform: scale(1.2);
 }
 
 /* ── Sticker Button on Card ────────────────────────────────────────────────── */

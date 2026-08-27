@@ -158,7 +158,7 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
 
   // Handle sticker selection from picker — enter placing mode
   const handleStickerSelect = useCallback(async (sticker) => {
-    if (clientStickerCount >= 5) return
+    if (clientStickerCount >= 10) return
     setShowPicker(false)
     setPlacingSticker(sticker)
   }, [clientStickerCount])
@@ -367,13 +367,13 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
             ref={pickerBtnRef}
             className="portal-sticker-btn"
             onClick={(e) => { e.stopPropagation(); setShowPicker(!showPicker) }}
-            disabled={clientStickerCount >= 5 || placingSticker || editMode}
-            title={clientStickerCount >= 5 ? 'Máximo 5 stickers alcanzado' : 'Añade un sticker'}
+            disabled={clientStickerCount >= 10 || placingSticker || editMode}
+            title={clientStickerCount >= 10 ? 'Máximo 10 stickers alcanzado' : 'Añade un sticker'}
             aria-label="Añade un sticker"
           >
             <img src="/logo-sticker-btn.png" alt="" className="portal-sticker-btn-icon" />
             <span className="portal-sticker-btn-label">Añade un sticker</span>
-            {clientStickerCount > 0 && <span className="portal-sticker-btn-count">{clientStickerCount}/5</span>}
+            {clientStickerCount > 0 && <span className="portal-sticker-btn-count">{clientStickerCount}/10</span>}
           </button>
           {/* Move button — only show if there are stickers placed */}
           {stickerEntries.length > 0 && !placingSticker && !editMode && (

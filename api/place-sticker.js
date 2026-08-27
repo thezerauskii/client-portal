@@ -13,7 +13,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-const MAX_CLIENT_STICKERS = 5
+const MAX_CLIENT_STICKERS = 10
 
 // Rate Limiter
 const rateLimitMap = new Map()
