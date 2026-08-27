@@ -1,0 +1,286 @@
+/* ══════════════════════════════════════════════════════════════════════════════
+   Portal Stickers — Overlay, Picker, y Animaciones
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+/* ── Sticker Overlay (sobre thumbnail) ─────────────────────────────────────── */
+
+.portal-sticker-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  padding: 4px;
+  gap: 2px;
+}
+
+.portal-sticker-overlay--positioned {
+  /* When all stickers have explicit positions, don't use flexbox */
+  display: block;
+}
+
+.portal-sticker-chip {
+  width: 36px;
+  height: 36px;
+  pointer-events: auto;
+  cursor: default;
+  transition: transform 0.15s ease, filter 0.15s ease;
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.3));
+  flex-shrink: 0;
+}
+
+.portal-sticker-chip--hovered {
+  transform: scale(1.2) !important;
+  z-index: 999 !important;
+  filter: drop-shadow(0 2px 6px rgba(255, 255, 255, 0.5));
+}
+
+.portal-sticker-media {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.portal-sticker-fallback {
+  font-size: 1.5rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.portal-sticker-delete {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.9);
+  color: #fff;
+  border: none;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  padding: 0;
+}
+
+.portal-sticker-chip--hovered .portal-sticker-delete {
+  opacity: 1;
+}
+
+/* ── Sticker Button on Card ────────────────────────────────────────────────── */
+
+.portal-sticker-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 1px solid var(--border, #2e2e36);
+  border-radius: 6px;
+  background: var(--surface, #1a1a1e);
+  color: var(--text, #e0e0e0);
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  margin-top: 6px;
+}
+
+.portal-sticker-btn:hover:not(:disabled) {
+  background: var(--surface-hover, #252529);
+  border-color: var(--accent, #22C55E);
+}
+
+.portal-sticker-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.portal-sticker-btn-count {
+  font-size: 0.6rem;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+/* ── Sticker Picker (Popover) ──────────────────────────────────────────────── */
+
+.portal-sticker-picker {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 200;
+  width: 280px;
+  max-height: 320px;
+  background: var(--surface, #1a1a1e);
+  border: 1px solid var(--border, #2e2e36);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: pickerFadeIn 0.15s ease;
+}
+
+@keyframes pickerFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Picker Tabs ───────────────────────────────────────────────────────────── */
+
+.portal-sticker-tabs {
+  display: flex;
+  gap: 2px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border, #2e2e36);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.portal-sticker-tabs::-webkit-scrollbar {
+  height: 3px;
+}
+
+.portal-sticker-tabs::-webkit-scrollbar-thumb {
+  background: var(--border, #2e2e36);
+  border-radius: 2px;
+}
+
+.portal-sticker-tab {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted, #8a8a9a);
+  font-size: 0.65rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.portal-sticker-tab:hover {
+  background: var(--surface-hover, #252529);
+  color: var(--text, #e0e0e0);
+}
+
+.portal-sticker-tab--active {
+  background: var(--accent, #22C55E);
+  color: #000;
+  font-weight: 600;
+}
+
+/* ── Picker Grid ───────────────────────────────────────────────────────────── */
+
+.portal-sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 8px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.portal-sticker-grid::-webkit-scrollbar {
+  width: 4px;
+}
+
+.portal-sticker-grid::-webkit-scrollbar-thumb {
+  background: var(--border, #2e2e36);
+  border-radius: 2px;
+}
+
+.portal-sticker-item {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.1s ease, transform 0.1s ease;
+}
+
+.portal-sticker-item:hover {
+  background: var(--surface-hover, #252529);
+  transform: scale(1.08);
+}
+
+.portal-sticker-item:active {
+  transform: scale(0.95);
+}
+
+.portal-sticker-item-media {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.portal-sticker-item-fallback {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+/* ── Picker States ─────────────────────────────────────────────────────────── */
+
+.portal-sticker-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.portal-sticker-error {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.7rem;
+  color: #f87171;
+}
+
+.portal-sticker-empty {
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.7rem;
+  color: var(--text-muted, #8a8a9a);
+}
+
+/* ── Sticker Pop Animation (on placement) ──────────────────────────────────── */
+
+@keyframes stickerPop {
+  0% { transform: scale(0) rotate(0deg); opacity: 0; }
+  50% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+  70% { transform: scale(0.9) rotate(-2deg); }
+  100% { transform: scale(1) rotate(var(--rot, 0deg)); opacity: 1; }
+}
+
+.portal-sticker-chip--entering {
+  animation: stickerPop 0.3s ease-out forwards;
+}
+
+/* ── Responsive: mobile bottom-sheet ───────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .portal-sticker-picker {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: 100%;
+    max-height: 50vh;
+    border-radius: 16px 16px 0 0;
+    z-index: 9999;
+  }
+}

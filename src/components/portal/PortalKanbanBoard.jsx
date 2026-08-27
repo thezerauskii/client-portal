@@ -1,6 +1,9 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { usePortalContext } from './PortalDataProvider.jsx'
 import { supabase, isSupabaseReady } from '../../lib/supabase.js'
+import { useStickerProxy } from '../../hooks/useStickerProxy.js'
+import PortalStickerOverlay from './PortalStickerOverlay.jsx'
+import PortalStickerPicker from './PortalStickerPicker.jsx'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -127,10 +130,96 @@ function CardGallery({ images, startIndex, onClose }) {
 
 // ─── PortalKanbanCard ───────────────────────────────────────────────────────
 
-function PortalKanbanCard({ task, onViewImages }) {
+function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets }) {
   const title = task.text || 'Comisión'
   const priority = PRIORITY_OPTIONS[task.priority]
   const stage = STAGE_OPTIONS[task.stage]
+  const [showPicker, setShowPicker] = useState(false)
+  const [localReactions, setLocalReactions] = useState(task.reactions || {})
+  const pickerBtnRef = useRef(null)
+  const { placeSticker, removeSticker } = useStickerProxy(artistId)
+
+  const hasStickerSets = telegramStickerSets && telegramStickerSets.length > 0
+
+  // Count client stickers
+  const clientStickerCount = useMemo(() => {
+    return Object.values(localReactions).filter(
+      (v) => v && typeof v === 'object' && v.placedBy === 'client'
+    ).length
+  }, [localReactions])
+
+  // Handle sticker selection from picker
+  const handleStickerSelect = useCallback(async (sticker) => {
+    if (clientStickerCount >= 5) return
+
+    // Optimistic update
+    const stickerKey = `__sticker__${sticker.file_unique_id}`
+    const hash = Math.abs([...stickerKey].reduce((h, c) => (Math.imul(31, h) + c.charCodeAt(0)) | 0, 0))
+    const optimisticEntry = {
+      type: 'sticker',
+      file_id: sticker.file_id || '',
+      file_unique_id: sticker.file_unique_id,
+      is_video: sticker.is_video || false,
+      emoji: sticker.emoji || '',
+      thumbUrl: sticker.thumbUrl || '',
+      count: 1,
+      x: 5 + (hash % 60),
+      y: 5 + ((hash * 7) % 55),
+      rot: (hash % 22) - 11,
+      placedBy: 'client',
+      placedAt: new Date().toISOString(),
+      _entering: true,
+    }
+
+    setLocalReactions(prev => ({ ...prev, [stickerKey]: optimisticEntry }))
+    setShowPicker(false)
+
+    // Remove _entering flag after animation
+    setTimeout(() => {
+      setLocalReactions(prev => {
+        if (!prev[stickerKey]) return prev
+        const { _entering, ...rest } = prev[stickerKey]
+        return { ...prev, [stickerKey]: rest }
+      })
+    }, 350)
+
+    // Persist
+    const result = await placeSticker(task.id, {
+      file_unique_id: sticker.file_unique_id,
+      file_id: sticker.file_id || '',
+      emoji: sticker.emoji || '',
+      thumbUrl: sticker.thumbUrl || '',
+      is_video: sticker.is_video || false,
+    })
+
+    if (!result.ok) {
+      // Rollback optimistic update
+      setLocalReactions(prev => {
+        const copy = { ...prev }
+        delete copy[stickerKey]
+        return copy
+      })
+      console.warn('[PortalKanbanCard] place sticker failed:', result.error)
+    }
+  }, [clientStickerCount, placeSticker, task.id])
+
+  // Handle sticker removal
+  const handleRemoveSticker = useCallback(async (stickerKey) => {
+    // Optimistic removal
+    const prev = localReactions[stickerKey]
+    setLocalReactions(r => {
+      const copy = { ...r }
+      delete copy[stickerKey]
+      return copy
+    })
+
+    const result = await removeSticker(task.id, stickerKey)
+    if (!result.ok) {
+      // Rollback
+      if (prev) setLocalReactions(r => ({ ...r, [stickerKey]: prev }))
+      console.warn('[PortalKanbanCard] remove sticker failed:', result.error)
+    }
+  }, [localReactions, removeSticker, task.id])
 
   // Get all image attachments
   const imageAttachments = useMemo(() => {
@@ -188,6 +277,35 @@ function PortalKanbanCard({ task, onViewImages }) {
               +{extraCount}
             </span>
           )}
+          {/* Sticker overlay */}
+          <PortalStickerOverlay
+            reactions={localReactions}
+            onRemoveSticker={handleRemoveSticker}
+          />
+        </div>
+      )}
+
+      {/* Sticker picker button */}
+      {hasStickerSets && (
+        <div style={{ position: 'relative' }}>
+          <button
+            ref={pickerBtnRef}
+            className="portal-sticker-btn"
+            onClick={(e) => { e.stopPropagation(); setShowPicker(!showPicker) }}
+            disabled={clientStickerCount >= 5}
+            title={clientStickerCount >= 5 ? 'Máximo 5 stickers alcanzado' : 'Agregar sticker'}
+            aria-label="Agregar sticker"
+          >
+            🎭{clientStickerCount > 0 && <span className="portal-sticker-btn-count">{clientStickerCount}/5</span>}
+          </button>
+          {showPicker && (
+            <PortalStickerPicker
+              artistId={artistId}
+              stickerSets={telegramStickerSets}
+              onSelect={handleStickerSelect}
+              onClose={() => setShowPicker(false)}
+            />
+          )}
         </div>
       )}
 
@@ -228,7 +346,7 @@ function PortalKanbanCard({ task, onViewImages }) {
 // ─── PortalKanbanBoard (Main Component) ─────────────────────────────────────
 
 export default function PortalKanbanBoard() {
-  const { artistId } = usePortalContext()
+  const { artistId, telegramStickerSets } = usePortalContext()
   const [allTasks, setAllTasks] = useState([])
   const [kanbanConfig, setKanbanConfig] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -263,7 +381,7 @@ export default function PortalKanbanBoard() {
         const [tasksRes, configRes] = await Promise.all([
           supabase
             .from('tasks')
-            .select('id, text, parent_id, priority, stage, client, client_email, deadline, note, attachments, checklist')
+            .select('id, text, parent_id, priority, stage, client, client_email, deadline, note, attachments, checklist, reactions')
             .eq('user_id', artistId)
             .or('archived.is.null,archived.eq.false'),
           supabase
@@ -445,7 +563,7 @@ export default function PortalKanbanBoard() {
                 </div>
               ) : (
                 col.tasks.map((task) => (
-                  <PortalKanbanCard key={task.id} task={task} onViewImages={openGallery} />
+                  <PortalKanbanCard key={task.id} task={task} onViewImages={openGallery} artistId={artistId} telegramStickerSets={telegramStickerSets} />
                 ))
               )}
             </div>
