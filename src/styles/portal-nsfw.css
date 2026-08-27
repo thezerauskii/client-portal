@@ -2,10 +2,10 @@
    NSFW / Private Commission Styles — Client Portal
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ─── Unlock Button (pill style, in banner area next to stats) ────────────── */
+/* ─── Unlock Button (pill style, sticky in header area) ──────────────────── */
 .portal-nsfw-unlock-btn {
   position: fixed;
-  top: 88px;
+  top: 12px;
   right: 240px;
   z-index: 300;
   display: inline-flex;
