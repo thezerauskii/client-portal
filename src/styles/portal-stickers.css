@@ -97,6 +97,13 @@
   margin-top: 6px;
 }
 
+.portal-sticker-btn-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .portal-sticker-btn:hover:not(:disabled) {
   background: var(--surface-hover, #252529);
   border-color: var(--accent, #22C55E);

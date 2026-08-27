@@ -296,7 +296,7 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
             title={clientStickerCount >= 5 ? 'Máximo 5 stickers alcanzado' : 'Agregar sticker'}
             aria-label="Agregar sticker"
           >
-            🎭{clientStickerCount > 0 && <span className="portal-sticker-btn-count">{clientStickerCount}/5</span>}
+            <img src="/logo-sticker-btn.png" alt="" className="portal-sticker-btn-icon" />{clientStickerCount > 0 && <span className="portal-sticker-btn-count">{clientStickerCount}/5</span>}
           </button>
           {showPicker && (
             <PortalStickerPicker
