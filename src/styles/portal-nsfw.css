@@ -4,9 +4,9 @@
 
 /* ─── Unlock Button (top-right, purple accent for dark mode) ─────────────── */
 .portal-nsfw-unlock-btn {
-  position: absolute;
-  top: 0;
-  right: 0;
+  position: fixed;
+  top: 72px;
+  right: 18px;
   z-index: 50;
   background: rgba(167, 139, 250, 0.18);
   border: 1px solid rgba(167, 139, 250, 0.4);
