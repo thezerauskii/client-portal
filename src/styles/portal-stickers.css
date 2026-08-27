@@ -78,9 +78,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.7;
+  opacity: 0;
+  pointer-events: none;
   transition: opacity 0.15s ease, transform 0.1s ease;
   padding: 0;
+}
+
+.portal-sticker-chip--hovered .portal-sticker-delete {
+  opacity: 0.85;
+  pointer-events: auto;
 }
 
 .portal-sticker-delete:hover {

@@ -293,7 +293,7 @@ export default function PortalStickerOverlay({
             stickerKey={key}
             val={displayVal}
             index={index}
-            onRemove={editMode ? onRemoveSticker : undefined}
+            onRemove={onRemoveSticker}
             draggable={editMode}
             containerRef={containerRef}
             onDragEnd={handleDragEnd}
