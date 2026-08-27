@@ -369,6 +369,33 @@
   border: 1px solid var(--border);
 }
 
+.portal-kanban-card-thumb-hover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: var(--radius-xs, 4px);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.portal-kanban-card-thumb-hover span {
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  backdrop-filter: blur(2px);
+}
+
+*:hover > .portal-kanban-card-thumb-hover {
+  opacity: 1;
+}
+
 /* ====== CARD GALLERY (Xbox 360-style stacked carousel) ====== */
 .portal-card-gallery {
   position: fixed;

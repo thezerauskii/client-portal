@@ -17,6 +17,13 @@
   gap: 2px;
 }
 
+.portal-sticker-overlay--edit {
+  pointer-events: auto;
+  outline: 2px dashed var(--accent, #22C55E);
+  outline-offset: -2px;
+  border-radius: inherit;
+}
+
 .portal-sticker-overlay--positioned {
   /* When all stickers have explicit positions, don't use flexbox */
   display: block;
@@ -466,9 +473,8 @@
   outline: 2px dashed var(--accent, #22C55E);
   outline-offset: -2px;
   border-radius: inherit;
+  pointer-events: auto;
 }
-
-/* ── Move button ───────────────────────────────────────────────────────────── */
 
 .portal-sticker-btn--move {
   margin-top: 4px;

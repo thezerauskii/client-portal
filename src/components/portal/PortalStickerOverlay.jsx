@@ -282,7 +282,7 @@ export default function PortalStickerOverlay({
   return (
     <div
       ref={containerRef}
-      className={`portal-sticker-overlay portal-sticker-overlay--positioned${editMode ? ' portal-sticker-overlay--edit' : ''}`}
+      className={`portal-sticker-overlay portal-sticker-overlay--positioned${editMode ? ' portal-sticker-overlay--edit' : ''}${placingSticker ? ' portal-sticker-overlay--edit' : ''}`}
     >
       {/* Existing stickers */}
       {stickerEntries.map(([key, val], index) => {

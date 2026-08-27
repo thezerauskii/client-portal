@@ -291,8 +291,13 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
       {/* Thumbnail with +N badge — clickable to open gallery */}
       {thumbnail && (
         <div
-          style={{ position: 'relative', cursor: 'pointer' }}
-          onClick={(e) => { e.stopPropagation(); onViewImages(imageAttachments, 0) }}
+          style={{ position: 'relative', cursor: (placingSticker || editMode) ? 'default' : 'pointer' }}
+          onClick={(e) => {
+            e.stopPropagation()
+            // Don't open gallery when placing or editing stickers
+            if (placingSticker || editMode) return
+            onViewImages(imageAttachments, 0)
+          }}
           role="button"
           tabIndex={0}
           aria-label={`Ver ${imageAttachments.length} imagen${imageAttachments.length > 1 ? 'es' : ''}`}
@@ -303,6 +308,12 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
             alt=""
             loading="lazy"
           />
+          {/* Hover overlay — "Ver historial de cambios" */}
+          {!placingSticker && !editMode && (
+            <div className="portal-kanban-card-thumb-hover">
+              <span>Ver historial de cambios</span>
+            </div>
+          )}
           {extraCount > 0 && (
             <span style={{
               position: 'absolute',
