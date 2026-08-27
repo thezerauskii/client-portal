@@ -678,16 +678,17 @@ export default function PortalKanbanBoard() {
       <CardGallery images={galleryImages} startIndex={galleryStart} onClose={closeGallery} />
     )}
 
-    {/* NSFW Unlock Button — Top right, icon only */}
+    {/* NSFW Unlock Button — Pill style, next to stats */}
     <button
       className="portal-nsfw-unlock-btn"
       onClick={() => setShowNsfwModal(true)}
       title="Desbloquear comisión privada con código"
       aria-label="Desbloquear comisión privada"
     >
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e2d6ff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>
       </svg>
+      <span>Pegar código</span>
     </button>
 
     {/* NSFW Unlock Modal */}
