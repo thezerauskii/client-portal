@@ -285,6 +285,16 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
         </div>
       )}
 
+      {/* Sticker overlay — show even if no thumbnail */}
+      {!thumbnail && Object.keys(localReactions).some(k => k.startsWith('__sticker__')) && (
+        <div style={{ position: 'relative', minHeight: '50px' }}>
+          <PortalStickerOverlay
+            reactions={localReactions}
+            onRemoveSticker={handleRemoveSticker}
+          />
+        </div>
+      )}
+
       {/* Sticker picker button */}
       {hasStickerSets && (
         <div style={{ position: 'relative' }}>
@@ -293,10 +303,12 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
             className="portal-sticker-btn"
             onClick={(e) => { e.stopPropagation(); setShowPicker(!showPicker) }}
             disabled={clientStickerCount >= 5}
-            title={clientStickerCount >= 5 ? 'Máximo 5 stickers alcanzado' : 'Agregar sticker'}
-            aria-label="Agregar sticker"
+            title={clientStickerCount >= 5 ? 'Máximo 5 stickers alcanzado' : 'Añade un sticker'}
+            aria-label="Añade un sticker"
           >
-            <img src="/logo-sticker-btn.png" alt="" className="portal-sticker-btn-icon" />{clientStickerCount > 0 && <span className="portal-sticker-btn-count">{clientStickerCount}/5</span>}
+            <img src="/logo-sticker-btn.png" alt="" className="portal-sticker-btn-icon" />
+            <span className="portal-sticker-btn-label">Añade un sticker</span>
+            {clientStickerCount > 0 && <span className="portal-sticker-btn-count">{clientStickerCount}/5</span>}
           </button>
           {showPicker && (
             <PortalStickerPicker
