@@ -389,6 +389,126 @@
   animation: stickerPop 0.3s ease-out forwards;
 }
 
+/* ── Placing mode ──────────────────────────────────────────────────────────── */
+
+.portal-sticker-chip--placing {
+  animation: stickerBounce 0.8s ease infinite;
+  filter: drop-shadow(0 2px 8px rgba(34, 197, 94, 0.5));
+}
+
+@keyframes stickerBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.portal-sticker-chip--draggable {
+  cursor: grab;
+  filter: drop-shadow(0 2px 8px rgba(34, 197, 94, 0.4));
+}
+
+.portal-sticker-chip--draggable:active {
+  cursor: grabbing;
+}
+
+.portal-sticker-place-actions {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 1001;
+}
+
+.portal-sticker-place-done {
+  padding: 4px 14px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent, #22C55E);
+  color: #000;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.portal-sticker-place-cancel {
+  padding: 4px 10px;
+  border: 1px solid var(--border, #2e2e36);
+  border-radius: 6px;
+  background: var(--surface, #1a1a1e);
+  color: var(--text-muted, #8a8a9a);
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.portal-sticker-place-hint {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 10px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 0.65rem;
+  border-radius: 4px;
+  z-index: 1001;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: hintFade 0.3s ease;
+}
+
+@keyframes hintFade {
+  from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.portal-sticker-overlay--edit {
+  outline: 2px dashed var(--accent, #22C55E);
+  outline-offset: -2px;
+  border-radius: inherit;
+}
+
+/* ── Move button ───────────────────────────────────────────────────────────── */
+
+.portal-sticker-btn--move {
+  margin-top: 4px;
+  background: transparent;
+  border-color: var(--text-muted, #8a8a9a);
+  color: var(--text-muted, #8a8a9a);
+  font-size: 0.65rem;
+  padding: 4px 10px;
+}
+
+.portal-sticker-btn--move:hover {
+  border-color: var(--accent, #22C55E);
+  color: var(--accent, #22C55E);
+}
+
+/* ── Confetti animation ────────────────────────────────────────────────────── */
+
+.portal-sticker-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1002;
+  background-image:
+    radial-gradient(circle, #22C55E 1px, transparent 1px),
+    radial-gradient(circle, #F59E0B 1px, transparent 1px),
+    radial-gradient(circle, #F472B6 1px, transparent 1px),
+    radial-gradient(circle, #60A5FA 1px, transparent 1px),
+    radial-gradient(circle, #A78BFA 1px, transparent 1px);
+  background-size: 10% 10%;
+  background-position:
+    10% 20%, 30% 40%, 50% 10%, 70% 60%, 90% 30%;
+  animation: confettiBurst 1.2s ease forwards;
+}
+
+@keyframes confettiBurst {
+  0% { opacity: 1; transform: scale(0.5); }
+  30% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(2); }
+}
+
 /* ── Responsive: mobile bottom-sheet ───────────────────────────────────────── */
 
 @media (max-width: 600px) {
