@@ -619,7 +619,7 @@ export default function PortalKanbanBoard() {
 
   return (
     <>
-    <div className="portal-kanban-wrapper">
+    <div className="portal-kanban-wrapper" style={{ position: 'relative' }}>
       {/* Client Filter */}
       <div style={{ marginBottom: '1rem' }}>
         <PortalClientFilter value={filterText} onChange={setFilterText} />
@@ -678,34 +678,35 @@ export default function PortalKanbanBoard() {
       <CardGallery images={galleryImages} startIndex={galleryStart} onClose={closeGallery} />
     )}
 
-    {/* NSFW Unlock Button */}
+    {/* NSFW Unlock Button — Top right, icon only */}
     <button
       className="portal-nsfw-unlock-btn"
       onClick={() => setShowNsfwModal(true)}
       title="Desbloquear comisión privada con código"
+      aria-label="Desbloquear comisión privada"
       style={{
-        position: 'fixed',
-        bottom: '20px',
-        right: '20px',
-        zIndex: 100,
-        background: 'var(--surface-elevated, #252530)',
-        border: '1px solid var(--border, #3a3a4a)',
+        position: 'absolute',
+        top: '0',
+        right: '0',
+        zIndex: 50,
+        background: '#ffffff',
+        border: 'none',
         borderRadius: '10px',
-        padding: '10px 16px',
-        color: 'var(--text, #eee)',
-        fontSize: '13px',
+        width: '44px',
+        height: '44px',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
-        gap: '6px',
-        boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+        justifyContent: 'center',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.25)',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
       }}
-      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.4)' }}
-      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.3)' }}
+      onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.35)' }}
+      onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.25)' }}
     >
-      <span aria-hidden="true">🔑</span>
-      <span>Tengo un código</span>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+      </svg>
     </button>
 
     {/* NSFW Unlock Modal */}
