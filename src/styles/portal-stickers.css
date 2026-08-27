@@ -539,8 +539,12 @@
     padding: 10px;
   }
 
+  .portal-sticker-item {
+    padding: 6px;
+  }
+
   .portal-sticker-chip {
-    width: 40px;
-    height: 40px;
+    width: 64px;
+    height: 64px;
   }
 }
