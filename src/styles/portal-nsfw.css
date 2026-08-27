@@ -6,8 +6,8 @@
 .portal-nsfw-unlock-btn {
   position: fixed;
   top: 12px;
-  right: 240px;
-  z-index: 300;
+  right: 180px;
+  z-index: 250;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -219,4 +219,17 @@
   filter: blur(4px);
   pointer-events: none;
   user-select: none;
+}
+
+/* Commission name shown on blur overlay hover */
+.portal-card-blur-overlay-name {
+  font-size: 0.65rem;
+  font-weight: 400;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  font-style: italic;
+}
+
+.portal-card-blur-overlay:hover .portal-card-blur-overlay-name {
+  opacity: 0.8;
 }

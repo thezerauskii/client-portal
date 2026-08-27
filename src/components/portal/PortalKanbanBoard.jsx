@@ -188,6 +188,7 @@ function PortalCardImage({ task, thumbnail, imageAttachments, extraCount, placin
             <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
           <span>Desbloquear</span>
+          <span className="portal-card-blur-overlay-name">{task.text || 'Comisión'}</span>
         </div>
       )}
 
@@ -412,6 +413,11 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
         />
       )}
 
+      {/* Hide sticker UI for private cards */}
+      {!task.nsfw_access_code && (
+        <>
+
+
       {/* Sticker overlay — show even if no thumbnail */}
       {!thumbnail && Object.keys(localReactions).some(k => k.startsWith('__sticker__')) && (
         <div style={{ position: 'relative', minHeight: '50px' }}>
@@ -461,6 +467,9 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
             />
           )}
         </div>
+      )}
+
+        </>
       )}
 
       {/* Title */}
