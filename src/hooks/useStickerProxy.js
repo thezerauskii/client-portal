@@ -7,9 +7,9 @@
 
 import { useState, useCallback, useRef } from 'react'
 
-// ── Base URL for Supabase Edge Functions ──────────────────────────────────────
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || ''
-const FUNCTIONS_BASE = SUPABASE_URL ? `${SUPABASE_URL}/functions/v1` : ''
+// ── Base URL for API routes ───────────────────────────────────────────────────
+// Vercel API routes are at /api/ relative to the same domain — no need for external URL
+const FUNCTIONS_BASE = '/api'
 
 // ── In-memory caches ──────────────────────────────────────────────────────────
 const stickerSetCache = new Map() // key: `${artistId}:${setName}` → { title, stickers }
