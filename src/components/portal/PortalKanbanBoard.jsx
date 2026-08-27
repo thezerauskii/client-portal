@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
+import ReactDOM from 'react-dom'
 import { usePortalContext } from './PortalDataProvider.jsx'
 import { supabase, isSupabaseReady } from '../../lib/supabase.js'
 import { useStickerProxy } from '../../hooks/useStickerProxy.js'
@@ -769,18 +770,21 @@ export default function PortalKanbanBoard() {
       <CardGallery images={galleryImages} startIndex={galleryStart} onClose={closeGallery} />
     )}
 
-    {/* NSFW Unlock Button — Pill style, next to stats */}
-    <button
-      className="portal-nsfw-unlock-btn"
-      onClick={() => setShowNsfwModal(true)}
-      title="Desbloquear comisión privada con código"
-      aria-label="Desbloquear comisión privada"
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>
-      </svg>
-      <span>Pegar código</span>
-    </button>
+    {/* NSFW Unlock Button — rendered via portal to escape layout transforms */}
+    {ReactDOM.createPortal(
+      <button
+        className="portal-nsfw-unlock-btn"
+        onClick={() => setShowNsfwModal(true)}
+        title="Desbloquear comisión privada con código"
+        aria-label="Desbloquear comisión privada"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+        </svg>
+        <span>Pegar código</span>
+      </button>,
+      document.body
+    )}
 
     {/* NSFW Unlock Modal */}
     {showNsfwModal && (
