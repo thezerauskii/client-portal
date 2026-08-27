@@ -794,6 +794,13 @@
   column-gap: 0.65rem;
 }
 
+@media (max-width: 767px) {
+  .portal-gallery-grid {
+    columns: 2;
+    column-gap: 0.4rem;
+  }
+}
+
 .portal-gallery-card {
   break-inside: avoid;
   position: relative;
