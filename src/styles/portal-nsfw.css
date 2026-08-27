@@ -1,0 +1,158 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   NSFW / Private Commission Styles — Client Portal
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── Unlock Button (fixed bottom-right) ─────────────────────────────────── */
+.portal-nsfw-unlock-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 100;
+  background: var(--surface-elevated, #252530);
+  border: 1px solid var(--border, #3a3a4a);
+  border-radius: 10px;
+  padding: 10px 16px;
+  color: var(--text, #eee);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.portal-nsfw-unlock-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.portal-nsfw-unlock-btn:active {
+  transform: translateY(0);
+}
+
+/* ─── Modal Overlay ──────────────────────────────────────────────────────── */
+.nsfw-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: nsfw-fade-in 0.2s ease;
+}
+
+@keyframes nsfw-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ─── Modal Card ─────────────────────────────────────────────────────────── */
+.nsfw-modal-card {
+  background: var(--surface-elevated, #1e1e28);
+  border: 1px solid var(--border, #3a3a4a);
+  border-radius: 14px;
+  padding: 24px 28px;
+  max-width: 420px;
+  width: 100%;
+  position: relative;
+  animation: nsfw-slide-up 0.25s ease;
+}
+
+@keyframes nsfw-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Code Input Fields ──────────────────────────────────────────────────── */
+.nsfw-modal-card input[type="text"] {
+  width: 60px;
+  text-align: center;
+  font-size: 18px;
+  font-family: monospace;
+  font-weight: 700;
+  letter-spacing: 2px;
+  padding: 8px 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #3a3a4a);
+  background: var(--surface, #15151c);
+  color: var(--accent, #a78bfa);
+  outline: none;
+  text-transform: uppercase;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nsfw-modal-card input[type="text"]:focus {
+  border-color: var(--accent, #a78bfa);
+  box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.15);
+}
+
+/* ─── Commission Card (unlocked) ─────────────────────────────────────────── */
+.nsfw-commission-card {
+  background: var(--surface, #15151c);
+  border: 1px solid var(--border, #3a3a4a);
+  border-radius: 10px;
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+  border-image: linear-gradient(135deg, rgba(167, 139, 250, 0.3), rgba(239, 68, 68, 0.3)) 1;
+  border-image-slice: 1;
+}
+
+/* Override for border-radius with gradient border */
+.nsfw-commission-card {
+  border: none;
+  background:
+    linear-gradient(var(--surface, #15151c), var(--surface, #15151c)) padding-box,
+    linear-gradient(135deg, rgba(167, 139, 250, 0.4), rgba(239, 68, 68, 0.4)) border-box;
+  border: 1px solid transparent;
+}
+
+/* ─── Blur Image ─────────────────────────────────────────────────────────── */
+.nsfw-blur-image-container {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.nsfw-blur-image-container img {
+  width: 100%;
+  display: block;
+  border-radius: 8px;
+  transition: filter 0.3s ease;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .nsfw-modal-card {
+    padding: 18px 16px;
+    border-radius: 12px;
+    margin: 0 8px;
+  }
+
+  .nsfw-modal-card input[type="text"] {
+    width: 52px;
+    font-size: 16px;
+    padding: 6px 3px;
+  }
+
+  .portal-nsfw-unlock-btn {
+    bottom: 12px;
+    right: 12px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}

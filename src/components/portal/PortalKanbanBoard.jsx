@@ -4,6 +4,7 @@ import { supabase, isSupabaseReady } from '../../lib/supabase.js'
 import { useStickerProxy } from '../../hooks/useStickerProxy.js'
 import PortalStickerOverlay from './PortalStickerOverlay.jsx'
 import PortalStickerPicker from './PortalStickerPicker.jsx'
+import NsfwUnlockModal from './NsfwUnlockModal.jsx'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -440,6 +441,10 @@ export default function PortalKanbanBoard() {
   const [filterText, setFilterText] = useState('')
   const [galleryImages, setGalleryImages] = useState(null)
   const [galleryStart, setGalleryStart] = useState(0)
+  const [showNsfwModal, setShowNsfwModal] = useState(false)
+
+  // Get artist slug from URL for NSFW unlock
+  const artistSlug = window.location.pathname.split('/p/')[1]?.split('/')[0] || ''
 
   const openGallery = useCallback((images, startIdx) => {
     setGalleryImages(images)
@@ -469,7 +474,8 @@ export default function PortalKanbanBoard() {
             .from('tasks')
             .select('id, text, parent_id, priority, stage, client, client_email, deadline, note, attachments, checklist, reactions')
             .eq('user_id', artistId)
-            .or('archived.is.null,archived.eq.false'),
+            .or('archived.is.null,archived.eq.false')
+            .or('is_nsfw.is.null,is_nsfw.eq.false'),
           supabase
             .from('kanban_config')
             .select('*')
@@ -670,6 +676,41 @@ export default function PortalKanbanBoard() {
     {/* Card gallery overlay */}
     {galleryImages && (
       <CardGallery images={galleryImages} startIndex={galleryStart} onClose={closeGallery} />
+    )}
+
+    {/* NSFW Unlock Button */}
+    <button
+      className="portal-nsfw-unlock-btn"
+      onClick={() => setShowNsfwModal(true)}
+      title="Desbloquear comisión privada con código"
+      style={{
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        zIndex: 100,
+        background: 'var(--surface-elevated, #252530)',
+        border: '1px solid var(--border, #3a3a4a)',
+        borderRadius: '10px',
+        padding: '10px 16px',
+        color: 'var(--text, #eee)',
+        fontSize: '13px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.4)' }}
+      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.3)' }}
+    >
+      <span aria-hidden="true">🔑</span>
+      <span>Tengo un código</span>
+    </button>
+
+    {/* NSFW Unlock Modal */}
+    {showNsfwModal && (
+      <NsfwUnlockModal artistSlug={artistSlug} onClose={() => setShowNsfwModal(false)} />
     )}
     </>
   )
