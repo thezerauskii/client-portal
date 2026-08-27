@@ -70,9 +70,8 @@ export default async function handler(req, res) {
   const stickerEntry = currentReactions[stickerKey]
 
   if (!stickerEntry) return res.status(404).json({ error: 'Sticker not found' })
-  if (stickerEntry.placedBy !== 'client') {
-    return res.status(403).json({ error: 'Cannot remove stickers placed by the artist' })
-  }
+
+  // Allow anyone to remove any sticker (artist and client stickers)
 
   // 3. Remove
   const updatedReactions = { ...currentReactions }

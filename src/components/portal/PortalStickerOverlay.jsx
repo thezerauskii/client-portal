@@ -36,7 +36,7 @@ function StickerChip({ stickerKey, val, index, onRemove }) {
   const thumbUrl = typeof val === 'object' ? val.thumbUrl : val
   const isHttp = typeof thumbUrl === 'string' && thumbUrl.startsWith('http')
   const isVideo = !!(val.is_video && isHttp)
-  const isClientPlaced = val.placedBy === 'client'
+  const isClientPlaced = true // Everyone can delete any sticker
 
   // Position from saved data or hash-based default
   const xPct = val.x ?? (5 + (hashStr(stickerKey) % 60))
