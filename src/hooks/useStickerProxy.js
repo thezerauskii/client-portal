@@ -28,8 +28,13 @@ export function useStickerProxy(artistId) {
    * @param {string} setName - Telegram sticker set name
    * @returns {Promise<{title: string, stickers: Array}>}
    */
-  const fetchStickerSet = useCallback(async (setName) => {
+  const fetchStickerSet = useCallback(async (rawSetName) => {
     if (!FUNCTIONS_BASE || !artistId) return null
+
+    // Extract set name from URL if user pastes full Telegram link
+    let setName = rawSetName
+    const urlMatch = rawSetName.match(/(?:t\.me\/addstickers\/)([A-Za-z0-9_]+)/)
+    if (urlMatch) setName = urlMatch[1]
 
     const cacheKey = `${artistId}:${setName}`
     if (stickerSetCache.has(cacheKey)) {
