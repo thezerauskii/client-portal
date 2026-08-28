@@ -35,15 +35,16 @@ function defaultRot(key) {
 
 // ── Draggable Sticker Chip ────────────────────────────────────────────────────
 
-function StickerChip({ stickerKey, val, index, onRemove, draggable, containerRef, onDragEnd }) {
+function StickerChip({ stickerKey, val, index, onRemove, draggable, containerRef, onDragEnd, onRefreshUrl }) {
   const [hovered, setHovered] = useState(false)
+  const [imgError, setImgError] = useState(false)
   const videoRef = useRef(null)
   const chipRef = useRef(null)
   const dragging = useRef(false)
   const dragOffset = useRef({ x: 0, y: 0 })
 
   const thumbUrl = typeof val === 'object' ? val.thumbUrl : val
-  const isHttp = typeof thumbUrl === 'string' && thumbUrl.startsWith('http')
+  const isHttp = typeof thumbUrl === 'string' && thumbUrl.startsWith('http') && !imgError
   const isVideo = !!(val.is_video && isHttp)
 
   const xPct = val.x ?? (5 + (hashStr(stickerKey) % 60))
@@ -116,15 +117,20 @@ function StickerChip({ stickerKey, val, index, onRemove, draggable, containerRef
     if (isVideo && isHttp) {
       return (
         <>
-          {thumbUrl && !hovered && <img src={thumbUrl} alt={val.emoji ?? 'sticker'} className="portal-sticker-media" draggable={false} />}
+          {thumbUrl && !hovered && <img src={thumbUrl} alt={val.emoji ?? 'sticker'} className="portal-sticker-media" draggable={false} onError={() => setImgError(true)} />}
           {hovered && <video ref={videoRef} src={thumbUrl} loop muted playsInline autoPlay className="portal-sticker-media" />}
         </>
       )
     }
     if (isHttp) {
-      return <img src={thumbUrl} alt={val.emoji ?? 'sticker'} className="portal-sticker-media" loading="lazy" draggable={false} />
+      return <img src={thumbUrl} alt={val.emoji ?? 'sticker'} className="portal-sticker-media" loading="lazy" draggable={false} onError={() => setImgError(true)} />
     }
-    return <span className="portal-sticker-fallback" aria-hidden="true">{val.emoji ?? '🖼'}</span>
+    // Fallback: show emoji or a generic sticker placeholder
+    return (
+      <span className="portal-sticker-fallback" aria-hidden="true" style={{ opacity: 0.6, fontSize: '1.2rem' }}>
+        {val.emoji || <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>}
+      </span>
+    )
   }
 
   return (
@@ -215,7 +221,7 @@ function PlacingGhost({ sticker, containerRef, onConfirm, onCancel }) {
         {isHttp ? (
           <img src={thumbUrl} alt={sticker.emoji || 'sticker'} className="portal-sticker-media" draggable={false} />
         ) : (
-          <span className="portal-sticker-fallback">{sticker.emoji || '🖼'}</span>
+          <span className="portal-sticker-fallback">{sticker.emoji || <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>}</span>
         )}
       </div>
 
