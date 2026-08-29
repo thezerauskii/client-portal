@@ -50,11 +50,26 @@ export function usePortalData(slug) {
     setNotFound(false)
 
     try {
-      const { data: profile, error: queryError } = await supabase
+      // Preferred column set (includes project_avatar_url). If that column
+      // doesn't exist yet (SQL migration not run), fall back gracefully so the
+      // whole portal doesn't break — the avatar just won't show until migrated.
+      const FULL_COLS = 'id, project_name, project_icon, project_avatar_url, accent_color, theme, cyberpunk_accent_color, social_links, platform_connections, project_banner_url, project_subtitle, global_bg_url, telegram_sticker_sets, request_form, commissions_open, commissions_closed_message, services_pricing'
+      const FALLBACK_COLS = 'id, project_name, project_icon, accent_color, theme, cyberpunk_accent_color, social_links, platform_connections, project_banner_url, project_subtitle, global_bg_url, telegram_sticker_sets, request_form, commissions_open, commissions_closed_message, services_pricing'
+
+      let { data: profile, error: queryError } = await supabase
         .from('profiles')
-        .select('id, project_name, project_icon, project_avatar_url, accent_color, theme, cyberpunk_accent_color, social_links, platform_connections, project_banner_url, project_subtitle, global_bg_url, telegram_sticker_sets, request_form, commissions_open, commissions_closed_message, services_pricing')
+        .select(FULL_COLS)
         .eq('public_slug', slug)
         .single()
+
+      // 42703 = undefined_column → retry without project_avatar_url
+      if (queryError && (queryError.code === '42703' || /project_avatar_url/.test(queryError.message || ''))) {
+        ({ data: profile, error: queryError } = await supabase
+          .from('profiles')
+          .select(FALLBACK_COLS)
+          .eq('public_slug', slug)
+          .single())
+      }
 
       if (queryError) {
         // PGRST116 = no rows found (single() with 0 results)
