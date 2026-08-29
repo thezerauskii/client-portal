@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import { usePortalContext } from '../../components/portal/PortalDataProvider.jsx'
-import { makeDefaultForm, SYSTEM_KEYS, validateAnswer } from '../../shared/domain/requestForm.js'
+import { makeDefaultForm, SYSTEM_KEYS, validateAnswer, normalizeForm, fieldsForPage } from '../../shared/domain/requestForm.js'
 import '../../styles/portal-request.css'
 
 const API_BASE = import.meta.env.VITE_FUNCTIONS_BASE || '/api'
@@ -105,9 +105,11 @@ function FormField({ field, value, onChange, error, uploading, onUpload }) {
 export default function PortalRequest() {
   const { artistId, requestForm, commissionsOpen, commissionsClosedMessage } = usePortalContext()
 
-  const form = useMemo(() => requestForm || makeDefaultForm(), [requestForm])
+  const form = useMemo(() => normalizeForm(requestForm || makeDefaultForm()), [requestForm])
   const status = form.status || (commissionsOpen ? 'open' : 'closed')
+  const pages = form.pages || ['Formulario']
 
+  const [page, setPage] = useState(0)
   const [values, setValues] = useState({})
   const [errors, setErrors] = useState({})
   const [uploadingField, setUploadingField] = useState(null)
@@ -151,19 +153,33 @@ export default function PortalRequest() {
     setUploadingField(null)
   }, [artistId, values, setValue])
 
-  function validateAll() {
+  function validateFields(fields) {
     const errs = {}
-    for (const field of form.fields) {
+    for (const field of fields) {
       const err = validateAnswer(field, values[field.id])
       if (err) errs[field.id] = err
     }
     return errs
   }
 
+  function goNext() {
+    const errs = validateFields(fieldsForPage(form, page))
+    if (Object.keys(errs).length) { setErrors(errs); return }
+    setErrors({})
+    setPage(p => Math.min(p + 1, pages.length - 1))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function goPrev() {
+    setErrors({})
+    setPage(p => Math.max(p - 1, 0))
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
   async function handleSubmit(e) {
     e.preventDefault()
     setSubmitError(null)
-    const errs = validateAll()
+    const errs = validateFields(form.fields)
     if (form.requireTos && !tos) errs._tos = 'Debes aceptar los términos'
     if (form.requireAge && !age) errs._age = 'Debes confirmar tu edad'
     if (Object.keys(errs).length) { setErrors(errs); return }
@@ -226,8 +242,12 @@ export default function PortalRequest() {
     )
   }
 
+  const isLastPage = page >= pages.length - 1
+  const currentFields = fieldsForPage(form, page)
+
   return (
     <div className="preq-wrap">
+      {form.headerImage && <img src={form.headerImage} alt="" className="preq-header-img" />}
       <div className="preq-header">
         <h1>{form.title}</h1>
         {form.description && <p>{form.description}</p>}
@@ -241,42 +261,59 @@ export default function PortalRequest() {
       )}
 
       {status !== 'closed' && (
-        <form className="preq-form" onSubmit={handleSubmit}>
-          {form.fields.map(field => (
-            <FormField
-              key={field.id}
-              field={field}
-              value={values[field.id]}
-              onChange={val => setValue(field.id, val)}
-              error={errors[field.id]}
-              uploading={uploadingField === field.id}
-              onUpload={handleUpload}
-            />
-          ))}
-
-          {form.requireTos && (
-            <label className="preq-consent">
-              <input type="checkbox" checked={tos} onChange={e => setTos(e.target.checked)} />
-              <span>Acepto los <a href={`/p/${window.location.pathname.split('/p/')[1]?.split('/')[0]}/terms`} target="_blank" rel="noopener noreferrer">Términos de Servicio</a></span>
-            </label>
+        <>
+          {/* Step indicators */}
+          {pages.length > 1 && (
+            <div className="preq-steps">
+              {pages.map((p, i) => (
+                <span key={i} className={`preq-step ${i === page ? 'active' : ''} ${i < page ? 'done' : ''}`}>{p}</span>
+              ))}
+            </div>
           )}
-          {errors._tos && <p className="preq-error">{errors._tos}</p>}
 
-          {form.requireAge && (
-            <label className="preq-consent">
-              <input type="checkbox" checked={age} onChange={e => setAge(e.target.checked)} />
-              <span>Confirmo que soy mayor de 18 años</span>
-            </label>
-          )}
-          {errors._age && <p className="preq-error">{errors._age}</p>}
-          {errors._email && <p className="preq-error">{errors._email}</p>}
+          <form className="preq-form" onSubmit={handleSubmit}>
+            {currentFields.map(field => (
+              <FormField
+                key={field.id}
+                field={field}
+                value={values[field.id]}
+                onChange={val => setValue(field.id, val)}
+                error={errors[field.id]}
+                uploading={uploadingField === field.id}
+                onUpload={handleUpload}
+              />
+            ))}
 
-          {submitError && <div className="preq-submit-error">{submitError}</div>}
+            {/* On last page: consent + submit; otherwise: next/prev */}
+            {isLastPage && (
+              <>
+                {form.requireTos && (
+                  <label className="preq-consent">
+                    <input type="checkbox" checked={tos} onChange={e => setTos(e.target.checked)} />
+                    <span>Acepto los <a href={`/p/${window.location.pathname.split('/p/')[1]?.split('/')[0]}/terms`} target="_blank" rel="noopener noreferrer">Términos de Servicio</a></span>
+                  </label>
+                )}
+                {errors._tos && <p className="preq-error">{errors._tos}</p>}
+                {form.requireAge && (
+                  <label className="preq-consent">
+                    <input type="checkbox" checked={age} onChange={e => setAge(e.target.checked)} />
+                    <span>Confirmo que soy mayor de 18 años</span>
+                  </label>
+                )}
+                {errors._age && <p className="preq-error">{errors._age}</p>}
+                {errors._email && <p className="preq-error">{errors._email}</p>}
+                {submitError && <div className="preq-submit-error">{submitError}</div>}
+              </>
+            )}
 
-          <button type="submit" className="preq-submit" disabled={submitting}>
-            {submitting ? 'Enviando…' : 'Enviar solicitud'}
-          </button>
-        </form>
+            <div className="preq-nav">
+              {page > 0 && <button type="button" className="preq-nav-btn" onClick={goPrev}>← Anterior</button>}
+              {!isLastPage
+                ? <button type="button" className="preq-nav-btn preq-nav-btn--primary" onClick={goNext}>Siguiente →</button>
+                : <button type="submit" className="preq-submit" disabled={submitting}>{submitting ? 'Enviando…' : 'Enviar solicitud'}</button>}
+            </div>
+          </form>
+        </>
       )}
     </div>
   )

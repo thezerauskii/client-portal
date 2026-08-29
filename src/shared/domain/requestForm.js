@@ -28,32 +28,63 @@ export const OPTION_TYPES = new Set(['radio', 'checkbox', 'select'])
 export const SYSTEM_KEYS = new Set(['name', 'email', 'description', 'budget', 'deadline', 'images'])
 
 /**
+ * Predefined furry/NSFW theme library — the artist toggles which ones to offer
+ * as options in a field, and can also add custom ones.
+ * These are just suggested option strings.
+ */
+export const FURRY_THEME_LIBRARY = [
+  'SFW / General',
+  'Suggestive',
+  'NSFW explícito',
+  'Vore',
+  'Macro / Micro',
+  'Giantess / Giant',
+  'Transformación (TF)',
+  'Inflación',
+  'Musculoso / Muscle',
+  'Feral',
+  'Anthro',
+  'Fat / Chubby',
+  'Hyper',
+  'Bondage',
+  'Latex',
+  'Fetiche de patas',
+  'Diaper / ABDL',
+  'Gore',
+  'Wholesome / Comfy',
+]
+
+/**
  * Default form template shown to a new artist (and used by the portal when the
  * artist hasn't configured a form yet). NSFW-aware (age confirmation).
+ * Fields are grouped into pages via `pageIndex`.
  */
 export function makeDefaultForm() {
   return {
     title: 'Solicita tu comisión',
     description: 'Llena este formulario con los detalles de tu comisión y te responderé pronto.',
-    status: 'open', // open | waitlist | closed
+    headerImage: '',            // URL of a decorative PNG banner shown at the top
+    status: 'open',             // open | waitlist | closed
     statusMessage: '',
     requireTos: true,
     requireAge: true,
+    pages: ['Información', 'Detalles', 'Referencias'],   // step labels
     fields: [
-      { id: 'f_name', type: 'short_text', label: 'Tu nombre', required: true, system: 'name', options: [] },
-      { id: 'f_email', type: 'email', label: 'Tu correo electrónico', required: true, system: 'email', options: [] },
-      { id: 'f_social', type: 'short_text', label: 'Redes sociales (opcional)', required: false, options: [] },
-      { id: 'f_type', type: 'select', label: 'Tipo de comisión', required: true, options: ['Busto', 'Medio cuerpo', 'Cuerpo completo', 'Ref sheet', 'Otro'] },
-      { id: 'f_desc', type: 'long_text', label: 'Describe tu idea', help: 'Personaje, pose, ambientación, detalles importantes', required: true, system: 'description', options: [] },
-      { id: 'f_refs', type: 'image_upload', label: 'Imágenes de referencia', help: 'Sube hasta 5 imágenes', required: false, system: 'images', options: [] },
-      { id: 'f_budget', type: 'budget', label: 'Presupuesto (USD)', required: false, system: 'budget', options: [] },
-      { id: 'f_deadline', type: 'date', label: '¿Tienes una fecha límite?', required: false, system: 'deadline', options: [] },
+      { id: 'f_name', type: 'short_text', label: 'Tu nombre', required: true, system: 'name', options: [], pageIndex: 0 },
+      { id: 'f_email', type: 'email', label: 'Tu correo electrónico', required: true, system: 'email', options: [], pageIndex: 0 },
+      { id: 'f_social', type: 'short_text', label: 'Redes sociales (opcional)', required: false, options: [], pageIndex: 0 },
+      { id: 'f_type', type: 'select', label: 'Tipo de comisión', required: true, options: ['Busto', 'Medio cuerpo', 'Cuerpo completo', 'Ref sheet', 'Otro'], pageIndex: 1 },
+      { id: 'f_theme', type: 'checkbox', label: 'Temática', required: false, options: ['SFW / General', 'NSFW explícito', 'Anthro', 'Feral'], pageIndex: 1 },
+      { id: 'f_desc', type: 'long_text', label: 'Describe tu idea', help: 'Personaje, pose, ambientación, detalles importantes', required: true, system: 'description', options: [], pageIndex: 1 },
+      { id: 'f_budget', type: 'budget', label: 'Presupuesto (USD)', required: false, system: 'budget', options: [], pageIndex: 1 },
+      { id: 'f_deadline', type: 'date', label: '¿Tienes una fecha límite?', required: false, system: 'deadline', options: [], pageIndex: 1 },
+      { id: 'f_refs', type: 'image_upload', label: 'Imágenes de referencia', help: 'Sube hasta 5 imágenes', required: false, system: 'images', options: [], pageIndex: 2 },
     ],
   }
 }
 
-/** Generate a new empty field of a given type. */
-export function makeField(type) {
+/** Generate a new empty field of a given type on a given page. */
+export function makeField(type, pageIndex = 0) {
   const id = 'f_' + Math.random().toString(36).slice(2, 9)
   return {
     id,
@@ -62,7 +93,24 @@ export function makeField(type) {
     help: '',
     required: false,
     options: OPTION_TYPES.has(type) ? ['Opción 1'] : [],
+    pageIndex,
   }
+}
+
+/** Normalize a form: ensure pages array + every field has a valid pageIndex. */
+export function normalizeForm(form) {
+  if (!form || !Array.isArray(form.fields)) return makeDefaultForm()
+  const pages = Array.isArray(form.pages) && form.pages.length > 0 ? form.pages : ['Formulario']
+  const fields = form.fields.map(f => ({
+    ...f,
+    pageIndex: typeof f.pageIndex === 'number' && f.pageIndex < pages.length ? f.pageIndex : 0,
+  }))
+  return { ...form, pages, fields }
+}
+
+/** Get the fields belonging to a given page index. */
+export function fieldsForPage(form, pageIndex) {
+  return (form.fields || []).filter(f => (f.pageIndex ?? 0) === pageIndex)
 }
 
 /** Validate a filled answer against a field. Returns error string or null. */
