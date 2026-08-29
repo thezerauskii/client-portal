@@ -31,7 +31,7 @@ export default function PortalLanding() {
   const { slug } = useParams()
   const {
     artistId, studioName, projectIcon, projectAvatarUrl, accentColor,
-    projectBannerUrl, projectSubtitle,
+    projectSubtitle,
   } = usePortalContext()
 
   // A profile picture (image URL) takes priority over the emoji/text icon.
@@ -58,16 +58,9 @@ export default function PortalLanding() {
 
   return (
     <div className="plh-root">
-      {/* ── Banner ── */}
-      <div
-        className="plh-banner"
-        style={projectBannerUrl ? { backgroundImage: `url(${projectBannerUrl})` } : { background: `linear-gradient(135deg, ${accent}22, #0d0d12)` }}
-      >
-        <div className="plh-banner-overlay" />
-      </div>
-
-      {/* ── Identity: big icon overlapping the banner ── */}
-      <div className="plh-identity">
+      {/* The banner is rendered once by PortalLayout (top). Here we only show
+          the identity (avatar) + the centered options, no duplicate banner. */}
+      <div className="plh-identity plh-identity--nobanner">
         <div className="plh-avatar" style={{ borderColor: accent }}>
           {avatarUrl ? (
             <img src={avatarUrl} alt={studioName} className="plh-avatar-img" />

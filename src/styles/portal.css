@@ -1487,6 +1487,11 @@
   z-index: 2;
   padding: 0 1rem;
 }
+/* When the banner is provided by the layout (no local banner), don't overlap */
+.plh-identity--nobanner {
+  margin-top: 0;
+  padding-top: 2rem;
+}
 
 .plh-avatar {
   width: 112px;
