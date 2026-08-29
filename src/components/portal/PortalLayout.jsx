@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
 import { usePortalContext } from './PortalDataProvider.jsx'
-import { supabase, isSupabaseReady } from '../../lib/supabase.js'
+import { usePortalTasks } from '../../hooks/usePortalTasks.js'
 
 /* ─── Navigation items for the portal sidebar ─── */
 const NAV_ITEMS = [
@@ -71,54 +71,26 @@ function CloseIcon() {
 }
 
 /* ─── Stats Bar component ─── */
+// Stage to progress mapping (matches Electron)
+const STAGE_PROGRESS = {
+  new: 0, sketch: 20, lineart: 40, base: 60, shade: 80, review: 90, delivered: 100,
+}
+// "En Revisión" section ID from kanban config
+const REVIEW_SECTION_ID = 'b5f9edcb-6fd0-4f89-a15d-9eb710ae37a0'
+
 function StatsBar({ artistId }) {
-  const [stats, setStats] = useState({ active: 0, avgProgress: 0, inReview: 0 })
+  const { tasks } = usePortalTasks(artistId)
 
-  useEffect(() => {
-    if (!artistId || !isSupabaseReady()) return
-
-    // Stage to progress mapping (matches Electron)
-    const STAGE_PROGRESS = {
-      new: 0,
-      sketch: 20,
-      lineart: 40,
-      base: 60,
-      shade: 80,
-      review: 90,
-      delivered: 100,
-    }
-
-    // "En Revisión" section ID from kanban config
-    const REVIEW_SECTION_ID = 'b5f9edcb-6fd0-4f89-a15d-9eb710ae37a0'
-
-    async function fetchStats() {
-      try {
-        const { data: tasks } = await supabase
-          .from('tasks')
-          .select('id, parent_id, stage')
-          .eq('user_id', artistId)
-          .or('archived.is.null,archived.eq.false')
-
-        if (!tasks || tasks.length === 0) return
-
-        // Commissions = tasks with parent_id (not sections)
-        const commissions = tasks.filter(t => t.parent_id)
-        const active = commissions.length
-        const inReview = commissions.filter(t => t.parent_id === REVIEW_SECTION_ID).length
-
-        // Average progress based on stage
-        const avgProgress = active > 0
-          ? Math.round(commissions.reduce((sum, t) => sum + (STAGE_PROGRESS[t.stage] || 0), 0) / active)
-          : 0
-
-        setStats({ active, avgProgress, inReview })
-      } catch {
-        // Silently fail — stats are non-critical
-      }
-    }
-
-    fetchStats()
-  }, [artistId])
+  // Derive stats from the shared tasks set (no separate query)
+  const stats = useMemo(() => {
+    const commissions = (tasks || []).filter(t => t.parent_id)
+    const active = commissions.length
+    const inReview = commissions.filter(t => t.parent_id === REVIEW_SECTION_ID).length
+    const avgProgress = active > 0
+      ? Math.round(commissions.reduce((sum, t) => sum + (STAGE_PROGRESS[t.stage] || 0), 0) / active)
+      : 0
+    return { active, avgProgress, inReview }
+  }, [tasks])
 
   return (
     <div className="portal-stats-bar">

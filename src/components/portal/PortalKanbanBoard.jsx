@@ -5,6 +5,7 @@ import { supabase, isSupabaseReady } from '../../lib/supabase.js'
 import { useStickerProxy } from '../../hooks/useStickerProxy.js'
 import PortalStickerOverlay from './PortalStickerOverlay.jsx'
 import { getSectionIcon, IconCalendar, IconWarning, IconMailbox } from './PortalIcons.jsx'
+import { usePortalTasks } from '../../hooks/usePortalTasks.js'
 import PortalStickerPicker from './PortalStickerPicker.jsx'
 import NsfwUnlockModal from './NsfwUnlockModal.jsx'
 
@@ -235,7 +236,7 @@ function PortalCardImage({ task, thumbnail, imageAttachments, extraCount, placin
 
 // ─── PortalKanbanCard ───────────────────────────────────────────────────────
 
-function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets }) {
+const PortalKanbanCard = React.memo(function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets }) {
   const title = task.text || 'Comisión'
   const priority = PRIORITY_OPTIONS[task.priority]
   const stage = STAGE_OPTIONS[task.stage]
@@ -521,7 +522,7 @@ function PortalKanbanCard({ task, onViewImages, artistId, telegramStickerSets })
       )}
     </div>
   )
-}
+})
 
 // ─── PortalKanbanBoard (Main Component) ─────────────────────────────────────
 
@@ -548,58 +549,36 @@ export default function PortalKanbanBoard() {
     setGalleryImages(null)
   }, [])
 
-  // Fetch all tasks and kanban_config on mount
+  // Tasks come from the shared cache (single query for whole portal)
+  const { tasks: sharedTasks, loading: tasksLoading, error: tasksError } = usePortalTasks(artistId)
+
+  // Sync shared tasks into local state (allows optimistic sticker updates)
   useEffect(() => {
-    if (!artistId || !isSupabaseReady()) {
-      setLoading(false)
-      return
-    }
+    setAllTasks(sharedTasks || [])
+  }, [sharedTasks])
 
+  useEffect(() => {
+    setLoading(tasksLoading)
+    if (tasksError) setError(tasksError)
+  }, [tasksLoading, tasksError])
+
+  // kanban_config is a separate table — fetch it once on mount
+  useEffect(() => {
+    if (!artistId || !isSupabaseReady()) return
     let cancelled = false
-
-    async function fetchData() {
-      setLoading(true)
-      setError(null)
-
+    async function fetchConfig() {
       try {
-        const [tasksRes, configRes] = await Promise.all([
-          supabase
-            .from('tasks')
-            .select('id, text, parent_id, priority, stage, client, client_email, deadline, note, attachments, checklist, reactions, is_nsfw, nsfw_access_code')
-            .eq('user_id', artistId)
-            .or('archived.is.null,archived.eq.false'),
-          supabase
-            .from('kanban_config')
-            .select('*')
-            .eq('user_id', artistId)
-            .single(),
-        ])
-
-        if (cancelled) return
-
-        if (tasksRes.error) {
-          setError(tasksRes.error)
-          setLoading(false)
-          return
-        }
-
-        setAllTasks(tasksRes.data || [])
-
-        // kanban_config might not exist yet — that's ok, use defaults
-        if (configRes.data) {
-          setKanbanConfig(configRes.data)
-        }
-
-        setLoading(false)
-      } catch (err) {
-        if (!cancelled) {
-          setError(err)
-          setLoading(false)
-        }
+        const { data } = await supabase
+          .from('kanban_config')
+          .select('*')
+          .eq('user_id', artistId)
+          .single()
+        if (!cancelled && data) setKanbanConfig(data)
+      } catch {
+        // kanban_config might not exist yet — use defaults
       }
     }
-
-    fetchData()
+    fetchConfig()
     return () => { cancelled = true }
   }, [artistId])
 
