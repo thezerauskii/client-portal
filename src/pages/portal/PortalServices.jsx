@@ -4,6 +4,28 @@ import { usePortalContext } from '../../components/portal/PortalDataProvider.jsx
 import { normalizeServices, formatPrice } from '../../shared/domain/servicesPricing.js'
 import '../../styles/portal-services.css'
 
+/* Render **bold** markdown in paragraphs */
+function renderBold(text) {
+  if (!text) return null
+  return String(text).split(/(\*\*[^*]+\*\*)/g).map((p, i) =>
+    p.startsWith('**') && p.endsWith('**') ? <strong key={i}>{p.slice(2, -2)}</strong> : <span key={i}>{p}</span>
+  )
+}
+
+/* View-only content block */
+function ContentBlockView({ block }) {
+  if (block.type === 'divider') return <hr className="psvc-block-divider" />
+  if (block.type === 'h1') return <h2 className="psvc-block-h1">{block.content}</h2>
+  if (block.type === 'h2') return <h3 className="psvc-block-h2">{block.content}</h3>
+  if (block.type === 'paragraph') return <p className="psvc-block-p">{renderBold(block.content)}</p>
+  if (block.type === 'image') return (
+    <div className="psvc-block-imgs">
+      {(block.images || []).map((url, i) => <img key={i} src={url} alt={`img ${i + 1}`} loading="lazy" />)}
+    </div>
+  )
+  return null
+}
+
 /* ─── One service card (public, read-only) ─── */
 function ServiceCard({ svc, currency, onRequest }) {
   const [revealed, setRevealed] = useState(false)
@@ -70,8 +92,32 @@ export default function PortalServices() {
     )
   }
 
+  const bgStyle = data.backgroundUrl
+    ? {
+        backgroundImage: `linear-gradient(rgba(0,0,0,${data.backgroundOpacity}), rgba(0,0,0,${data.backgroundOpacity})), url(${data.backgroundUrl})`,
+        backgroundSize: 'cover', backgroundAttachment: 'fixed', backgroundPosition: 'center',
+      }
+    : undefined
+
   return (
-    <div className="psvc-wrap">
+    <div className="psvc-wrap psvc-wrap--bg" style={bgStyle}>
+      {/* Decorative stickers (view-only) */}
+      {(data.stickers || []).length > 0 && (
+        <div className="psvc-sticker-layer" aria-hidden="true">
+          {data.stickers.map(s => (
+            <img
+              key={s.id}
+              src={s.url}
+              alt=""
+              className="psvc-sticker"
+              style={{ left: s.x + '%', top: s.y + '%', transform: `translate(-50%,-50%) rotate(${s.rot}deg) scale(${s.scale})` }}
+              draggable={false}
+            />
+          ))}
+        </div>
+      )}
+
+      {data.bannerUrl && <img src={data.bannerUrl} alt="" className="psvc-banner-img" />}
       {data.headerImage && <img src={data.headerImage} alt="" className="psvc-header-img" />}
       <div className="psvc-header">
         <h1>Servicios y Precios</h1>
@@ -82,6 +128,13 @@ export default function PortalServices() {
         <div className={`psvc-banner psvc-banner--${data.status}`}>
           <strong>{data.status === 'closed' ? 'Comisiones cerradas' : 'Lista de espera'}</strong>
           {data.statusMessage && <p>{data.statusMessage}</p>}
+        </div>
+      )}
+
+      {/* ─── Rich content blocks ─── */}
+      {(data.blocks || []).length > 0 && (
+        <div className="psvc-blocks">
+          {data.blocks.map(b => <ContentBlockView key={b.id} block={b} />)}
         </div>
       )}
 
