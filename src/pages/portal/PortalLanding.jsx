@@ -1,259 +1,109 @@
-import React, { useState, useEffect } from 'react'
+import React, { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { usePortalContext } from '../../components/portal/PortalDataProvider.jsx'
-import { supabase } from '../../lib/supabase.js'
-import { IconBrush, IconImage, IconCalendar, IconLink } from '../../components/portal/PortalIcons.jsx'
+import { usePortalTasks } from '../../hooks/usePortalTasks.js'
+import { isActiveCommission } from '../../shared/domain/sections.js'
+import {
+  IconBrush, IconImage, IconCalendar, IconLink,
+} from '../../components/portal/PortalIcons.jsx'
+
+/* Price/Request icons (inline, matching the portal SVG style) */
+function IconPrice({ size = 26 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+    </svg>
+  )
+}
+function IconRequest({ size = 26 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="12" y1="18" x2="12" y2="12" /><line x1="9" y1="15" x2="15" y2="15" />
+    </svg>
+  )
+}
 
 /**
- * Portal landing page — /p/:slug
- * Displays artist info, quick stats, and links to portal sections.
+ * Portal landing page — /p/:slug — store-style home.
+ * Banner on top, big studio icon, then a centered grid of section options.
  */
 export default function PortalLanding() {
   const { slug } = useParams()
-  const { artistId, studioName, projectIcon, accentColor } = usePortalContext()
+  const {
+    artistId, studioName, projectIcon, projectAvatarUrl, accentColor,
+    projectBannerUrl, projectSubtitle,
+  } = usePortalContext()
 
-  const [commissionCount, setCommissionCount] = useState(null)
-  const [portfolioCount, setPortfolioCount] = useState(null)
-  const [loadingStats, setLoadingStats] = useState(true)
+  // A profile picture (image URL) takes priority over the emoji/text icon.
+  const avatarUrl = projectAvatarUrl || (typeof projectIcon === 'string' && projectIcon.startsWith('http') ? projectIcon : null)
+  const emojiIcon = !avatarUrl && projectIcon && projectIcon.length <= 4 ? projectIcon : null
 
-  useEffect(() => {
-    if (!artistId || !supabase) return
+  const { tasks, loading: tasksLoading } = usePortalTasks(artistId)
 
-    let cancelled = false
-
-    async function fetchStats() {
-      setLoadingStats(true)
-
-      const [commRes, portRes] = await Promise.all([
-        supabase
-          .from('tasks')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', artistId)
-          .or('archived.is.null,archived.eq.false'),
-        supabase
-          .from('portfolio_items')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', artistId),
-      ])
-
-      if (!cancelled) {
-        setCommissionCount(commRes.count ?? 0)
-        setPortfolioCount(portRes.count ?? 0)
-        setLoadingStats(false)
-      }
-    }
-
-    fetchStats()
-    return () => { cancelled = true }
-  }, [artistId])
+  const activeCount = useMemo(
+    () => (tasks || []).filter(isActiveCommission).length,
+    [tasks]
+  )
 
   const accent = accentColor || 'var(--green, #22C55E)'
 
   const sections = [
-    {
-      key: 'commissions',
-      title: 'Comisiones',
-      icon: <IconBrush size={20} />,
-      path: `/p/${slug}/commissions`,
-      stat: commissionCount,
-      statLabel: 'activas',
-    },
-    {
-      key: 'portfolio',
-      title: 'Portafolio',
-      icon: <IconImage size={20} />,
-      path: `/p/${slug}/portfolio`,
-      stat: portfolioCount,
-      statLabel: 'obras',
-    },
-    {
-      key: 'calendar',
-      title: 'Calendario',
-      icon: <IconCalendar size={20} />,
-      path: `/p/${slug}/calendar`,
-      stat: null,
-      statLabel: null,
-    },
-    {
-      key: 'links',
-      title: 'Links',
-      icon: <IconLink size={20} />,
-      path: `/p/${slug}/links`,
-      stat: null,
-      statLabel: null,
-    },
+    { key: 'commissions', title: 'Comisiones', icon: <IconBrush size={26} />, path: `/p/${slug}/commissions`, stat: activeCount, statLabel: 'activas' },
+    { key: 'services', title: 'Servicios y Precios', icon: <IconPrice size={26} />, path: `/p/${slug}/services` },
+    { key: 'request', title: 'Solicitar comisión', icon: <IconRequest size={26} />, path: `/p/${slug}/request` },
+    { key: 'portfolio', title: 'Portafolio', icon: <IconImage size={26} />, path: `/p/${slug}/portfolio` },
+    { key: 'calendar', title: 'Calendario', icon: <IconCalendar size={26} />, path: `/p/${slug}/calendar` },
+    { key: 'links', title: 'Links', icon: <IconLink size={26} />, path: `/p/${slug}/links` },
   ]
 
   return (
-    <div style={styles.container}>
-      {/* Hero section */}
-      <section style={styles.hero}>
-        {projectIcon ? (
-          <img
-            src={projectIcon}
-            alt={`${studioName} icon`}
-            style={styles.heroIcon}
-          />
-        ) : (
-          <div style={{ ...styles.heroIconPlaceholder, borderColor: accent }}>
-            {studioName?.[0]?.toUpperCase() || 'P'}
-          </div>
-        )}
-        <h1 style={styles.heroTitle}>{studioName}</h1>
-        <div style={{ ...styles.accentBar, background: accent }} aria-hidden="true" />
-      </section>
+    <div className="plh-root">
+      {/* ── Banner ── */}
+      <div
+        className="plh-banner"
+        style={projectBannerUrl ? { backgroundImage: `url(${projectBannerUrl})` } : { background: `linear-gradient(135deg, ${accent}22, #0d0d12)` }}
+      >
+        <div className="plh-banner-overlay" />
+      </div>
 
-      {/* Quick stats */}
-      <section style={styles.statsRow} aria-label="Estadísticas rápidas">
-        <div style={styles.statBox}>
-          <span style={{ ...styles.statNumber, color: accent }}>
-            {loadingStats ? '—' : commissionCount}
-          </span>
-          <span style={styles.statLabel}>Comisiones activas</span>
+      {/* ── Identity: big icon overlapping the banner ── */}
+      <div className="plh-identity">
+        <div className="plh-avatar" style={{ borderColor: accent }}>
+          {avatarUrl ? (
+            <img src={avatarUrl} alt={studioName} className="plh-avatar-img" />
+          ) : emojiIcon ? (
+            <span className="plh-avatar-fallback">{emojiIcon}</span>
+          ) : (
+            <span className="plh-avatar-fallback">{studioName?.[0]?.toUpperCase() || 'P'}</span>
+          )}
         </div>
-        <div style={styles.statBox}>
-          <span style={{ ...styles.statNumber, color: accent }}>
-            {loadingStats ? '—' : portfolioCount}
-          </span>
-          <span style={styles.statLabel}>Obras en portafolio</span>
-        </div>
-      </section>
+        <h1 className="plh-name">{studioName}</h1>
+        {projectSubtitle && <p className="plh-subtitle">{projectSubtitle}</p>}
+        <div className="plh-accent-bar" style={{ background: accent }} aria-hidden="true" />
+        <p className="plh-active">
+          <strong style={{ color: accent }}>{tasksLoading ? '—' : activeCount}</strong> comisiones activas
+        </p>
+      </div>
 
-      {/* Quick-links grid */}
-      <section style={styles.grid} aria-label="Secciones del portal">
-        {sections.map(section => (
+      {/* ── Centered options grid (store-style) ── */}
+      <nav className="plh-grid" aria-label="Secciones">
+        {sections.map(s => (
           <Link
-            key={section.key}
-            to={section.path}
-            style={styles.card}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = accent
-              e.currentTarget.style.transform = 'translateY(-2px)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'var(--border, #2e2e36)'
-              e.currentTarget.style.transform = 'translateY(0)'
-            }}
+            key={s.key}
+            to={s.path}
+            className="plh-card"
+            style={{ '--accent': accent }}
           >
-            <span style={styles.cardIcon}>{section.icon}</span>
-            <span style={styles.cardTitle}>{section.title}</span>
-            {section.stat !== null && (
-              <span style={{ ...styles.cardStat, color: accent }}>
-                {loadingStats ? '...' : `${section.stat} ${section.statLabel}`}
+            <span className="plh-card-icon">{s.icon}</span>
+            <span className="plh-card-title">{s.title}</span>
+            {s.stat != null && (
+              <span className="plh-card-stat" style={{ color: accent }}>
+                {tasksLoading ? '...' : `${s.stat} ${s.statLabel}`}
               </span>
             )}
           </Link>
         ))}
-      </section>
+      </nav>
     </div>
   )
-}
-
-// --- Inline styles ---
-
-const styles = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '2rem',
-    padding: '2rem 1rem',
-  },
-
-  // Hero
-  hero: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '0.75rem',
-    textAlign: 'center',
-  },
-  heroIcon: {
-    width: '72px',
-    height: '72px',
-    borderRadius: '50%',
-    objectFit: 'cover',
-    border: '2px solid var(--border, #2e2e36)',
-  },
-  heroIconPlaceholder: {
-    width: '72px',
-    height: '72px',
-    borderRadius: '50%',
-    background: 'var(--surface, #1a1a1e)',
-    border: '2px solid',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '1.75rem',
-    fontWeight: 700,
-    color: 'var(--text, #e8e8ec)',
-  },
-  heroTitle: {
-    margin: 0,
-    fontSize: '1.5rem',
-    fontWeight: 700,
-    color: 'var(--text, #e8e8ec)',
-  },
-  accentBar: {
-    width: '48px',
-    height: '3px',
-    borderRadius: '2px',
-    marginTop: '0.25rem',
-  },
-
-  // Stats
-  statsRow: {
-    display: 'flex',
-    gap: '2rem',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  statBox: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '0.2rem',
-  },
-  statNumber: {
-    fontSize: '1.75rem',
-    fontWeight: 700,
-  },
-  statLabel: {
-    fontSize: '0.78rem',
-    color: 'var(--text-muted, #888896)',
-  },
-
-  // Grid
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-    gap: '1rem',
-    width: '100%',
-    maxWidth: '640px',
-  },
-  card: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '0.5rem',
-    padding: '1.5rem 1rem',
-    background: 'var(--surface, #1a1a1e)',
-    border: '1px solid var(--border, #2e2e36)',
-    borderRadius: 'var(--radius, 10px)',
-    textDecoration: 'none',
-    color: 'var(--text, #e8e8ec)',
-    transition: 'border-color 150ms ease, transform 150ms ease',
-    cursor: 'pointer',
-  },
-  cardIcon: {
-    fontSize: '1.75rem',
-  },
-  cardTitle: {
-    fontSize: '0.9rem',
-    fontWeight: 600,
-  },
-  cardStat: {
-    fontSize: '0.72rem',
-    fontWeight: 500,
-  },
 }

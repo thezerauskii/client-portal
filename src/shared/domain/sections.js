@@ -25,3 +25,31 @@ export const SECTION_DEFAULT_LABELS = {
   [SECTION_IDS.IN_PROGRESS]: 'comisiones en progreso',
   [SECTION_IDS.IN_REVIEW]: 'En Revisión',
 }
+
+/**
+ * Sections that count as "active commissions".
+ * Excludes Backlog (planning/ideas, not active work) and any completed/archived task.
+ * Used by BOTH the Electron studio header and the public portal so the numbers match.
+ */
+export const ACTIVE_SECTION_IDS = [
+  SECTION_IDS.NEW,
+  SECTION_IDS.IN_PROGRESS,
+  SECTION_IDS.IN_REVIEW,
+]
+
+/**
+ * Returns true if a task counts as an active commission.
+ * A task must: live inside an active workflow section (not Backlog),
+ * not be completed, and not be archived. Section rows (parent_id null)
+ * and portfolio items are naturally excluded because they lack an active parent.
+ *
+ * @param {{ parent_id?: string, parentId?: string, completed_state?: boolean, completed?: boolean, archived?: boolean }} task
+ * @returns {boolean}
+ */
+export function isActiveCommission(task) {
+  if (!task) return false
+  const parent = task.parent_id ?? task.parentId ?? null
+  const completed = task.completed_state ?? task.completed ?? false
+  const archived = task.archived ?? false
+  return ACTIVE_SECTION_IDS.includes(parent) && !completed && !archived
+}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { NavLink, useParams } from 'react-router-dom'
 import { usePortalContext } from './PortalDataProvider.jsx'
 import { usePortalTasks } from '../../hooks/usePortalTasks.js'
+import { isActiveCommission, REVIEW_SECTION_ID } from '../../shared/domain/sections.js'
 
 /* ─── Navigation items for the portal sidebar ─── */
 const NAV_ITEMS = [
@@ -97,16 +98,14 @@ function CloseIcon() {
 const STAGE_PROGRESS = {
   new: 0, sketch: 20, lineart: 40, base: 60, shade: 80, review: 90, delivered: 100,
 }
-// "En Revisión" section ID from kanban config
-const REVIEW_SECTION_ID = 'b5f9edcb-6fd0-4f89-a15d-9eb710ae37a0'
-
 function StatsBar({ artistId }) {
   const { tasks } = usePortalTasks(artistId)
 
   // Derive stats from the shared tasks set (no separate query).
-  // Match Electron: only count commissions that are NOT completed.
+  // "Active" = in a real workflow section (Nuevas / En Proceso / En Revisión),
+  // not completed, not archived. Excludes Backlog + section rows + portfolio.
   const stats = useMemo(() => {
-    const commissions = (tasks || []).filter(t => t.parent_id && !t.completed_state)
+    const commissions = (tasks || []).filter(isActiveCommission)
     const active = commissions.length
     const inReview = commissions.filter(t => t.parent_id === REVIEW_SECTION_ID).length
     const avgProgress = active > 0
@@ -167,6 +166,18 @@ export default function PortalLayout({ children }) {
         <div className="portal-sidebar-brand">
           <img src="/logo-possum.svg" alt="" className="portal-sidebar-logo" />
           <span className="portal-sidebar-brand-name">Possumble</span>
+          <NavLink
+            to={`/p/${slug}`}
+            end
+            className="portal-home-btn"
+            title="Volver a la página principal"
+            aria-label="Ir a inicio"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9.5 12 3l9 6.5" /><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10" />
+            </svg>
+          </NavLink>
         </div>
         <nav className="portal-layout-sidebar-nav">
           {NAV_ITEMS.map(item => {

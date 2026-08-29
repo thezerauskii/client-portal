@@ -1452,3 +1452,147 @@
     padding: 2rem 2.5rem;
   }
 }
+
+/* ============================================================
+   PORTAL LANDING (store-style home) — banner + centered options
+   ============================================================ */
+.plh-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.plh-banner {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 0 0 16px 16px;
+  overflow: hidden;
+}
+.plh-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(13, 13, 18, 0.15), rgba(13, 13, 18, 0.9));
+}
+
+.plh-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: -56px;      /* overlap the banner */
+  z-index: 2;
+  padding: 0 1rem;
+}
+
+.plh-avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid var(--green, #22C55E);
+  background: var(--surface, #1a1a1e);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.plh-avatar-img { width: 100%; height: 100%; object-fit: cover; }
+.plh-avatar-fallback { font-size: 2.6rem; font-weight: 800; color: var(--text, #e8e8ec); }
+
+.plh-name {
+  margin: 0.75rem 0 0;
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--text, #e8e8ec);
+  letter-spacing: -0.02em;
+}
+.plh-subtitle {
+  margin: 0.25rem 0 0;
+  font-size: 0.95rem;
+  color: var(--text-muted, #888896);
+}
+.plh-accent-bar {
+  width: 52px;
+  height: 3px;
+  border-radius: 2px;
+  margin: 0.85rem 0 0.6rem;
+}
+.plh-active {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted, #9a9aa4);
+}
+
+.plh-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 200px));
+  gap: 1rem;
+  width: 100%;
+  max-width: 680px;
+  margin: 2rem auto 3rem;
+  padding: 0 1rem;
+  justify-content: center;
+}
+
+.plh-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 1.6rem 1rem;
+  background: var(--surface, #1a1a1e);
+  border: 1px solid var(--border, #2e2e36);
+  border-radius: 14px;
+  text-decoration: none;
+  color: var(--text, #e8e8ec);
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+  cursor: pointer;
+}
+.plh-card:hover {
+  border-color: var(--accent, var(--green, #22C55E));
+  transform: translateY(-3px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+}
+.plh-card-icon { color: var(--accent, var(--green, #22C55E)); display: flex; }
+.plh-card-title { font-size: 0.92rem; font-weight: 600; text-align: center; }
+.plh-card-stat { font-size: 0.74rem; font-weight: 600; }
+
+@media (max-width: 560px) {
+  .plh-grid { grid-template-columns: repeat(2, 1fr); max-width: 420px; }
+  .plh-banner { height: 150px; }
+  .plh-avatar { width: 92px; height: 92px; }
+}
+
+/* Animated home button next to the Possumble brand */
+.portal-sidebar-brand { display: flex; align-items: center; gap: 8px; }
+.portal-home-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  color: var(--text-muted, #9a9aa4);
+  background: transparent;
+  border: 1px solid transparent;
+  text-decoration: none;
+  transition: color 160ms ease, background 160ms ease, transform 160ms ease, border-color 160ms ease;
+}
+.portal-home-btn:hover {
+  color: var(--green, #22C55E);
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+  transform: translateY(-2px);
+  animation: portal-home-bounce 700ms ease infinite;
+}
+.portal-home-btn.active { color: var(--green, #22C55E); }
+
+@keyframes portal-home-bounce {
+  0%, 100% { transform: translateY(-2px); }
+  50% { transform: translateY(-5px); }
+}
