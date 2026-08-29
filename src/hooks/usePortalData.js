@@ -26,6 +26,7 @@ export function usePortalData(slug) {
     requestForm: null,
     commissionsOpen: true,
     commissionsClosedMessage: '',
+    servicesPricing: null,
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -51,7 +52,7 @@ export function usePortalData(slug) {
     try {
       const { data: profile, error: queryError } = await supabase
         .from('profiles')
-        .select('id, project_name, project_icon, accent_color, theme, cyberpunk_accent_color, social_links, platform_connections, project_banner_url, project_subtitle, global_bg_url, telegram_sticker_sets, request_form, commissions_open, commissions_closed_message')
+        .select('id, project_name, project_icon, accent_color, theme, cyberpunk_accent_color, social_links, platform_connections, project_banner_url, project_subtitle, global_bg_url, telegram_sticker_sets, request_form, commissions_open, commissions_closed_message, services_pricing')
         .eq('public_slug', slug)
         .single()
 
@@ -82,6 +83,7 @@ export function usePortalData(slug) {
         requestForm: profile.request_form && profile.request_form.fields ? profile.request_form : null,
         commissionsOpen: profile.commissions_open ?? true,
         commissionsClosedMessage: profile.commissions_closed_message || '',
+        servicesPricing: profile.services_pricing && profile.services_pricing.services ? profile.services_pricing : null,
       })
       setLoading(false)
     } catch (err) {

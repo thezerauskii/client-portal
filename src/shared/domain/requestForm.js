@@ -7,18 +7,19 @@
  * Pure data/functions — no imports.
  */
 
-/** Field types available in the form builder. */
+/** Field types available in the form builder, with a short description shown
+ *  on hover in the "add question" gallery. */
 export const FIELD_TYPES = [
-  { type: 'short_text', label: 'Texto corto' },
-  { type: 'long_text', label: 'Texto largo' },
-  { type: 'email', label: 'Email' },
-  { type: 'radio', label: 'Opción única' },
-  { type: 'checkbox', label: 'Opción múltiple' },
-  { type: 'select', label: 'Desplegable' },
-  { type: 'budget', label: 'Presupuesto (rango)' },
-  { type: 'date', label: 'Fecha / deadline' },
-  { type: 'image_upload', label: 'Subir imágenes de referencia' },
-  { type: 'section', label: 'Encabezado de sección' },
+  { type: 'short_text', label: 'Texto corto', desc: 'Una línea de texto (nombre, usuario, etc.)' },
+  { type: 'long_text', label: 'Texto largo', desc: 'Párrafo largo para descripciones detalladas' },
+  { type: 'email', label: 'Email', desc: 'Correo electrónico con validación automática' },
+  { type: 'radio', label: 'Opción única', desc: 'El cliente elige UNA opción de una lista' },
+  { type: 'checkbox', label: 'Opción múltiple', desc: 'El cliente elige VARIAS opciones (ideal para temas)' },
+  { type: 'select', label: 'Desplegable', desc: 'Lista desplegable para elegir una opción' },
+  { type: 'budget', label: 'Presupuesto', desc: 'Rango de presupuesto mínimo y máximo' },
+  { type: 'date', label: 'Fecha / deadline', desc: 'Selector de fecha límite' },
+  { type: 'image_upload', label: 'Imágenes', desc: 'El cliente sube imágenes de referencia' },
+  { type: 'section', label: 'Sección', desc: 'Título para separar y organizar preguntas' },
 ]
 
 /** Types that require an options list. */
