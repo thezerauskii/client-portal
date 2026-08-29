@@ -225,18 +225,15 @@ export default function PortalLayout({ children }) {
       {/* ─── Content column ─── */}
       <div className="portal-layout-right portal-layout-right--top">
         <header className="portal-layout-header">
-          {/* Banner image only (stats overlaid) */}
+          {/* Banner image only — clean, nothing overlaid */}
           <div
             className="portal-banner"
             style={projectBannerUrl ? { backgroundImage: `url(${projectBannerUrl})` } : undefined}
           >
             <div className="portal-banner-overlay" />
-            <div className="portal-banner-content">
-              <StatsBar artistId={artistId} />
-            </div>
           </div>
 
-          {/* Identity row BELOW the banner: avatar (only if set) + name + subtitle */}
+          {/* Identity row BELOW the banner: avatar (only if set) + name + subtitle + stats */}
           <div className="portal-identity-row">
             {avatarUrl && (
               <div className="portal-identity-avatar" style={{ borderColor: accentColor || undefined }}>
@@ -247,6 +244,7 @@ export default function PortalLayout({ children }) {
               <h1 className="portal-identity-name">{displayName}</h1>
               {projectSubtitle && <p className="portal-identity-subtitle">{projectSubtitle}</p>}
             </div>
+            <StatsBar artistId={artistId} />
           </div>
         </header>
 

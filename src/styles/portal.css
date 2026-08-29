@@ -1213,16 +1213,15 @@
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 }
 
-/* ====== STATS BAR (inside banner) ====== */
+/* ====== STATS BAR (in the identity row, below the banner) ====== */
 .portal-stats-bar {
   display: flex;
   align-items: center;
   gap: 1rem;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--surface2, #232329);
+  padding: 0.5rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid var(--border, #3a3a44);
 }
 
 .portal-stat {
@@ -1233,16 +1232,16 @@
 }
 
 .portal-stat-value {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 800;
-  color: #fff;
+  color: #ffffff;
 }
 
 .portal-stat-label {
   font-size: 0.55rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.65);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.8);
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -1250,7 +1249,7 @@
 .portal-stat-divider {
   width: 1px;
   height: 28px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 /* ====== HAMBURGER (mobile only) ====== */
@@ -1437,8 +1436,12 @@
     font-size: 1.2rem;
   }
 
-  .portal-stats-bar {
-    display: none;
+  /* Stats wrap below the name on mobile */
+  .portal-identity-row { flex-wrap: wrap; }
+  .portal-identity-row .portal-stats-bar {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-around;
   }
 }
 
@@ -1728,6 +1731,8 @@
   margin: 0 auto;
   padding: 1rem 1.5rem 1.25rem;
 }
+/* Push the stats to the far right of the identity row */
+.portal-identity-row .portal-stats-bar { margin-left: auto; }
 .portal-identity-avatar {
   width: 72px;
   height: 72px;
