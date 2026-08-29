@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import { usePortalContext } from '../../components/portal/PortalDataProvider.jsx'
 import { makeDefaultForm, SYSTEM_KEYS, validateAnswer, normalizeForm, fieldsForPage } from '../../shared/domain/requestForm.js'
+import { formatPrice as formatServicePrice } from '../../shared/domain/servicesPricing.js'
 import '../../styles/portal-request.css'
 
 const API_BASE = import.meta.env.VITE_FUNCTIONS_BASE || '/api'
@@ -103,11 +104,12 @@ function FormField({ field, value, onChange, error, uploading, onUpload }) {
 }
 
 export default function PortalRequest() {
-  const { artistId, requestForm, commissionsOpen, commissionsClosedMessage } = usePortalContext()
+  const { artistId, requestForm, commissionsOpen, commissionsClosedMessage, servicesPricing } = usePortalContext()
 
   const form = useMemo(() => normalizeForm(requestForm || makeDefaultForm()), [requestForm])
   const status = form.status || (commissionsOpen ? 'open' : 'closed')
   const pages = form.pages || ['Formulario']
+  const currency = servicesPricing?.currency || 'USD'
 
   const [page, setPage] = useState(0)
   const [values, setValues] = useState({})
@@ -245,6 +247,21 @@ export default function PortalRequest() {
   const isLastPage = page >= pages.length - 1
   const currentFields = fieldsForPage(form, page)
 
+  // Match the client's chosen service (any radio/select answer that equals a service title)
+  // so we can show its minimum price as a hint on the budget field.
+  const matchedService = useMemo(() => {
+    const services = servicesPricing?.services
+    if (!services || !services.length) return null
+    for (const f of form.fields) {
+      if (f.type === 'radio' || f.type === 'select') {
+        const val = values[f.id]
+        const found = services.find(s => s.title && s.title === val)
+        if (found) return found
+      }
+    }
+    return null
+  }, [servicesPricing, form.fields, values])
+
   return (
     <div className="preq-wrap">
       {form.headerImage && <img src={form.headerImage} alt="" className="preq-header-img" />}
@@ -268,6 +285,16 @@ export default function PortalRequest() {
               {pages.map((p, i) => (
                 <span key={i} className={`preq-step ${i === page ? 'active' : ''} ${i < page ? 'done' : ''}`}>{p}</span>
               ))}
+            </div>
+          )}
+
+          {/* Selected service price hint */}
+          {matchedService && (
+            <div className="preq-price-hint">
+              <span className="preq-price-hint-label">{matchedService.title}</span>
+              <span className="preq-price-hint-value">
+                {formatServicePrice(matchedService, currency)}
+              </span>
             </div>
           )}
 
