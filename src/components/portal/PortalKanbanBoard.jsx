@@ -6,6 +6,8 @@ import { useStickerProxy } from '../../hooks/useStickerProxy.js'
 import PortalStickerOverlay from './PortalStickerOverlay.jsx'
 import { getSectionIcon, IconCalendar, IconWarning, IconMailbox } from './PortalIcons.jsx'
 import { usePortalTasks } from '../../hooks/usePortalTasks.js'
+import { SECTION_IDS } from '../../shared/domain/sections.js'
+import { hashStr, defaultRot } from '../../shared/domain/stickerGeometry.js'
 import PortalStickerPicker from './PortalStickerPicker.jsx'
 import NsfwUnlockModal from './NsfwUnlockModal.jsx'
 
@@ -273,8 +275,6 @@ const PortalKanbanCard = React.memo(function PortalKanbanCard({ task, onViewImag
   // Handle place confirm — user chose position
   const handlePlaceConfirm = useCallback(async (sticker, pos) => {
     const stickerKey = `__sticker__${sticker.file_unique_id}`
-    const hash = Math.abs([...stickerKey].reduce((h, c) => (Math.imul(31, h) + c.charCodeAt(0)) | 0, 0))
-
     const newEntry = {
       type: 'sticker',
       file_id: sticker.file_id || '',
@@ -285,7 +285,7 @@ const PortalKanbanCard = React.memo(function PortalKanbanCard({ task, onViewImag
       count: 1,
       x: pos.x,
       y: pos.y,
-      rot: (hash % 22) - 11,
+      rot: defaultRot(stickerKey),
       placedBy: 'client',
       placedAt: new Date().toISOString(),
       _entering: true,
@@ -609,10 +609,10 @@ export default function PortalKanbanBoard() {
 
     // Fixed sections that always exist (as task parents in the DB)
     const FIXED_SECTIONS = [
-      { id: '6d74847d-beda-45fb-ac99-63c52212dfec', defaultLabel: 'Backlog y Proyectos', defaultColor: '#6B7280', emoji: null },
-      { id: 'd02c3d13-e87b-4b43-83b6-7407e689a32e', defaultLabel: 'comisiones en progreso', defaultColor: '#F59E0B', emoji: null },
-      { id: 'b5f9edcb-6fd0-4f89-a15d-9eb710ae37a0', defaultLabel: 'En Revisión', defaultColor: '#FACC15', emoji: null },
-      { id: '02ee79a6-abd7-436f-938b-4386c520e203', defaultLabel: 'Comisiones Nuevas', defaultColor: '#60A5FA', emoji: null },
+      { id: SECTION_IDS.BACKLOG, defaultLabel: 'Backlog y Proyectos', defaultColor: '#6B7280', emoji: null },
+      { id: SECTION_IDS.IN_PROGRESS, defaultLabel: 'comisiones en progreso', defaultColor: '#F59E0B', emoji: null },
+      { id: SECTION_IDS.IN_REVIEW, defaultLabel: 'En Revisión', defaultColor: '#FACC15', emoji: null },
+      { id: SECTION_IDS.NEW, defaultLabel: 'Comisiones Nuevas', defaultColor: '#60A5FA', emoji: null },
     ]
 
     // Build section map from tasks (sections are tasks with no parent_id)

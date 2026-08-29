@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "sync-shared": "node scripts/sync-shared.js",
+    "build": "node scripts/sync-shared.js && vite build",
     "preview": "vite preview",
     "test": "node --test api/*.test.js"
   },

@@ -18,20 +18,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-
-// ── Utilities ─────────────────────────────────────────────────────────────────
-
-function hashStr(str) {
-  let h = 0
-  for (let i = 0; i < str.length; i++) {
-    h = (Math.imul(31, h) + str.charCodeAt(i)) | 0
-  }
-  return Math.abs(h)
-}
-
-function defaultRot(key) {
-  return ((hashStr(key) % 22) - 11)
-}
+import { hashStr, defaultRot } from '../../shared/domain/stickerGeometry.js'
 
 // ── Draggable Sticker Chip ────────────────────────────────────────────────────
 

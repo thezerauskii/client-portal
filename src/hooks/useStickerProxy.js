@@ -6,6 +6,7 @@
  */
 
 import { useState, useCallback, useRef } from 'react'
+import { parseStickerSetName } from '../shared/domain/telegramUrl.js'
 
 // ── Base URL for API routes ───────────────────────────────────────────────────
 // Vercel API routes are at /api/ relative to the same domain — no need for external URL
@@ -32,9 +33,7 @@ export function useStickerProxy(artistId) {
     if (!FUNCTIONS_BASE || !artistId) return null
 
     // Extract set name from URL if user pastes full Telegram link
-    let setName = rawSetName
-    const urlMatch = rawSetName.match(/(?:t\.me\/addstickers\/)([A-Za-z0-9_]+)/)
-    if (urlMatch) setName = urlMatch[1]
+    const setName = parseStickerSetName(rawSetName)
 
     const cacheKey = `${artistId}:${setName}`
     if (stickerSetCache.has(cacheKey)) {
