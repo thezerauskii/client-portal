@@ -49,3 +49,91 @@ export function validateStickerPayload(sticker) {
 export function isValidStickerKey(stickerKey) {
   return typeof stickerKey === 'string' && stickerKey.length <= 160 && STICKER_KEY_PATTERN.test(stickerKey)
 }
+
+// ─── Request submission validation ───────────────────────────────────────────
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+/**
+ * Validate a commission request submission from the public portal.
+ * `answers` is an object { fieldId: { label, value } }.
+ * @returns {{ valid: true } | { valid: false, error: string }}
+ */
+export function validateRequestSubmission(body) {
+  if (!body || typeof body !== 'object') return { valid: false, error: 'Invalid body' }
+  if (!isValidId(body.artistId)) return { valid: false, error: 'Invalid artistId' }
+
+  const name = body.name
+  if (typeof name !== 'string' || name.trim().length < 1 || name.length > 100) {
+    return { valid: false, error: 'Nombre inválido' }
+  }
+
+  const email = body.email
+  if (typeof email !== 'string' || !EMAIL_PATTERN.test(email) || email.length > 200) {
+    return { valid: false, error: 'Correo inválido' }
+  }
+
+  // description optional but bounded
+  if (body.description != null && (typeof body.description !== 'string' || body.description.length > 5000)) {
+    return { valid: false, error: 'Descripción demasiado larga' }
+  }
+
+  // answers: object with bounded size
+  if (body.answers != null) {
+    if (typeof body.answers !== 'object' || Array.isArray(body.answers)) {
+      return { valid: false, error: 'Respuestas inválidas' }
+    }
+    const keys = Object.keys(body.answers)
+    if (keys.length > 50) return { valid: false, error: 'Demasiadas respuestas' }
+    for (const k of keys) {
+      const entry = body.answers[k]
+      if (!entry || typeof entry !== 'object') return { valid: false, error: 'Respuesta malformada' }
+      const val = entry.value
+      // value may be string, number, boolean, or array of strings
+      if (Array.isArray(val)) {
+        if (val.length > 30) return { valid: false, error: 'Demasiadas opciones' }
+        if (val.some(v => typeof v !== 'string' || v.length > 500)) return { valid: false, error: 'Opción inválida' }
+      } else if (val != null && !['string', 'number', 'boolean'].includes(typeof val)) {
+        return { valid: false, error: 'Valor de respuesta inválido' }
+      } else if (typeof val === 'string' && val.length > 5000) {
+        return { valid: false, error: 'Respuesta demasiado larga' }
+      }
+    }
+  }
+
+  // images: array of https URLs, max 5
+  if (body.images != null) {
+    if (!Array.isArray(body.images) || body.images.length > 5) {
+      return { valid: false, error: 'Demasiadas imágenes' }
+    }
+    for (const url of body.images) {
+      if (typeof url !== 'string' || !/^https:\/\//.test(url) || url.length > 1024) {
+        return { valid: false, error: 'URL de imagen inválida' }
+      }
+    }
+  }
+
+  return { valid: true }
+}
+
+/**
+ * Validate an image upload payload (base64 data URL).
+ * @returns {{ valid: true, mime, buffer } | { valid: false, error: string }}
+ */
+export function validateImageUpload(body) {
+  if (!body || typeof body !== 'object') return { valid: false, error: 'Invalid body' }
+  if (!isValidId(body.artistId)) return { valid: false, error: 'Invalid artistId' }
+
+  const dataUrl = body.dataUrl
+  if (typeof dataUrl !== 'string') return { valid: false, error: 'Missing image data' }
+
+  const match = dataUrl.match(/^data:(image\/(png|jpeg|jpg|webp|gif));base64,([A-Za-z0-9+/=]+)$/)
+  if (!match) return { valid: false, error: 'Formato de imagen no soportado' }
+
+  const mime = match[1]
+  const b64 = match[3]
+  // Approx byte size from base64 length; cap at 5MB
+  const approxBytes = Math.floor(b64.length * 0.75)
+  if (approxBytes > 5 * 1024 * 1024) return { valid: false, error: 'Imagen demasiado grande (máx 5MB)' }
+
+  return { valid: true, mime, base64: b64 }
+}

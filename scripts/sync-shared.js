@@ -20,7 +20,7 @@ const portalRoot = join(__dirname, '..')
 const sharedSrc = join(portalRoot, '..', 'shared', 'domain')
 const sharedDest = join(portalRoot, 'src', 'shared', 'domain')
 
-const FILES = ['sections.js', 'stickerGeometry.js', 'telegramUrl.js']
+const FILES = ['sections.js', 'stickerGeometry.js', 'telegramUrl.js', 'requestForm.js']
 
 if (!existsSync(sharedSrc)) {
   console.warn(`[sync-shared] Source not found at ${sharedSrc} — skipping (portal keeps its committed copy).`)

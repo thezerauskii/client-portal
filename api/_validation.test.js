@@ -106,3 +106,69 @@ test('isValidStickerKey rejects keys without prefix or with injection', () => {
   assert.equal(isValidStickerKey('__sticker__' + 'x'.repeat(200)), false)
   assert.equal(isValidStickerKey(null), false)
 })
+
+// ─── validateRequestSubmission ────────────────────────────────────────────
+import { validateRequestSubmission, validateImageUpload } from './_validation.js'
+
+test('valid request submission passes', () => {
+  const r = validateRequestSubmission({
+    artistId: '6d74847d-beda-45fb-ac99-63c52212dfec',
+    name: 'Juan',
+    email: 'juan@example.com',
+    description: 'Quiero un dibujo de mi personaje',
+    answers: { f_type: { label: 'Tipo', value: 'Busto' } },
+    images: ['https://x.supabase.co/ref.png'],
+  })
+  assert.equal(r.valid, true)
+})
+
+test('rejects invalid email', () => {
+  const r = validateRequestSubmission({ artistId: 'abc', name: 'Juan', email: 'not-an-email' })
+  assert.equal(r.valid, false)
+})
+
+test('rejects missing name', () => {
+  const r = validateRequestSubmission({ artistId: 'abc', email: 'a@b.com' })
+  assert.equal(r.valid, false)
+})
+
+test('rejects non-https image url', () => {
+  const r = validateRequestSubmission({
+    artistId: 'abc', name: 'J', email: 'a@b.com',
+    images: ['http://evil.com/x.png'],
+  })
+  assert.equal(r.valid, false)
+})
+
+test('rejects too many images', () => {
+  const r = validateRequestSubmission({
+    artistId: 'abc', name: 'J', email: 'a@b.com',
+    images: Array(6).fill('https://x.co/a.png'),
+  })
+  assert.equal(r.valid, false)
+})
+
+test('rejects oversized answer value', () => {
+  const r = validateRequestSubmission({
+    artistId: 'abc', name: 'J', email: 'a@b.com',
+    answers: { f1: { label: 'x', value: 'z'.repeat(6000) } },
+  })
+  assert.equal(r.valid, false)
+})
+
+// ─── validateImageUpload ──────────────────────────────────────────────────
+test('valid png data URL passes', () => {
+  const r = validateImageUpload({ artistId: 'abc', dataUrl: 'data:image/png;base64,iVBORw0KGgo=' })
+  assert.equal(r.valid, true)
+  assert.equal(r.mime, 'image/png')
+})
+
+test('rejects non-image data URL', () => {
+  const r = validateImageUpload({ artistId: 'abc', dataUrl: 'data:text/html;base64,PHNjcmlwdD4=' })
+  assert.equal(r.valid, false)
+})
+
+test('rejects missing dataUrl', () => {
+  const r = validateImageUpload({ artistId: 'abc' })
+  assert.equal(r.valid, false)
+})
