@@ -148,7 +148,7 @@ export default function PortalLayout({ children }) {
   const displayName = studioName || 'Estudio'
 
   return (
-    <div className="portal-layout">
+    <div className="portal-layout portal-layout--top">
       {/* ─── Background image (global_bg_url) ─── */}
       {globalBgUrl && (
         <div
@@ -158,55 +158,60 @@ export default function PortalLayout({ children }) {
         />
       )}
 
-      {/* ─── Sidebar (full height) ─── */}
-      <aside
-        className={`portal-layout-sidebar ${mobileMenuOpen ? 'portal-layout-sidebar--open' : ''}`}
-        aria-label="Navegación del portal"
-      >
-        <div className="portal-sidebar-brand">
-          <img src="/logo-possum.svg" alt="" className="portal-sidebar-logo" />
-          <span className="portal-sidebar-brand-name">Possumble</span>
-          <NavLink
-            to={`/p/${slug}`}
-            end
-            className="portal-home-btn"
-            title="Volver a la página principal"
-            aria-label="Ir a inicio"
-            onClick={() => setMobileMenuOpen(false)}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 9.5 12 3l9 6.5" /><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10" />
-            </svg>
-          </NavLink>
-        </div>
-        <nav className="portal-layout-sidebar-nav">
-          {NAV_ITEMS.map(item => {
-            const Icon = item.icon
-            return (
-              <NavLink
-                key={item.id}
-                to={`/p/${slug}/${item.path}`}
-                className={({ isActive }) =>
-                  `portal-sidebar-item ${isActive ? 'portal-sidebar-item--active' : ''}`
-                }
-                style={({ isActive }) =>
-                  isActive && accentColor
-                    ? { '--sidebar-accent': accentColor }
-                    : undefined
-                }
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <span className="portal-sidebar-item-icon">
-                  <Icon />
-                </span>
-                <span className="portal-sidebar-item-label">{item.label}</span>
-              </NavLink>
-            )
-          })}
-        </nav>
-      </aside>
+      {/* ─── Top navigation bar (store-style header) ─── */}
+      <header className="portal-topnav">
+        <div className="portal-topnav-inner">
+          <div className="portal-topnav-brand">
+            <img src="/logo-possum.svg" alt="" className="portal-topnav-logo" />
+            <span className="portal-topnav-name">{displayName}</span>
+            <NavLink
+              to={`/p/${slug}`}
+              end
+              className="portal-home-btn"
+              title="Ir a la página principal"
+              aria-label="Ir a inicio"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9.5 12 3l9 6.5" /><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10" />
+              </svg>
+            </NavLink>
+          </div>
 
-      {/* Backdrop for mobile sidebar */}
+          <button
+            className="portal-topnav-hamburger"
+            onClick={() => setMobileMenuOpen(o => !o)}
+            aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={mobileMenuOpen}
+          >
+            {mobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
+          </button>
+
+          <nav className={`portal-topnav-links ${mobileMenuOpen ? 'portal-topnav-links--open' : ''}`}>
+            {NAV_ITEMS.map(item => {
+              const Icon = item.icon
+              return (
+                <NavLink
+                  key={item.id}
+                  to={`/p/${slug}/${item.path}`}
+                  className={({ isActive }) =>
+                    `portal-topnav-item ${isActive ? 'portal-topnav-item--active' : ''}`
+                  }
+                  style={({ isActive }) =>
+                    isActive && accentColor ? { '--nav-accent': accentColor } : undefined
+                  }
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <span className="portal-topnav-item-icon"><Icon /></span>
+                  <span className="portal-topnav-item-label">{item.label}</span>
+                </NavLink>
+              )
+            })}
+          </nav>
+        </div>
+      </header>
+
+      {/* Backdrop for mobile menu */}
       {mobileMenuOpen && (
         <div
           className="portal-layout-backdrop"
@@ -215,9 +220,8 @@ export default function PortalLayout({ children }) {
         />
       )}
 
-      {/* ─── Right side: banner + content + footer ─── */}
-      <div className="portal-layout-right">
-        {/* Banner Header */}
+      {/* ─── Content column ─── */}
+      <div className="portal-layout-right portal-layout-right--top">
         <header className="portal-layout-header">
           <div
             className="portal-banner"
@@ -225,14 +229,6 @@ export default function PortalLayout({ children }) {
           >
             <div className="portal-banner-overlay" />
             <div className="portal-banner-content">
-              <button
-                className="portal-layout-hamburger"
-                onClick={() => setMobileMenuOpen(o => !o)}
-                aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-                aria-expanded={mobileMenuOpen}
-              >
-                {mobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
-              </button>
               <div className="portal-banner-text">
                 <h1 className="portal-banner-title">{displayName}</h1>
                 {projectSubtitle && (
@@ -244,12 +240,10 @@ export default function PortalLayout({ children }) {
           </div>
         </header>
 
-        {/* Main content */}
         <main className="portal-layout-main">
           {children}
         </main>
 
-        {/* Footer */}
         <footer className="portal-layout-footer">
           <span>
             Powered by{' '}

@@ -1596,3 +1596,110 @@
   0%, 100% { transform: translateY(-2px); }
   50% { transform: translateY(-5px); }
 }
+
+/* ============================================================
+   TOP NAVIGATION LAYOUT (store-style — replaces left sidebar)
+   Works for both desktop and mobile.
+   ============================================================ */
+.portal-layout--top {
+  flex-direction: column;   /* stack: topnav on top, content below */
+}
+
+.portal-topnav {
+  position: sticky;
+  top: 0;
+  z-index: 500;
+  width: 100%;
+  background: var(--surface, #16161a);
+  border-bottom: 1px solid var(--border, #2e2e36);
+}
+.portal-topnav-inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+  height: 58px;
+}
+
+.portal-topnav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.portal-topnav-logo { width: 30px; height: 30px; border-radius: 50%; }
+.portal-topnav-name {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text, #e8e8ec);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Horizontal nav links (centered/right) */
+.portal-topnav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.portal-topnav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  color: var(--text-muted, #9a9aa4);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 150ms ease, background 150ms ease;
+}
+.portal-topnav-item:hover { color: var(--text, #e8e8ec); background: rgba(255,255,255,0.05); }
+.portal-topnav-item--active { color: var(--nav-accent, var(--green, #22C55E)); }
+.portal-topnav-item-icon { display: inline-flex; }
+
+.portal-topnav-hamburger {
+  display: none;
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--text, #e8e8ec);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+}
+.portal-topnav-hamburger:hover { background: rgba(255,255,255,0.08); }
+
+/* The top-nav content column takes full width */
+.portal-layout-right--top { width: 100%; }
+
+/* ── Mobile: collapse nav into a dropdown under the bar ── */
+@media (max-width: 860px) {
+  .portal-topnav-hamburger { display: inline-flex; }
+  .portal-topnav-links {
+    display: none;
+    position: absolute;
+    top: 58px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    background: var(--surface, #16161a);
+    border-bottom: 1px solid var(--border, #2e2e36);
+    padding: 0.4rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  .portal-topnav-links--open { display: flex; }
+  .portal-topnav-item { padding: 12px 14px; border-radius: 10px; font-size: 0.95rem; }
+  .portal-topnav-name { max-width: 140px; }
+}
