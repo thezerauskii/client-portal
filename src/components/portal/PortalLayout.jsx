@@ -137,7 +137,7 @@ function StatsBar({ artistId }) {
 /* ─── Main Layout ─── */
 export default function PortalLayout({ children }) {
   const { slug } = useParams()
-  const { studioName, projectIcon, projectAvatarUrl, accentColor, artistId, projectBannerUrl, projectSubtitle, globalBgUrl } = usePortalContext()
+  const { studioName, projectIcon, projectAvatarUrl, projectBio, accentColor, artistId, projectBannerUrl, projectSubtitle, globalBgUrl } = usePortalContext()
   // Profile picture: only an actual image URL counts (no emoji placeholder).
   const avatarUrl = projectAvatarUrl || (typeof projectIcon === 'string' && projectIcon.startsWith('http') ? projectIcon : null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -243,6 +243,7 @@ export default function PortalLayout({ children }) {
             <div className="portal-identity-text">
               <h1 className="portal-identity-name">{displayName}</h1>
               {projectSubtitle && <p className="portal-identity-subtitle">{projectSubtitle}</p>}
+              {projectBio && <p className="portal-identity-bio">{projectBio}</p>}
             </div>
             <StatsBar artistId={artistId} />
           </div>

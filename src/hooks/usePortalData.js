@@ -53,7 +53,7 @@ export function usePortalData(slug) {
       // Preferred column set (includes project_avatar_url). If that column
       // doesn't exist yet (SQL migration not run), fall back gracefully so the
       // whole portal doesn't break — the avatar just won't show until migrated.
-      const FULL_COLS = 'id, project_name, project_icon, project_avatar_url, accent_color, theme, cyberpunk_accent_color, social_links, platform_connections, project_banner_url, project_subtitle, global_bg_url, telegram_sticker_sets, request_form, commissions_open, commissions_closed_message, services_pricing'
+      const FULL_COLS = 'id, project_name, project_icon, project_avatar_url, project_bio, accent_color, theme, cyberpunk_accent_color, social_links, platform_connections, project_banner_url, project_subtitle, global_bg_url, telegram_sticker_sets, request_form, commissions_open, commissions_closed_message, services_pricing'
       const FALLBACK_COLS = 'id, project_name, project_icon, accent_color, theme, cyberpunk_accent_color, social_links, platform_connections, project_banner_url, project_subtitle, global_bg_url, telegram_sticker_sets, request_form, commissions_open, commissions_closed_message, services_pricing'
 
       let { data: profile, error: queryError } = await supabase
@@ -62,8 +62,8 @@ export function usePortalData(slug) {
         .eq('public_slug', slug)
         .single()
 
-      // 42703 = undefined_column → retry without project_avatar_url
-      if (queryError && (queryError.code === '42703' || /project_avatar_url/.test(queryError.message || ''))) {
+      // 42703 = undefined_column → retry without the newer optional columns
+      if (queryError && (queryError.code === '42703' || /project_avatar_url|project_bio/.test(queryError.message || ''))) {
         ({ data: profile, error: queryError } = await supabase
           .from('profiles')
           .select(FALLBACK_COLS)
@@ -87,6 +87,7 @@ export function usePortalData(slug) {
         studioName: profile.project_name || '',
         projectIcon: profile.project_icon || null,
         projectAvatarUrl: profile.project_avatar_url || null,
+        projectBio: profile.project_bio || null,
         accentColor: profile.accent_color || null,
         theme: profile.theme || 'default',
         cyberpunkAccentColor: profile.cyberpunk_accent_color || '#f472b6',
