@@ -16,11 +16,11 @@ function MusicIcon() {
 const NAV_ITEMS = [
   { id: 'commissions', path: 'commissions', label: 'Estudio de Comisiones', icon: CommissionsIcon },
   { id: 'services', path: 'services', label: 'Servicios y Precios', icon: PriceIcon },
-  { id: 'music', path: 'music', label: 'Estudio de Sonido', icon: MusicIcon },
   { id: 'request', path: 'request', label: 'Solicitar comisión', icon: RequestIcon },
   { id: 'portfolio', path: 'portfolio', label: 'Galería de Portafolio', icon: PortfolioIcon },
   { id: 'calendar', path: 'calendar', label: 'Calendario', icon: CalendarIcon },
   { id: 'links', path: 'links', label: 'Medios de comunicación', icon: LinksIcon },
+  { id: 'music', path: 'music', label: 'Estudio de Sonido', icon: MusicIcon },
 ]
 
 /* ─── SVG Icons (matching Electron sidebarIcons style) ─── */

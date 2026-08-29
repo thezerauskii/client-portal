@@ -80,3 +80,37 @@
 .tc-actions { display: flex; gap: 4px; }
 .tc-actions button { background: transparent; border: 1px solid var(--border, #3a3a44); color: var(--text-muted, #9a9aa4); border-radius: 6px; cursor: pointer; width: 24px; height: 24px; font-size: 0.8rem; }
 .tc-actions button:hover { color: var(--text, #e8e8ec); border-color: var(--accent, #22C55E); }
+
+/* ── Vintage Knob ── */
+.knob-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.knob { position: relative; cursor: ns-resize; outline: none; touch-action: none; }
+.knob:focus-visible { filter: drop-shadow(0 0 6px var(--accent, #22C55E)); }
+.knob-ticks { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.knob-body {
+  position: absolute; inset: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #3a3a42, #17171b 70%);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), 0 4px 10px rgba(0,0,0,0.5);
+}
+.knob-indicator { position: absolute; inset: 0; display: flex; justify-content: center; }
+.knob-pointer { width: 4px; height: 42%; border-radius: 2px; margin-top: 6%; box-shadow: 0 0 6px currentColor; }
+.knob-endlabels { display: flex; justify-content: space-between; width: 100%; font-size: 0.62rem; color: var(--text-muted, #9a9aa4); text-transform: uppercase; letter-spacing: 0.04em; }
+.knob-label { font-size: 0.72rem; font-weight: 700; color: var(--text-dim, #b4b4bd); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ── Spectrogram compare ── */
+.sc-compare { background: #0a0a0e; border: 1px solid var(--border, #2e2e36); border-radius: 14px; padding: 16px; }
+.sc-canvas-wrap { position: relative; }
+.sc-canvas { width: 100%; display: block; border-radius: 8px; }
+.sc-legend { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.78rem; font-weight: 700; }
+.sc-legend-a { color: #60a5fa; }
+.sc-legend-b { color: var(--accent, #22C55E); }
+.sc-controls { display: flex; align-items: center; justify-content: center; gap: 24px; margin-top: 14px; }
+.sc-hint { text-align: center; font-size: 0.74rem; color: var(--text-muted, #8b8b93); margin: 10px 0 0; }
+
+/* ── Empty preview cards ── */
+.mm-empty-card {
+  border: 1.5px dashed var(--border, #3a3a44); border-radius: 12px;
+  padding: 1.5rem; text-align: center; color: var(--text-muted, #8b8b93);
+  background: rgba(255,255,255,0.02);
+}

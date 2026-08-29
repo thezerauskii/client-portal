@@ -1633,11 +1633,12 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 0 1.25rem;
+  padding: 0 0.75rem 0 0.5rem;   /* logo hugs the left */
   height: 58px;
 }
+.portal-topnav-brand { margin-right: 0.5rem; }
 
 .portal-topnav-brand {
   display: flex;

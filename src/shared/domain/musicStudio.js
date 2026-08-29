@@ -70,6 +70,21 @@ export function crossfadeGains(x) {
   }
 }
 
+/**
+ * Map a 0..1 knob value to a rotary angle in degrees for a vintage knob.
+ * Sweeps from -135° (fully left = Original) to +135° (fully right = Master).
+ */
+export function knobAngle(x) {
+  const t = Math.max(0, Math.min(1, Number(x) || 0))
+  return -135 + t * 270
+}
+
+/** Bézier path for a synth patch cable between two points (with gravity sag). */
+export function cablePath(sx, sy, tx, ty, sag = 40) {
+  const dx = Math.abs(tx - sx) * 0.4
+  return `M ${sx} ${sy} C ${sx + dx} ${sy + sag}, ${tx - dx} ${ty + sag}, ${tx} ${ty}`
+}
+
 // ── Downsample audio samples to N min/max peak pairs (for Canvas waveform) ──
 /**
  * @param {Float32Array|number[]} samples
@@ -102,14 +117,29 @@ export function downsamplePeaks(samples, n) {
 }
 
 // ── Factory helpers ──────────────────────────────────────────────────────────
+/** Work session types (eMastered-style). "album" intentionally omitted. */
+export const WORK_SESSIONS = [
+  { id: 'single', label: 'Single', desc: 'Sube una pista del cliente y tu master para comparar.' },
+  { id: 'stems', label: 'Stems', desc: 'Sube los stems para una comparación coordinada.' },
+]
+
+/** Common music genres (cards). */
+export const GENRES = [
+  'Pop', 'Rock', 'Hip-Hop', 'Electrónica', 'Dubstep', 'House', 'Techno',
+  'Trap', 'Lo-fi', 'Jazz', 'Clásica', 'Metal', 'R&B', 'Reggaetón', 'Ambient', 'Otro',
+]
+
 export function makeComparison() {
   return {
     id: makeId('cmp'),
     title: 'Antes / Después',
-    trackA: null, // { url, name, storageKey }
-    trackB: null,
+    session: 'single',   // 'single' | 'stems'
+    genre: '',
+    subgenre: '',
+    trackA: null, // { url, name, storageKey }  — original (cliente)
+    trackB: null, // master
     labelA: 'Original',
-    labelB: 'Remaster',
+    labelB: 'Master',
     sortOrder: 0,
   }
 }
@@ -131,12 +161,13 @@ export function makeGig(tier = 'basic') {
     id: makeId('gig'),
     title: '',
     description: '',
+    imageUrl: '',      // Fiverr-style gig thumbnail
     includes: [],
     price: '',
     currency: 'USD',
     deliveryDays: '',
     revisions: '',
-    fiverrUrl: '',
+    fiverrUrl: '',     // clicking the card/image goes here
     tier, // 'basic' | 'standard' | 'pro'
     exampleTrackIds: [],
     sortOrder: 0,
@@ -174,6 +205,9 @@ export function normalizeMusicStudio(data) {
     gigs: arr(d.gigs),
     tools: arr(d.tools),
     testimonials: arr(d.testimonials),
+    soundcloudUser: typeof d.soundcloudUser === 'string' ? d.soundcloudUser : '',
+    videoDemoUrl: typeof d.videoDemoUrl === 'string' ? d.videoDemoUrl : '',
+    theme: d.theme || 'studio', // 'studio' | 'synth-analog'
     fxDemo: {
       audio: d.fxDemo?.audio || null,
       enabledDefaults: {

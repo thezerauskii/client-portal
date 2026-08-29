@@ -72,3 +72,23 @@
 .pm-stars { font-size: 0.95rem; margin-bottom: 6px; }
 .pm-testimonial-text { font-size: 0.9rem; font-style: italic; color: var(--text-dim, #b4b4bd); margin: 0 0 8px; }
 .pm-testimonial-author { font-size: 0.8rem; font-weight: 700; color: var(--text, #e8e8ec); }
+
+/* Gig image cards (Fiverr-style) */
+.pm-gig-imglink { display: block; margin: -18px -18px 10px; }
+.pm-gig-img { width: 100%; height: 130px; object-fit: cover; border-radius: 14px 14px 0 0; display: block; }
+
+/* Video demo */
+.pm-video { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden; background: #000; }
+.pm-video iframe, .pm-video video { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+
+/* SoundCloud link */
+.pm-soundcloud { display: inline-block; padding: 12px 20px; border-radius: 999px; background: #ff5500; color: #fff; font-weight: 700; text-decoration: none; }
+.pm-soundcloud:hover { filter: brightness(1.08); }
+
+/* Analog theme + synth-cable section backdrop */
+.pm-section--analog { position: relative; }
+.pm-root--analog .pm-section {
+  background: linear-gradient(180deg, rgba(30,26,22,0.4), transparent);
+}
+.pm-root--analog .pm-h2 { text-shadow: 0 0 12px rgba(244,114,182,0.25); }
+.synth-cable path { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5)); }

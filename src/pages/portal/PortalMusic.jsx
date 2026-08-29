@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { usePortalContext } from '../../components/portal/PortalDataProvider.jsx'
 import { normalizeMusicStudio } from '../../shared/domain/musicStudio.js'
-import ABComparePlayer from '../../components/portal/music/ABComparePlayer.jsx'
+import SpectrogramCompare from '../../components/portal/music/SpectrogramCompare.jsx'
 import WaveformPlayer from '../../components/portal/music/WaveformPlayer.jsx'
 import FxRack from '../../components/portal/music/FxRack.jsx'
+import { SynthCablesBackground } from '../../components/portal/music/SynthCable.jsx'
 import './PortalMusic.css'
 
 /** POST helper — fire-and-forget analytics/interaction endpoints. */
@@ -44,14 +45,10 @@ export default function PortalMusic() {
     post('/api/music/like', { artistId, trackId, clientId })
   }
 
-  const hasContent = data.comparisons.length || data.library.length || data.gigs.length || hero.headline
-
-  if (!hasContent) {
-    return <div className="pm-empty">Este artista aún no ha configurado su estudio de sonido.</div>
-  }
+  const isAnalog = data.theme === 'synth-analog'
 
   return (
-    <div className="pm-root" style={{ '--accent': accent }}>
+    <div className={`pm-root ${isAnalog ? 'pm-root--analog' : ''}`} style={{ '--accent': accent }}>
       {/* ── HERO ── */}
       <section className="pm-hero" style={hero.bgType === 'image' && hero.bgUrl ? { backgroundImage: `url(${hero.bgUrl})` } : undefined}>
         {hero.bgType === 'video' && hero.bgUrl && (
@@ -79,14 +76,17 @@ export default function PortalMusic() {
         </div>
       </section>
 
-      {/* ── FEATURED DEMO ── */}
-      {featured?.trackA?.url && featured?.trackB?.url && (
-        <section className="pm-section">
-          <h2 className="pm-h2">Escucha la magia</h2>
-          <p className="pm-sub">Arrastra el control para escuchar el antes y el después.</p>
-          <ABComparePlayer trackA={featured.trackA} trackB={featured.trackB} labelA={featured.labelA} labelB={featured.labelB} accent={accent} />
-        </section>
-      )}
+      {/* ── FEATURED DEMO (always present as preview) ── */}
+      <section className="pm-section pm-section--analog">
+        {isAnalog && <SynthCablesBackground accent={accent} />}
+        <h2 className="pm-h2">Escucha la magia</h2>
+        <p className="pm-sub">Gira la perilla para escuchar el master frente al original, en tiempo real.</p>
+        {featured?.trackA?.url && featured?.trackB?.url ? (
+          <SpectrogramCompare trackA={featured.trackA} trackB={featured.trackB} labelA={featured.labelA} labelB={featured.labelB} accent={accent} />
+        ) : (
+          <div className="mm-empty-card">Aquí aparecerá el comparador de master (Original vs. Master) con una perilla analógica.</div>
+        )}
+      </section>
 
       {/* ── GIGS ── */}
       {data.gigs.length > 0 && (
@@ -95,6 +95,11 @@ export default function PortalMusic() {
           <div className="pm-gigs">
             {data.gigs.map(g => (
               <div className="pm-gig" key={g.id}>
+                {g.imageUrl && (
+                  <a href={g.fiverrUrl || '#'} target="_blank" rel="noopener noreferrer" onClick={() => g.fiverrUrl && onFiverr(g.id)} className="pm-gig-imglink">
+                    <img src={g.imageUrl} alt={g.title} className="pm-gig-img" />
+                  </a>
+                )}
                 <span className={`pm-gig-tier pm-gig-tier--${g.tier}`}>{g.tier === 'basic' ? 'Básico' : g.tier === 'pro' ? 'Pro' : 'Estándar'}</span>
                 <h3 className="pm-gig-title">{g.title}</h3>
                 <div className="pm-gig-price" style={{ color: accent }}>{g.price ? `${g.price} ${g.currency || ''}` : ''}</div>
@@ -123,7 +128,7 @@ export default function PortalMusic() {
           <h2 className="pm-h2">Más comparaciones</h2>
           {data.comparisons.filter(c => c !== featured).map(c => (
             c.trackA?.url && c.trackB?.url
-              ? <div className="pm-block" key={c.id}><h3 className="pm-block-title">{c.title}</h3><ABComparePlayer trackA={c.trackA} trackB={c.trackB} labelA={c.labelA} labelB={c.labelB} accent={accent} /></div>
+              ? <div className="pm-block" key={c.id}><h3 className="pm-block-title">{c.title}{c.genre ? ` · ${c.genre}` : ''}</h3><SpectrogramCompare trackA={c.trackA} trackB={c.trackB} labelA={c.labelA} labelB={c.labelB} accent={accent} /></div>
               : null
           ))}
         </section>
@@ -150,6 +155,32 @@ export default function PortalMusic() {
               <WaveformPlayer url={t.audio.url} accent={accent} onEnded={() => {}} registerSeek={() => {}} onTime={(cur) => { if (cur > 0.5 && !t.__counted) { t.__counted = true; onPlay(t.id) } }} />
             </div>
           ))}
+        </section>
+      )}
+
+      {/* ── VIDEO DEMO ── */}
+      {data.videoDemoUrl && (
+        <section className="pm-section">
+          <h2 className="pm-h2">Video demo</h2>
+          {/youtube\.com|youtu\.be/.test(data.videoDemoUrl) ? (
+            <div className="pm-video">
+              <iframe
+                src={data.videoDemoUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                title="Video demo" frameBorder="0" allow="accelerometer; encrypted-media" allowFullScreen />
+            </div>
+          ) : (
+            <video className="pm-video" src={data.videoDemoUrl} controls />
+          )}
+        </section>
+      )}
+
+      {/* ── SOUNDCLOUD ── */}
+      {data.soundcloudUser && (
+        <section className="pm-section">
+          <h2 className="pm-h2">Escúchame en SoundCloud</h2>
+          <a className="pm-soundcloud" href={`https://soundcloud.com/${data.soundcloudUser}`} target="_blank" rel="noopener noreferrer">
+            @{data.soundcloudUser} en SoundCloud →
+          </a>
         </section>
       )}
 
