@@ -81,9 +81,10 @@ const REVIEW_SECTION_ID = 'b5f9edcb-6fd0-4f89-a15d-9eb710ae37a0'
 function StatsBar({ artistId }) {
   const { tasks } = usePortalTasks(artistId)
 
-  // Derive stats from the shared tasks set (no separate query)
+  // Derive stats from the shared tasks set (no separate query).
+  // Match Electron: only count commissions that are NOT completed.
   const stats = useMemo(() => {
-    const commissions = (tasks || []).filter(t => t.parent_id)
+    const commissions = (tasks || []).filter(t => t.parent_id && !t.completed_state)
     const active = commissions.length
     const inReview = commissions.filter(t => t.parent_id === REVIEW_SECTION_ID).length
     const avgProgress = active > 0

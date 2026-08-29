@@ -18,7 +18,7 @@ import { supabase, isSupabaseReady } from '../lib/supabase.js'
 const _cache = new Map()
 
 const TASK_COLUMNS =
-  'id, text, parent_id, priority, stage, client, client_email, deadline, note, attachments, checklist, reactions, is_nsfw, nsfw_access_code'
+  'id, text, parent_id, priority, stage, client, client_email, deadline, note, attachments, checklist, reactions, is_nsfw, nsfw_access_code, completed_state'
 
 async function fetchTasksForArtist(artistId) {
   const { data, error } = await supabase
