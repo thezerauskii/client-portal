@@ -5,9 +5,18 @@ import { usePortalTasks } from '../../hooks/usePortalTasks.js'
 import { isActiveCommission, REVIEW_SECTION_ID } from '../../shared/domain/sections.js'
 
 /* ─── Navigation items for the portal sidebar ─── */
+function MusicIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18V5l10-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="16" cy="16" r="3" />
+    </svg>
+  )
+}
+
 const NAV_ITEMS = [
   { id: 'commissions', path: 'commissions', label: 'Estudio de Comisiones', icon: CommissionsIcon },
   { id: 'services', path: 'services', label: 'Servicios y Precios', icon: PriceIcon },
+  { id: 'music', path: 'music', label: 'Estudio de Sonido', icon: MusicIcon },
   { id: 'request', path: 'request', label: 'Solicitar comisión', icon: RequestIcon },
   { id: 'portfolio', path: 'portfolio', label: 'Galería de Portafolio', icon: PortfolioIcon },
   { id: 'calendar', path: 'calendar', label: 'Calendario', icon: CalendarIcon },

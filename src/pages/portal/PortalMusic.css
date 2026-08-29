@@ -1,0 +1,74 @@
+/* PortalMusic — conversion-focused sound designer landing */
+.pm-root { display: flex; flex-direction: column; gap: 0; }
+.pm-empty { padding: 3rem 1rem; text-align: center; color: var(--text-muted, #9a9aa4); }
+
+/* Hero */
+.pm-hero {
+  position: relative; overflow: hidden;
+  min-height: 340px; display: flex; align-items: center; justify-content: center;
+  background-size: cover; background-position: center;
+  border-radius: 0 0 20px 20px;
+}
+.pm-hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.pm-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(13,13,18,0.5), rgba(13,13,18,0.92)); }
+.pm-hero-content { position: relative; z-index: 1; text-align: center; padding: 2.5rem 1.25rem; max-width: 760px; }
+.pm-hero-title { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 900; letter-spacing: -0.02em; margin: 0 0 0.5rem; color: #fff; }
+.pm-hero-tagline { font-size: 1.05rem; color: rgba(255,255,255,0.85); margin: 0 0 1.25rem; }
+.pm-metrics { display: flex; gap: 1.75rem; justify-content: center; flex-wrap: wrap; margin: 1.25rem 0; }
+.pm-metric { display: flex; flex-direction: column; }
+.pm-metric-val { font-size: 1.6rem; font-weight: 800; }
+.pm-metric-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: rgba(255,255,255,0.7); }
+.pm-cta {
+  display: inline-block; margin-top: 0.5rem; padding: 13px 28px; border-radius: 999px;
+  color: #0b0b0e; font-weight: 800; font-size: 1rem; text-decoration: none;
+  box-shadow: 0 8px 26px rgba(0,0,0,0.4); transition: transform 140ms ease, filter 150ms ease;
+}
+.pm-cta:hover { transform: translateY(-2px); filter: brightness(1.08); }
+
+/* Sections */
+.pm-section { max-width: 900px; margin: 0 auto; padding: 2rem 1.25rem; width: 100%; }
+.pm-h2 { font-size: 1.4rem; font-weight: 800; margin: 0 0 0.35rem; color: var(--text, #e8e8ec); }
+.pm-sub { color: var(--text-muted, #9a9aa4); margin: 0 0 1rem; font-size: 0.9rem; }
+.pm-block { margin-bottom: 1.5rem; }
+.pm-block-title { font-size: 1rem; font-weight: 700; margin: 0 0 0.5rem; }
+.pm-final { text-align: center; }
+
+/* Gigs */
+.pm-gigs { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; }
+.pm-gig { background: var(--surface, #1a1a1e); border: 1px solid var(--border, #2e2e36); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
+.pm-gig-tier { align-self: flex-start; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 3px 9px; border-radius: 999px; background: rgba(255,255,255,0.08); color: var(--text-muted, #9a9aa4); }
+.pm-gig-tier--pro { background: rgba(236,72,153,0.18); color: #f472b6; }
+.pm-gig-tier--standard { background: rgba(96,165,250,0.18); color: #60a5fa; }
+.pm-gig-title { font-size: 1.05rem; font-weight: 700; margin: 0; }
+.pm-gig-price { font-size: 1.5rem; font-weight: 900; }
+.pm-gig-desc { font-size: 0.85rem; color: var(--text-dim, #b4b4bd); margin: 0; }
+.pm-gig-includes { list-style: none; margin: 4px 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.pm-gig-includes li { font-size: 0.82rem; color: var(--text-dim, #b4b4bd); padding-left: 18px; position: relative; }
+.pm-gig-includes li::before { content: '✓'; position: absolute; left: 0; color: var(--accent, #22C55E); font-weight: 800; }
+.pm-gig-meta { display: flex; gap: 12px; font-size: 0.75rem; color: var(--text-muted, #9a9aa4); }
+.pm-gig-cta { margin-top: auto; text-align: center; padding: 10px; border-radius: 10px; border: 1.5px solid; font-weight: 700; text-decoration: none; transition: background 150ms ease; }
+.pm-gig-cta:hover { background: rgba(255,255,255,0.05); }
+
+/* Tracks / library */
+.pm-track { background: var(--surface, #1a1a1e); border: 1px solid var(--border, #2e2e36); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+.pm-track-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.pm-track-title { font-size: 1rem; font-weight: 700; margin: 0; }
+.pm-track-cat { font-size: 0.7rem; color: var(--text-muted, #9a9aa4); }
+.pm-track-desc { font-size: 0.85rem; color: var(--text-dim, #b4b4bd); margin: 0 0 8px; }
+.pm-like { background: transparent; border: 1px solid var(--border, #3a3a44); border-radius: 8px; width: 34px; height: 34px; cursor: pointer; color: var(--text-muted, #9a9aa4); display: flex; align-items: center; justify-content: center; }
+.pm-like--on { border-color: var(--accent, #22C55E); }
+
+/* Tools */
+.pm-tools { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.pm-tool { display: flex; gap: 10px; align-items: center; background: var(--surface, #1a1a1e); border: 1px solid var(--border, #2e2e36); border-radius: 10px; padding: 12px; }
+.pm-tool-logo { width: 38px; height: 38px; object-fit: contain; border-radius: 6px; }
+.pm-tool-name { font-weight: 700; font-size: 0.9rem; display: block; }
+.pm-tool-cat { font-size: 0.7rem; color: var(--accent, #22C55E); }
+.pm-tool-note { font-size: 0.78rem; color: var(--text-muted, #9a9aa4); margin: 4px 0 0; }
+
+/* Testimonials */
+.pm-testimonials { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.pm-testimonial { background: var(--surface, #1a1a1e); border: 1px solid var(--border, #2e2e36); border-radius: 12px; padding: 16px; }
+.pm-stars { font-size: 0.95rem; margin-bottom: 6px; }
+.pm-testimonial-text { font-size: 0.9rem; font-style: italic; color: var(--text-dim, #b4b4bd); margin: 0 0 8px; }
+.pm-testimonial-author { font-size: 0.8rem; font-weight: 700; color: var(--text, #e8e8ec); }

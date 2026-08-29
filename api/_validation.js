@@ -137,3 +137,64 @@ export function validateImageUpload(body) {
 
   return { valid: true, mime, base64: b64 }
 }
+
+// ─── Music Studio interaction validation ─────────────────────────────────────
+
+/** trackId: bounded string (matches library item ids like 'trk_xxx'). */
+export function isValidTrackId(v) {
+  return typeof v === 'string' && v.length > 0 && v.length <= 128 && ID_PATTERN.test(v)
+}
+
+/** clientId: opaque local id from the visitor (bounded). */
+export function isValidClientId(v) {
+  return typeof v === 'string' && v.length > 0 && v.length <= 128 && ID_PATTERN.test(v)
+}
+
+/** Validate a like payload. */
+export function validateLike(body) {
+  if (!body || typeof body !== 'object') return { valid: false, error: 'Invalid body' }
+  if (!isValidId(body.artistId)) return { valid: false, error: 'Invalid artistId' }
+  if (!isValidTrackId(body.trackId)) return { valid: false, error: 'Invalid trackId' }
+  if (!isValidClientId(body.clientId)) return { valid: false, error: 'Invalid clientId' }
+  return { valid: true }
+}
+
+/** Validate a play payload. */
+export function validatePlay(body) {
+  if (!body || typeof body !== 'object') return { valid: false, error: 'Invalid body' }
+  if (!isValidId(body.artistId)) return { valid: false, error: 'Invalid artistId' }
+  if (!isValidTrackId(body.trackId)) return { valid: false, error: 'Invalid trackId' }
+  return { valid: true }
+}
+
+/** Validate a Fiverr-click payload. target = 'hero' | gigId. */
+export function validateFiverrClick(body) {
+  if (!body || typeof body !== 'object') return { valid: false, error: 'Invalid body' }
+  if (!isValidId(body.artistId)) return { valid: false, error: 'Invalid artistId' }
+  if (typeof body.target !== 'string' || body.target.length < 1 || body.target.length > 128 || !ID_PATTERN.test(body.target)) {
+    return { valid: false, error: 'Invalid target' }
+  }
+  return { valid: true }
+}
+
+/** Validate a timeline comment payload. */
+export function validateMusicComment(body) {
+  if (!body || typeof body !== 'object') return { valid: false, error: 'Invalid body' }
+  if (!isValidId(body.artistId)) return { valid: false, error: 'Invalid artistId' }
+  if (!isValidTrackId(body.trackId)) return { valid: false, error: 'Invalid trackId' }
+  const t = Number(body.timeSec)
+  if (!Number.isFinite(t) || t < 0 || t > 86400) return { valid: false, error: 'Invalid timeSec' }
+  const text = body.text
+  const hasText = typeof text === 'string' && text.trim().length > 0
+  const hasSticker = body.sticker && typeof body.sticker === 'object'
+  if (!hasText && !hasSticker) return { valid: false, error: 'Comentario vacío' }
+  if (hasText && text.length > 500) return { valid: false, error: 'Comentario demasiado largo' }
+  if (body.author != null && (typeof body.author !== 'string' || body.author.length > 60)) {
+    return { valid: false, error: 'Autor inválido' }
+  }
+  if (hasSticker) {
+    const s = validateStickerPayload(body.sticker)
+    if (!s.valid) return s
+  }
+  return { valid: true }
+}

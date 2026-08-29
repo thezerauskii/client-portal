@@ -53,7 +53,7 @@ export function usePortalData(slug) {
       // Preferred column set (includes project_avatar_url). If that column
       // doesn't exist yet (SQL migration not run), fall back gracefully so the
       // whole portal doesn't break — the avatar just won't show until migrated.
-      const FULL_COLS = 'id, project_name, project_icon, project_avatar_url, project_bio, accent_color, theme, cyberpunk_accent_color, social_links, platform_connections, project_banner_url, project_subtitle, global_bg_url, telegram_sticker_sets, request_form, commissions_open, commissions_closed_message, services_pricing'
+      const FULL_COLS = 'id, project_name, project_icon, project_avatar_url, project_bio, accent_color, theme, cyberpunk_accent_color, social_links, platform_connections, project_banner_url, project_subtitle, global_bg_url, telegram_sticker_sets, request_form, commissions_open, commissions_closed_message, services_pricing, music_studio'
       const FALLBACK_COLS = 'id, project_name, project_icon, accent_color, theme, cyberpunk_accent_color, social_links, platform_connections, project_banner_url, project_subtitle, global_bg_url, telegram_sticker_sets, request_form, commissions_open, commissions_closed_message, services_pricing'
 
       let { data: profile, error: queryError } = await supabase
@@ -63,7 +63,7 @@ export function usePortalData(slug) {
         .single()
 
       // 42703 = undefined_column → retry without the newer optional columns
-      if (queryError && (queryError.code === '42703' || /project_avatar_url|project_bio/.test(queryError.message || ''))) {
+      if (queryError && (queryError.code === '42703' || /project_avatar_url|project_bio|music_studio/.test(queryError.message || ''))) {
         ({ data: profile, error: queryError } = await supabase
           .from('profiles')
           .select(FALLBACK_COLS)
@@ -101,6 +101,7 @@ export function usePortalData(slug) {
         commissionsOpen: profile.commissions_open ?? true,
         commissionsClosedMessage: profile.commissions_closed_message || '',
         servicesPricing: profile.services_pricing && profile.services_pricing.services ? profile.services_pricing : null,
+        musicStudio: profile.music_studio && Object.keys(profile.music_studio).length > 0 ? profile.music_studio : null,
       })
       setLoading(false)
     } catch (err) {

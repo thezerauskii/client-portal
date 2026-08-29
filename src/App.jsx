@@ -12,6 +12,7 @@ const PortalCalendar = React.lazy(() => import('./pages/portal/PortalCalendar.js
 const PortalLinks = React.lazy(() => import('./pages/portal/PortalLinks.jsx'))
 const PortalRequest = React.lazy(() => import('./pages/portal/PortalRequest.jsx'))
 const PortalServices = React.lazy(() => import('./pages/portal/PortalServices.jsx'))
+const PortalMusic = React.lazy(() => import('./pages/portal/PortalMusic.jsx'))
 const PortalThemeProvider = React.lazy(() => import('./components/portal/PortalThemeProvider.jsx'))
 
 function PortalRoutes() {
@@ -24,6 +25,7 @@ function PortalRoutes() {
       <Route path="links" element={<PortalLinks />} />
       <Route path="request" element={<PortalRequest />} />
       <Route path="services" element={<PortalServices />} />
+      <Route path="music" element={<PortalMusic />} />
       <Route path="*" element={<Navigate to="" replace />} />
     </Routes>
   )
