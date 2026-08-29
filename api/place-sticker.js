@@ -12,6 +12,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { isValidId, validateStickerPayload } from './_validation.js'
 
 const MAX_CLIENT_STICKERS = 10
 
@@ -56,6 +57,17 @@ export default async function handler(req, res) {
 
   if (!taskId || !artistId || !sticker?.file_unique_id) {
     return res.status(400).json({ error: 'Missing required fields: taskId, artistId, sticker.file_unique_id' })
+  }
+
+  // Validate IDs to prevent injection of malformed keys
+  if (!isValidId(taskId) || !isValidId(artistId)) {
+    return res.status(400).json({ error: 'Invalid taskId or artistId format' })
+  }
+
+  // Validate the sticker payload (untrusted client input)
+  const validation = validateStickerPayload(sticker)
+  if (!validation.valid) {
+    return res.status(400).json({ error: validation.error })
   }
 
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL

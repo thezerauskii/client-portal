@@ -8,6 +8,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { isValidId, isValidStickerKey } from './_validation.js'
 
 // Rate Limiter
 const rateLimitMap = new Map()
@@ -44,7 +45,13 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing required fields: taskId, artistId, stickerKey' })
   }
 
-  if (!stickerKey.startsWith('__sticker__')) {
+  // Validate taskId / artistId format (UUIDs contain dashes, allowed)
+  if (!isValidId(taskId) || !isValidId(artistId)) {
+    return res.status(400).json({ error: 'Invalid taskId or artistId format' })
+  }
+
+  // stickerKey must be '__sticker__' followed by an alphanumeric id
+  if (!isValidStickerKey(stickerKey)) {
     return res.status(400).json({ error: 'Invalid stickerKey format' })
   }
 

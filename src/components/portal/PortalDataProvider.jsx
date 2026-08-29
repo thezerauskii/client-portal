@@ -131,27 +131,29 @@ export default function PortalDataProvider({ children }) {
           Reintentar
         </button>
 
-        {/* Debug info — remove in production */}
-        <div style={{
-          marginTop: '2rem',
-          padding: '1rem',
-          background: 'rgba(255,0,0,0.1)',
-          border: '1px solid rgba(255,0,0,0.3)',
-          borderRadius: '8px',
-          textAlign: 'left',
-          fontSize: '12px',
-          maxWidth: '600px',
-          width: '100%',
-          fontFamily: 'monospace',
-          wordBreak: 'break-all',
-        }}>
-          <p style={{ margin: '0 0 8px', fontWeight: 700, color: '#ff6b6b' }}>🐛 Debug Info:</p>
-          <p style={{ margin: '4px 0' }}>Slug: <code>{slug}</code></p>
-          <p style={{ margin: '4px 0' }}>VITE_SUPABASE_URL: <code>{supabaseUrl || '❌ NO DEFINIDA'}</code></p>
-          <p style={{ margin: '4px 0' }}>VITE_SUPABASE_ANON_KEY: <code>{hasAnonKey ? '✅ presente' : '❌ NO DEFINIDA'}</code></p>
-          <p style={{ margin: '4px 0' }}>Supabase client created: <code>{!!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ sí' : '❌ no (faltan env vars)'}</code></p>
-          <p style={{ margin: '8px 0 0', color: '#ff6b6b' }}>Error: <code>{errorMsg}</code></p>
-        </div>
+        {/* Debug info — ONLY in development, never leaked in production */}
+        {import.meta.env.DEV && (
+          <div style={{
+            marginTop: '2rem',
+            padding: '1rem',
+            background: 'rgba(255,0,0,0.1)',
+            border: '1px solid rgba(255,0,0,0.3)',
+            borderRadius: '8px',
+            textAlign: 'left',
+            fontSize: '12px',
+            maxWidth: '600px',
+            width: '100%',
+            fontFamily: 'monospace',
+            wordBreak: 'break-all',
+          }}>
+            <p style={{ margin: '0 0 8px', fontWeight: 700, color: '#ff6b6b' }}>Debug Info:</p>
+            <p style={{ margin: '4px 0' }}>Slug: <code>{slug}</code></p>
+            <p style={{ margin: '4px 0' }}>VITE_SUPABASE_URL: <code>{supabaseUrl || 'NO DEFINIDA'}</code></p>
+            <p style={{ margin: '4px 0' }}>VITE_SUPABASE_ANON_KEY: <code>{hasAnonKey ? 'presente' : 'NO DEFINIDA'}</code></p>
+            <p style={{ margin: '4px 0' }}>Supabase client created: <code>{!!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY ? 'sí' : 'no (faltan env vars)'}</code></p>
+            <p style={{ margin: '8px 0 0', color: '#ff6b6b' }}>Error: <code>{errorMsg}</code></p>
+          </div>
+        )}
       </div>
     )
   }
