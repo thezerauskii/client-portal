@@ -1734,9 +1734,9 @@
 /* Push the stats to the far right of the identity row */
 .portal-identity-row .portal-stats-bar { margin-left: auto; }
 .portal-identity-avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
+  width: 84px;
+  height: 84px;
+  border-radius: 10px;          /* square, FurAffinity-style */
   overflow: hidden;
   border: 2px solid var(--green, #22C55E);
   background: var(--surface, #1a1a1e);
