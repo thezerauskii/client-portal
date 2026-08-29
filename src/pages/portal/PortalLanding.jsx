@@ -29,14 +29,7 @@ function IconRequest({ size = 26 }) {
  */
 export default function PortalLanding() {
   const { slug } = useParams()
-  const {
-    artistId, studioName, projectIcon, projectAvatarUrl, accentColor,
-    projectSubtitle,
-  } = usePortalContext()
-
-  // A profile picture (image URL) takes priority over the emoji/text icon.
-  const avatarUrl = projectAvatarUrl || (typeof projectIcon === 'string' && projectIcon.startsWith('http') ? projectIcon : null)
-  const emojiIcon = !avatarUrl && projectIcon && projectIcon.length <= 4 ? projectIcon : null
+  const { artistId, accentColor } = usePortalContext()
 
   const { tasks, loading: tasksLoading } = usePortalTasks(artistId)
 
@@ -58,25 +51,11 @@ export default function PortalLanding() {
 
   return (
     <div className="plh-root">
-      {/* The banner is rendered once by PortalLayout (top). Here we only show
-          the identity (avatar) + the centered options, no duplicate banner. */}
-      <div className="plh-identity plh-identity--nobanner">
-        <div className="plh-avatar" style={{ borderColor: accent }}>
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={studioName} className="plh-avatar-img" />
-          ) : emojiIcon ? (
-            <span className="plh-avatar-fallback">{emojiIcon}</span>
-          ) : (
-            <span className="plh-avatar-fallback">{studioName?.[0]?.toUpperCase() || 'P'}</span>
-          )}
-        </div>
-        <h1 className="plh-name">{studioName}</h1>
-        {projectSubtitle && <p className="plh-subtitle">{projectSubtitle}</p>}
-        <div className="plh-accent-bar" style={{ background: accent }} aria-hidden="true" />
-        <p className="plh-active">
-          <strong style={{ color: accent }}>{tasksLoading ? '—' : activeCount}</strong> comisiones activas
-        </p>
-      </div>
+      {/* Banner + identity (name/avatar) are rendered once by PortalLayout.
+          The home only shows the active count + centered options. */}
+      <p className="plh-active plh-active--standalone">
+        <strong style={{ color: accent }}>{tasksLoading ? '—' : activeCount}</strong> comisiones activas
+      </p>
 
       {/* ── Centered options grid (store-style) ── */}
       <nav className="plh-grid" aria-label="Secciones">

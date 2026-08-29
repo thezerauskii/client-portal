@@ -1182,7 +1182,9 @@
   z-index: 1;
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
+  justify-content: flex-end;
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 1.25rem 1.5rem;
   min-height: 140px;
   gap: 1rem;
@@ -1492,6 +1494,12 @@
   margin-top: 0;
   padding-top: 2rem;
 }
+/* Active-count line shown standalone on the home (identity is in the layout) */
+.plh-active--standalone {
+  text-align: center;
+  margin: 0.5rem 0 0.5rem;
+  font-size: 0.95rem;
+}
 
 .plh-avatar {
   width: 112px;
@@ -1707,4 +1715,46 @@
   .portal-topnav-links--open { display: flex; }
   .portal-topnav-item { padding: 12px 14px; border-radius: 10px; font-size: 0.95rem; }
   .portal-topnav-name { max-width: 140px; }
+}
+
+/* ============================================================
+   IDENTITY ROW (below the banner): avatar + name + subtitle
+   ============================================================ */
+.portal-identity-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem 1.25rem;
+}
+.portal-identity-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--green, #22C55E);
+  background: var(--surface, #1a1a1e);
+  flex-shrink: 0;
+}
+.portal-identity-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.portal-identity-text { min-width: 0; }
+.portal-identity-name {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text, #e8e8ec);
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.portal-identity-subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.9rem;
+  color: var(--text-muted, #888896);
+}
+
+@media (max-width: 767px) {
+  .portal-identity-row { padding: 0.85rem 1rem 1rem; gap: 0.75rem; }
+  .portal-identity-avatar { width: 58px; height: 58px; }
+  .portal-identity-name { font-size: 1.25rem; }
 }
