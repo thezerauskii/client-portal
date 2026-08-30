@@ -5,6 +5,7 @@ import SpectrogramCompare from '../../components/portal/music/SpectrogramCompare
 import WaveformPlayer from '../../components/portal/music/WaveformPlayer.jsx'
 import FxRack from '../../components/portal/music/FxRack.jsx'
 import { SynthCablesBackground } from '../../components/portal/music/SynthCable.jsx'
+import WaveformHero from '../../components/portal/music/WaveformHero.jsx'
 import './PortalMusic.css'
 
 /** POST helper — fire-and-forget analytics/interaction endpoints. */
@@ -54,6 +55,7 @@ export default function PortalMusic() {
         {hero.bgType === 'video' && hero.bgUrl && (
           <video className="pm-hero-video" src={hero.bgUrl} autoPlay muted loop playsInline />
         )}
+        {hero.bgType === 'waveform' && <WaveformHero accent={accent} />}
         <div className="pm-hero-overlay" />
         <div className="pm-hero-content">
           <h1 className="pm-hero-title">{hero.headline || studioName}</h1>
