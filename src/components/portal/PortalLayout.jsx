@@ -20,7 +20,7 @@ const NAV_ITEMS = [
   { id: 'portfolio', path: 'portfolio', label: 'Galería de Portafolio', icon: PortfolioIcon },
   { id: 'calendar', path: 'calendar', label: 'Calendario', icon: CalendarIcon },
   { id: 'links', path: 'links', label: 'Medios de comunicación', icon: LinksIcon },
-  { id: 'music', path: 'music', label: 'Estudio de Sonido', icon: MusicIcon },
+  { id: 'music', path: 'music', label: 'Estudio de Audio', icon: MusicIcon },
 ]
 
 /* ─── SVG Icons (matching Electron sidebarIcons style) ─── */

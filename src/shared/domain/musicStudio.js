@@ -254,3 +254,28 @@ export function makeDefaultMusicStudio() {
     interactions: { allowLikes: true, allowComments: true, requireApproval: true },
   })
 }
+
+/**
+ * Example content for the READ-ONLY portal preview. Lets the portal render the
+ * full page structure (comparator/library/tools/soundcloud) with placeholders
+ * when the artist hasn't filled data yet. Blocks are tagged `__example: true`
+ * so the portal can badge them and skip real interactions. No real audio/media
+ * (those sections need actual files) — only structure + copy.
+ */
+export function makeExamplePreview() {
+  return {
+    comparisons: [
+      { ...makeComparison(), title: 'Antes / Después (ejemplo)', genre: 'Pop', labelA: 'Original', labelB: 'Master', __example: true },
+    ],
+    library: [
+      { ...makeLibraryTrack(), title: 'Mi último master (ejemplo)', category: 'Pop', description: 'Así se verá cada pista tuya, con su forma de onda.', __example: true },
+      { ...makeLibraryTrack(), title: 'Beat lo-fi (ejemplo)', category: 'Lo-fi', __example: true },
+    ],
+    tools: [
+      { ...makeTool(), name: 'FabFilter Pro-Q 3', category: 'EQ', note: 'Ecualización quirúrgica', __example: true },
+      { ...makeTool(), name: 'Valhalla VintageVerb', category: 'Reverb', note: 'Ambiente y profundidad', __example: true },
+      { ...makeTool(), name: 'Ableton Live', category: 'DAW', __example: true },
+    ],
+    soundcloudUser: 'tu-usuario',
+  }
+}
