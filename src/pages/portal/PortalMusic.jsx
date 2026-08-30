@@ -2,12 +2,54 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { usePortalContext } from '../../components/portal/PortalDataProvider.jsx'
 import { normalizeMusicStudio } from '../../shared/domain/musicStudio.js'
 import SpectrogramCompare from '../../components/portal/music/SpectrogramCompare.jsx'
+import PatchbayCompare from '../../components/portal/music/PatchbayCompare.jsx'
 import WaveformPlayer from '../../components/portal/music/WaveformPlayer.jsx'
 import FxRack from '../../components/portal/music/FxRack.jsx'
 import { SynthCablesBackground } from '../../components/portal/music/SynthCable.jsx'
 import WaveformHero from '../../components/portal/music/WaveformHero.jsx'
+import SectionSeparator from '../../components/portal/music/SectionSeparator.jsx'
+import PortalMusicHeader from '../../components/portal/music/PortalMusicHeader.jsx'
+import ContactPatch from '../../components/portal/music/ContactPatch.jsx'
+import WebAudioSynth from '../../components/portal/music/WebAudioSynth.jsx'
+import { useScrollReveal } from '../../components/portal/music/useScrollReveal.js'
+import { useTapeProgress } from '../../components/portal/music/useTapeProgress.js'
 import { buildPreviewModel } from './musicPreviewModel.js'
 import './PortalMusic.css'
+
+/**
+ * Reveal — envuelve una sección para que aparezca al entrar en viewport
+ * (fade + subida). Respeta reduced-motion (aparece estática). Aditivo.
+ */
+function Reveal({ enabled, className = '', children }) {
+  const [ref, shown] = useScrollReveal({ enabled })
+  return (
+    <section ref={ref} className={`${className} pm-reveal ${shown ? 'is-in' : ''}`}>
+      {children}
+    </section>
+  )
+}
+
+/**
+ * ContactSection — sección de redes "con alma". Solo renderiza si ContactPatch
+ * produce algo (hay redes); si no, devuelve null para no dejar títulos vacíos.
+ */
+function ContactSection({ enabled, socialLinks, platformConnections, style, accent }) {
+  const patch = (
+    <ContactPatch socialLinks={socialLinks} platformConnections={platformConnections} style={style} accent={accent} />
+  )
+  if (!patch.props.socialLinks && !patch.props.platformConnections) return null
+  const hasAny =
+    Object.values(socialLinks || {}).some(Boolean) ||
+    Object.values(platformConnections || {}).some(v => v && v.connected && v.handle)
+  if (!hasAny) return null
+  return (
+    <Reveal enabled={enabled} className="pm-section">
+      <h2 className="pm-h2">Conecta conmigo</h2>
+      <p className="pm-sub">Encuéntrame en mis redes y plataformas.</p>
+      {patch}
+    </Reveal>
+  )
+}
 
 /** POST helper — fire-and-forget analytics/interaction endpoints. */
 function post(url, body) {
@@ -31,7 +73,7 @@ function GigImagePlaceholder() {
 }
 
 export default function PortalMusic() {
-  const { artistId, studioName, accentColor, musicStudio } = usePortalContext()
+  const { artistId, studioName, accentColor, musicStudio, socialLinks, platformConnections } = usePortalContext()
   const accent = accentColor || '#22C55E'
   const real = useMemo(() => normalizeMusicStudio(musicStudio || {}), [musicStudio])
   const data = useMemo(() => buildPreviewModel(real), [real])
@@ -74,8 +116,40 @@ export default function PortalMusic() {
   const featured = data.comparisons.find(c => c.id === hero.featuredComparisonId) || data.comparisons[0] || null
   const featuredHasAudio = !!(featured?.trackA?.url && featured?.trackB?.url)
 
+  // ── Immersive scroll config (page.scroll) ──────────────────────────────────
+  const scroll = data.page?.scroll || {}
+  const revealOn = scroll.sectionReveal !== false
+  const sep = scroll.separators || 'tape'
+  const tapeOn = scroll.tapeProgress !== false
+  const tapeP = useTapeProgress({ enabled: tapeOn })
+  const Sep = () => <SectionSeparator kind={sep} accent={accent} />
+
+  // Visibilidad de secciones (page.sections). Si una sección no está marcada,
+  // se muestra por defecto (cero regresión). Mapea ids del modelo a la UI.
+  const sectionVisible = (id) => {
+    const s = (data.page?.sections || []).find(x => x.id === id)
+    return s ? s.visible !== false : true
+  }
+
+  const pageHeader = data.page?.header || {}
+
   return (
     <div className={`pm-root ${isAnalog ? 'pm-root--analog' : ''}`} style={{ '--accent': accent }}>
+      {/* Header sticky transformable (solo si el artista lo configuró) */}
+      <PortalMusicHeader
+        header={pageHeader}
+        accent={accent}
+        sticky={pageHeader.stickyTransport !== false}
+        ctaUrl={hero.fiverrUrl}
+        ctaLabel={hero.ctaLabel || 'Contacto'}
+      />
+
+      {/* Barra de progreso de scroll tipo cinta */}
+      {tapeOn && (
+        <div className="pm-tapebar" aria-hidden="true">
+          <div className="pm-tapebar-fill" style={{ width: `${tapeP * 100}%`, background: accent }} />
+        </div>
+      )}
       {/* ── HERO ── */}
       <section className="pm-hero" style={hero.bgType === 'image' && hero.bgUrl ? { backgroundImage: `url(${hero.bgUrl})` } : undefined}>
         {hero.bgType === 'video' && hero.bgUrl && (
@@ -107,12 +181,17 @@ export default function PortalMusic() {
         </div>
       </section>
 
-      {/* ── FEATURED DEMO / COMPARADOR (siempre visible) ── */}
-      <section className="pm-section pm-section--analog">
+      {sectionVisible('comparator') && <>
+      <Sep />
+
+      {/* ── FEATURED DEMO / COMPARADOR ── */}
+      <Reveal enabled={revealOn} className="pm-section pm-section--analog">
         {isAnalog && <SynthCablesBackground accent={accent} />}
         <h2 className="pm-h2">Escucha la magia {!featuredHasAudio && <ExampleBadge />}</h2>
         <p className="pm-sub">Gira la perilla para escuchar el master frente al original, en tiempo real.</p>
-        {featuredHasAudio ? (
+        {data.patchbay?.enabled ? (
+          <PatchbayCompare trackA={featured?.trackA} trackB={featured?.trackB} labelA={featured?.labelA} labelB={featured?.labelB} accent={accent} patchbay={data.patchbay} />
+        ) : featuredHasAudio ? (
           <SpectrogramCompare trackA={featured.trackA} trackB={featured.trackB} labelA={featured.labelA} labelB={featured.labelB} accent={accent} />
         ) : (
           <div className="pm-compare-ph">
@@ -129,10 +208,14 @@ export default function PortalMusic() {
             </div>
           </div>
         )}
-      </section>
+      </Reveal>
+      </>}
 
-      {/* ── PAQUETES / GIGS (siempre visible) ── */}
-      <section className="pm-section">
+      {sectionVisible('gigs') && <>
+      <Sep />
+
+      {/* ── PAQUETES / GIGS ── */}
+      <Reveal enabled={revealOn} className="pm-section">
         <h2 className="pm-h2">Paquetes {gigsAreExample && <ExampleBadge />}</h2>
         <div className="pm-gigs">
           {data.gigs.map(g => {
@@ -171,7 +254,8 @@ export default function PortalMusic() {
             )
           })}
         </div>
-      </section>
+      </Reveal>
+      </>}
 
       {/* ── MÁS COMPARACIONES (solo reales con audio) ── */}
       {data.comparisons.filter(c => c !== featured && c.trackA?.url && c.trackB?.url).length > 0 && (
@@ -183,17 +267,23 @@ export default function PortalMusic() {
         </section>
       )}
 
-      {/* ── LIBRERÍA (siempre visible) ── */}
-      <section className="pm-section">
+      {sectionVisible('library') && <>
+      <Sep />
+
+      {/* ── LIBRERÍA ── */}
+      <Reveal enabled={revealOn} className="pm-section">
         <h2 className="pm-h2">Librería {libIsExample && <ExampleBadge />}</h2>
         {data.library.map(t => {
           const ex = !!t.__example
           return (
             <div className="pm-track" key={t.id}>
               <div className="pm-track-head">
-                <div>
-                  <h3 className="pm-track-title">{t.title}</h3>
-                  {t.category && <span className="pm-track-cat">{t.category}</span>}
+                <div className="pm-track-head-main">
+                  {t.coverUrl && <img src={t.coverUrl} alt="" className="pm-track-cover" loading="lazy" />}
+                  <div>
+                    <h3 className="pm-track-title">{t.title}</h3>
+                    {t.category && <span className="pm-track-cat">{t.category}</span>}
+                  </div>
                 </div>
                 {data.interactions.allowLikes && (
                   <button className={`pm-like ${likedTracks.has(t.id) ? 'pm-like--on' : ''}`} onClick={() => toggleLike(t.id, ex)} aria-label="Me gusta" style={{ color: likedTracks.has(t.id) ? accent : undefined }}>
@@ -212,7 +302,8 @@ export default function PortalMusic() {
             </div>
           )
         })}
-      </section>
+      </Reveal>
+      </>}
 
       {/* ── VIDEO DEMO (solo real) ── */}
       {data.videoDemoUrl && (
@@ -253,8 +344,11 @@ export default function PortalMusic() {
         </section>
       )}
 
-      {/* ── VSTs / SETUP (siempre visible) ── */}
-      <section className="pm-section">
+      {sectionVisible('setup') && <>
+      <Sep />
+
+      {/* ── VSTs / SETUP ── */}
+      <Reveal enabled={revealOn} className="pm-section">
         <h2 className="pm-h2">Mi setup / VSTs {toolsAreExample && <ExampleBadge />}</h2>
         <div className="pm-tools">
           {data.tools.map(t => (
@@ -268,10 +362,12 @@ export default function PortalMusic() {
             </div>
           ))}
         </div>
-      </section>
+      </Reveal>
+      </>}
 
-      {/* ── TESTIMONIOS (siempre visible) ── */}
-      <section className="pm-section">
+      {sectionVisible('testimonials') && <>
+      {/* ── TESTIMONIOS ── */}
+      <Reveal enabled={revealOn} className="pm-section">
         <h2 className="pm-h2">Lo que dicen mis clientes {testiAreExample && <ExampleBadge />}</h2>
         <div className="pm-testimonials">
           {data.testimonials.map(t => (
@@ -282,7 +378,36 @@ export default function PortalMusic() {
             </div>
           ))}
         </div>
-      </section>
+      </Reveal>
+      </>}
+
+      {sectionVisible('synth') && (data.synth?.presets?.length > 0) && <>
+      <Sep />
+
+      {/* ── MINI-SINTETIZADOR (opt-in) ── */}
+      <Reveal enabled={revealOn} className="pm-section">
+        <h2 className="pm-h2">Toca mi sonido</h2>
+        <p className="pm-sub">Un mini-sintetizador con el sonido del artista. Toca con el ratón o tu teclado.</p>
+        <WebAudioSynth
+          preset={data.synth.presets.find(p => p.id === data.synth.defaultPresetId) || data.synth.presets[0]}
+          accent={accent}
+          keysHint={data.synth.keysHint !== false}
+        />
+      </Reveal>
+      </>}
+
+      {sectionVisible('contact') && <>
+      <Sep />
+
+      {/* ── REDES / CONTACTO "con alma" (solo si hay redes) ── */}
+      <ContactSection
+        enabled={revealOn}
+        socialLinks={socialLinks}
+        platformConnections={platformConnections}
+        style={data.patchbay?.contactStyle}
+        accent={accent}
+      />
+      </>}
 
       {/* ── CTA FINAL ── */}
       <section className="pm-section pm-final">

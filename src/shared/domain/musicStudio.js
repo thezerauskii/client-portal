@@ -182,6 +182,161 @@ export function makeTestimonial() {
   return { id: makeId('tst'), author: '', text: '', rating: 5, avatarUrl: '' }
 }
 
+/**
+ * Normalize the optional "vintage patchbay" block. Purely additive: if the
+ * artist never touched it, everything defaults so the page behaves exactly like
+ * before (enabled:false). Shared between the Electron editor and the portal.
+ */
+export function normalizePatchbay(p) {
+  const d = (p && typeof p === 'object') ? p : {}
+  const s = d.surfaces || {}
+  const str = (v, def) => (typeof v === 'string' ? v : def)
+  const bool = (v, def) => (typeof v === 'boolean' ? v : def)
+  return {
+    enabled: bool(d.enabled, false),           // false → página se ve como hoy
+    bulbs: bool(d.bulbs, true),
+    vuMeter: bool(d.vuMeter, true),
+    vuStyle: (d.vuStyle === 'dotmatrix') ? 'dotmatrix' : 'needle',
+    tapeReels: bool(d.tapeReels, true),
+    woodTone: ['walnut', 'oak', 'dark'].includes(d.woodTone) ? d.woodTone : 'walnut',
+    transportDisplay: bool(d.transportDisplay, true),
+    contactStyle: (d.contactStyle === 'stickers') ? 'stickers' : 'patchbay',
+    surfaces: {
+      background: {
+        texture: ['paper', 'wood', 'felt', 'concrete'].includes(s.background?.texture) ? s.background.texture : 'paper',
+        tint: str(s.background?.tint, '#e8dcc0'),
+      },
+      panel: {
+        texture: ['metal', 'wood', 'cream-plastic', 'bakelite'].includes(s.panel?.texture) ? s.panel.texture : 'metal',
+        tint: str(s.panel?.tint, '#2b2b2e'),
+      },
+    },
+  }
+}
+
+// ── Page structure (immersive layout, editable) ─────────────────────────────
+/** Section ids the page knows how to render, in their natural order. */
+export const PAGE_SECTION_IDS = ['hero', 'comparator', 'gigs', 'library', 'synth', 'setup', 'testimonials', 'contact']
+/** Sections hidden by default (opt-in). */
+const PAGE_SECTION_DEFAULT_HIDDEN = ['synth']
+
+/**
+ * Normalize `page.sections` into a stable, de-duplicated, fully-ordered list of
+ * every known section id. Unknown ids are dropped; missing ids are appended in
+ * their natural order. `order` is re-numbered 0..n so callers can sort safely.
+ */
+export function normalizeSections(input) {
+  const arr = Array.isArray(input) ? input : []
+  const byId = new Map()
+  for (const s of arr) {
+    if (!s || typeof s !== 'object') continue
+    if (!PAGE_SECTION_IDS.includes(s.id)) continue
+    if (byId.has(s.id)) continue
+    byId.set(s.id, {
+      id: s.id,
+      visible: typeof s.visible === 'boolean' ? s.visible : !PAGE_SECTION_DEFAULT_HIDDEN.includes(s.id),
+      order: typeof s.order === 'number' ? s.order : Number.MAX_SAFE_INTEGER,
+    })
+  }
+  // Append any known section that wasn't provided, in natural order.
+  PAGE_SECTION_IDS.forEach((id, i) => {
+    if (!byId.has(id)) {
+      byId.set(id, { id, visible: !PAGE_SECTION_DEFAULT_HIDDEN.includes(id), order: 1000 + i })
+    }
+  })
+  // Sort by requested order (fallback natural order), then renumber 0..n.
+  const natural = (id) => PAGE_SECTION_IDS.indexOf(id)
+  return [...byId.values()]
+    .sort((a, b) => (a.order - b.order) || (natural(a.id) - natural(b.id)))
+    .map((s, i) => ({ id: s.id, visible: s.visible, order: i }))
+}
+
+/**
+ * Normalize the optional `page` block (immersive layout + editable structure).
+ * Purely additive: absent `page` → safe defaults so the page renders like today.
+ */
+export function normalizePage(p) {
+  const d = (p && typeof p === 'object') ? p : {}
+  const h = d.header || {}
+  const sc = d.scroll || {}
+  const str = (v, def = '') => (typeof v === 'string' ? v : def)
+  const bool = (v, def) => (typeof v === 'boolean' ? v : def)
+  return {
+    header: {
+      avatarUrl: str(h.avatarUrl),
+      displayName: str(h.displayName),
+      tagline: str(h.tagline),
+      bio: str(h.bio),
+      heroBgType: ['waveform', 'image', 'video'].includes(h.heroBgType) ? h.heroBgType : 'waveform',
+      heroBgUrl: str(h.heroBgUrl),
+      stickyTransport: bool(h.stickyTransport, true),
+    },
+    sections: normalizeSections(d.sections),
+    scroll: {
+      parallax: bool(sc.parallax, true),
+      tapeProgress: bool(sc.tapeProgress, true),
+      sectionReveal: bool(sc.sectionReveal, true),
+      separators: ['tape', 'patchrail', 'screws', 'stitch', 'none'].includes(sc.separators) ? sc.separators : 'tape',
+    },
+  }
+}
+
+// ── Mini-synth presets (artist's saved sounds) ──────────────────────────────
+const SYNTH_WAVEFORMS = ['sine', 'triangle', 'sawtooth', 'square']
+
+/** Factory for a new synth preset with safe defaults. */
+export function makeSynthPreset(name = 'Nuevo sonido') {
+  return {
+    id: makeId('syn'), name,
+    osc: 'sawtooth', osc2: null,
+    cutoff: 0.6, q: 0.2,
+    attack: 0.01, decay: 0.2, sustain: 0.7, release: 0.3,
+    octave: 0,
+  }
+}
+
+/** Clamp a numeric synth field to [min,max] with a default fallback. */
+function clampNum(v, min, max, def) {
+  const n = Number(v)
+  if (!Number.isFinite(n)) return def
+  return Math.max(min, Math.min(max, n))
+}
+
+/** Normalize a single preset to a safe shape. */
+export function normalizeSynthPreset(p) {
+  const d = (p && typeof p === 'object') ? p : {}
+  const wf = (v, def) => (SYNTH_WAVEFORMS.includes(v) ? v : def)
+  return {
+    id: typeof d.id === 'string' && d.id ? d.id : makeId('syn'),
+    name: typeof d.name === 'string' ? d.name : 'Sonido',
+    osc: wf(d.osc, 'sawtooth'),
+    osc2: d.osc2 == null ? null : wf(d.osc2, null),
+    cutoff: clampNum(d.cutoff, 0, 1, 0.6),
+    q: clampNum(d.q, 0, 1, 0.2),
+    attack: clampNum(d.attack, 0.001, 3, 0.01),
+    decay: clampNum(d.decay, 0.001, 3, 0.2),
+    sustain: clampNum(d.sustain, 0, 1, 0.7),
+    release: clampNum(d.release, 0.001, 5, 0.3),
+    octave: Math.round(clampNum(d.octave, -2, 2, 0)),
+  }
+}
+
+/**
+ * Normalize the optional `synth` block (mini-synth section). Additive: absent
+ * synth → empty presets, keysHint on. The section is opt-in via page.sections
+ * (hidden by default), so this never changes existing pages.
+ */
+export function normalizeSynth(s) {
+  const d = (s && typeof s === 'object') ? s : {}
+  const presets = (Array.isArray(d.presets) ? d.presets : []).map(normalizeSynthPreset)
+  const defaultPresetId = presets.some(p => p.id === d.defaultPresetId) ? d.defaultPresetId : (presets[0]?.id || '')
+  return {
+    presets,
+    defaultPresetId,
+    keysHint: typeof d.keysHint === 'boolean' ? d.keysHint : true,
+  }
+}
+
 // ── Normalize the whole jsonb blob to a safe shape ───────────────────────────
 export function normalizeMusicStudio(data) {
   const d = (data && typeof data === 'object') ? data : {}
@@ -207,7 +362,10 @@ export function normalizeMusicStudio(data) {
     testimonials: arr(d.testimonials),
     soundcloudUser: typeof d.soundcloudUser === 'string' ? d.soundcloudUser : '',
     videoDemoUrl: typeof d.videoDemoUrl === 'string' ? d.videoDemoUrl : '',
-    theme: d.theme || 'studio', // 'studio' | 'synth-analog'
+    theme: d.theme || 'studio', // 'studio' | 'synth-analog' | 'vintage-console'
+    patchbay: normalizePatchbay(d.patchbay),
+    page: normalizePage(d.page),
+    synth: normalizeSynth(d.synth),
     fxDemo: {
       audio: d.fxDemo?.audio || null,
       enabledDefaults: {

@@ -54,7 +54,9 @@
 
 /* Tracks / library */
 .pm-track { background: var(--surface, #1a1a1e); border: 1px solid var(--border, #2e2e36); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-.pm-track-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.pm-track-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 10px; }
+.pm-track-head-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.pm-track-cover { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border, #2e2e36); }
 .pm-track-title { font-size: 1rem; font-weight: 700; margin: 0; }
 .pm-track-cat { font-size: 0.7rem; color: var(--text-muted, #9a9aa4); }
 .pm-track-desc { font-size: 0.85rem; color: var(--text-dim, #b4b4bd); margin: 0 0 8px; }
@@ -140,4 +142,54 @@
 .pm-hint {
   border: 1px dashed var(--border, #3a3a44); border-radius: 12px; padding: 16px;
   color: var(--text-muted, #9a9aa4); font-size: 0.88rem; background: rgba(255,255,255,0.02);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Scroll inmersivo (Fase 3): barra de progreso tipo cinta, reveal de
+   secciones, separadores con carácter. Todo GPU-friendly (transform/opacity).
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Barra de progreso fija arriba (se enrolla como cinta con el scroll) */
+.pm-tapebar {
+  position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 50;
+  background: rgba(0,0,0,0.25); pointer-events: none;
+}
+.pm-tapebar-fill {
+  height: 100%; width: 0;
+  box-shadow: 0 0 8px currentColor;
+  transition: width 0.08s linear;
+}
+
+/* Reveal de secciones al entrar en viewport */
+.pm-reveal {
+  opacity: 0; transform: translateY(22px);
+  transition: opacity 0.6s ease, transform 0.6s cubic-bezier(.22,.61,.36,1);
+  will-change: opacity, transform;
+}
+.pm-reveal.is-in { opacity: 1; transform: none; }
+
+/* Separadores */
+.sep { width: 100%; margin: 6px 0; line-height: 0; }
+.sep-svg { display: block; width: 100%; height: auto; }
+/* tape */
+.sep--tape .sep-svg { height: 20px; }
+.sep-tape-body { fill: #6b4a2a; }
+.sep-tape-hi { fill: rgba(255,255,255,0.14); }
+/* patchrail */
+.sep--patchrail .sep-svg { height: 22px; }
+.sep-rail-body { fill: #2b2b2e; stroke: #17171b; stroke-width: 1; }
+.sep-rail-ring { fill: none; stroke: #6b6b72; stroke-width: 1.6; }
+.sep-rail-hole { fill: #0c0c0f; }
+/* screws */
+.sep--screws .sep-svg { height: 18px; }
+.sep-screws-line { stroke: rgba(255,255,255,0.08); stroke-width: 1; }
+.sep-screw { fill: #6b6b70; stroke: #3a3a40; stroke-width: 0.8; }
+.sep-screw-slot { stroke: #2a2a2e; stroke-width: 1.2; }
+/* stitch */
+.sep--stitch .sep-svg { height: 14px; }
+.sep-stitch { stroke: var(--accent, #22c55e); stroke-width: 2; opacity: 0.5; stroke-linecap: round; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-reveal { opacity: 1; transform: none; transition: none; }
+  .pm-tapebar-fill { transition: none; }
 }
