@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { NavLink, useParams } from 'react-router-dom'
+import { NavLink, useParams, useLocation } from 'react-router-dom'
 import { usePortalContext } from './PortalDataProvider.jsx'
 import { usePortalTasks } from '../../hooks/usePortalTasks.js'
 import { isActiveCommission, REVIEW_SECTION_ID } from '../../shared/domain/sections.js'
@@ -146,7 +146,13 @@ function StatsBar({ artistId }) {
 /* ─── Main Layout ─── */
 export default function PortalLayout({ children }) {
   const { slug } = useParams()
-  const { studioName, projectIcon, projectAvatarUrl, projectBio, accentColor, artistId, projectBannerUrl, projectSubtitle, globalBgUrl } = usePortalContext()
+  const location = useLocation()
+  const { studioName, projectIcon, projectAvatarUrl, projectBio, accentColor, artistId, projectBannerUrl, projectSubtitle, globalBgUrl, servicesPricing } = usePortalContext()
+  // On the Services page, if the artist set a services-specific banner, hide the
+  // global banner so it doesn't stack (the services banner replaces it there).
+  const onServices = /\/services\/?$/.test(location.pathname)
+  const servicesHasBanner = !!(servicesPricing && servicesPricing.bannerUrl)
+  const hideGlobalBanner = onServices && servicesHasBanner
   // Profile picture: only an actual image URL counts (no emoji placeholder).
   const avatarUrl = projectAvatarUrl || (typeof projectIcon === 'string' && projectIcon.startsWith('http') ? projectIcon : null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -234,13 +240,16 @@ export default function PortalLayout({ children }) {
       {/* ─── Content column ─── */}
       <div className="portal-layout-right portal-layout-right--top">
         <header className="portal-layout-header">
-          {/* Banner image only — clean, nothing overlaid */}
-          <div
-            className="portal-banner"
-            style={projectBannerUrl ? { backgroundImage: `url(${projectBannerUrl})` } : undefined}
-          >
-            <div className="portal-banner-overlay" />
-          </div>
+          {/* Banner image only — clean, nothing overlaid.
+              Hidden on the Services page when a services-specific banner exists. */}
+          {!hideGlobalBanner && (
+            <div
+              className="portal-banner"
+              style={projectBannerUrl ? { backgroundImage: `url(${projectBannerUrl})` } : undefined}
+            >
+              <div className="portal-banner-overlay" />
+            </div>
+          )}
 
           {/* Identity row BELOW the banner: avatar (only if set) + name + subtitle + stats */}
           <div className="portal-identity-row">

@@ -22,21 +22,42 @@ export const SERVICE_BLOCK_TYPES = [
   { type: 'h2', label: 'Subtítulo' },
   { type: 'paragraph', label: 'Párrafo' },
   { type: 'image', label: 'Imagen(es)' },
+  { type: 'gallery', label: 'Galería' },
+  { type: 'faq', label: 'Preguntas frecuentes' },
+  { type: 'priceTable', label: 'Tabla de precios' },
+  { type: 'button', label: 'Botón / Enlace' },
+  { type: 'callout', label: 'Nota destacada' },
   { type: 'divider', label: 'Separador' },
 ]
 
 /** Create a new content block. */
 export function makeBlock(type) {
   const id = 'blk_' + Math.random().toString(36).slice(2, 9)
-  if (type === 'image') return { id, type, images: [] }
-  return { id, type, content: '' }
+  if (type === 'image' || type === 'gallery') return { id, type, images: [] }
+  if (type === 'faq') return { id, type, items: [{ q: '', a: '' }] }
+  if (type === 'priceTable') return { id, type, rows: [{ label: '', price: '' }] }
+  if (type === 'button') return { id, type, label: '', url: '' }
+  return { id, type, content: '' } // h1, h2, paragraph, callout, divider
 }
 
+/** Clamp a number into [min, max] with a fallback default. */
+export function clampNum(value, min, max, fallback) {
+  const n = typeof value === 'number' && !Number.isNaN(value) ? value : fallback
+  return Math.max(min, Math.min(max, n))
+}
+
+/** Image sizing limits (px) — keep the layout sane. */
+export const IMAGE_HEIGHT_MIN = 80
+export const IMAGE_HEIGHT_MAX = 420
+export const BG_ZOOM_MIN = 100
+export const BG_ZOOM_MAX = 300
+
 /** Create a decorative sticker entry (view-only in portal). */
-export function makeSticker(url) {
+export function makeSticker(url, telegram = null) {
   return {
     id: 'stk_' + Math.random().toString(36).slice(2, 9),
     url,
+    telegram,                    // optional { fileId, setName } when from Telegram
     x: 40 + Math.random() * 20,  // % position
     y: 40 + Math.random() * 20,
     scale: 1,
@@ -50,9 +71,14 @@ export function makeDefaultServices() {
     statusMessage: '',
     currency: 'USD',
     headerImage: '',
+    headerHeight: 200,        // px, editable
     bannerUrl: '',            // wide banner at top of the page
+    bannerHeight: 200,        // px, editable
     backgroundUrl: '',        // full-page background image
     backgroundOpacity: 0.85,  // overlay darkness (0..1)
+    backgroundZoom: 100,      // % (background-size)
+    backgroundPosX: 50,       // % (background-position X)
+    backgroundPosY: 50,       // % (background-position Y)
     intro: 'Estos son mis tipos de comisión y precios. ¡Escríbeme si tienes dudas!',
     blocks: [],               // rich content blocks (headings, paragraphs, images)
     stickers: [],             // decorative stickers (view-only in portal)
@@ -87,6 +113,26 @@ export function makeAddon() {
   return { id: 'add_' + Math.random().toString(36).slice(2, 9), name: '', price: '' }
 }
 
+/** Normalize one content block to a safe shape by type. */
+export function normalizeBlock(b, i = 0) {
+  const id = b?.id || 'blk_' + i
+  const type = b?.type || 'paragraph'
+  const arr = (v) => (Array.isArray(v) ? v : [])
+  switch (type) {
+    case 'image':
+    case 'gallery':
+      return { id, type, images: arr(b.images) }
+    case 'faq':
+      return { id, type, items: arr(b.items).map(it => ({ q: it?.q || '', a: it?.a || '' })) }
+    case 'priceTable':
+      return { id, type, rows: arr(b.rows).map(r => ({ label: r?.label || '', price: r?.price || '' })) }
+    case 'button':
+      return { id, type, label: b.label || '', url: b.url || '' }
+    default: // h1, h2, paragraph, callout, divider
+      return { id, type, content: b.content || '' }
+  }
+}
+
 /** Normalize a services object so both apps always get a valid shape. */
 export function normalizeServices(data) {
   if (!data || !Array.isArray(data.services)) return makeDefaultServices()
@@ -95,19 +141,20 @@ export function normalizeServices(data) {
     statusMessage: data.statusMessage || '',
     currency: data.currency || 'USD',
     headerImage: data.headerImage || '',
+    headerHeight: clampNum(data.headerHeight, IMAGE_HEIGHT_MIN, IMAGE_HEIGHT_MAX, 200),
     bannerUrl: data.bannerUrl || '',
+    bannerHeight: clampNum(data.bannerHeight, IMAGE_HEIGHT_MIN, IMAGE_HEIGHT_MAX, 200),
     backgroundUrl: data.backgroundUrl || '',
     backgroundOpacity: typeof data.backgroundOpacity === 'number' ? data.backgroundOpacity : 0.85,
+    backgroundZoom: clampNum(data.backgroundZoom, BG_ZOOM_MIN, BG_ZOOM_MAX, 100),
+    backgroundPosX: clampNum(data.backgroundPosX, 0, 100, 50),
+    backgroundPosY: clampNum(data.backgroundPosY, 0, 100, 50),
     intro: data.intro || '',
-    blocks: Array.isArray(data.blocks) ? data.blocks.map((b, i) => ({
-      id: b.id || 'blk_' + i,
-      type: b.type || 'paragraph',
-      content: b.content || '',
-      images: Array.isArray(b.images) ? b.images : [],
-    })) : [],
+    blocks: Array.isArray(data.blocks) ? data.blocks.map((b, i) => normalizeBlock(b, i)) : [],
     stickers: Array.isArray(data.stickers) ? data.stickers.map((s, i) => ({
       id: s.id || 'stk_' + i,
       url: s.url || '',
+      telegram: s.telegram && typeof s.telegram === 'object' ? { fileId: s.telegram.fileId || '', setName: s.telegram.setName || '' } : null,
       x: typeof s.x === 'number' ? s.x : 50,
       y: typeof s.y === 'number' ? s.y : 50,
       scale: typeof s.scale === 'number' ? s.scale : 1,

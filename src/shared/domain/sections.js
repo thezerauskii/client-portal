@@ -37,17 +37,48 @@ export const ACTIVE_SECTION_IDS = [
   SECTION_IDS.IN_REVIEW,
 ]
 
+/** All fixed section UUIDs, for O(1) "is this row a panel/section?" checks. */
+export const ALL_SECTION_IDS = [
+  SECTION_IDS.BACKLOG,
+  SECTION_IDS.NEW,
+  SECTION_IDS.IN_PROGRESS,
+  SECTION_IDS.IN_REVIEW,
+]
+
+/**
+ * Returns true if the row is a PANEL/section/column rather than a real card.
+ * A card is only a card if it is NOT itself a section. We detect a section by:
+ *  - its id being one of the fixed section UUIDs, OR
+ *  - an explicit discriminator on the row (is_section / type === 'section').
+ * This makes the active-commission count robust even if a panel row was
+ * accidentally saved with an active parent_id (nesting), so we never count
+ * panels as commissions — only the cards (tarjetas) inside them.
+ *
+ * @param {{ id?: string, is_section?: boolean, isSection?: boolean, type?: string }} row
+ * @returns {boolean}
+ */
+export function isPanelRow(row) {
+  if (!row) return false
+  if (row.is_section === true || row.isSection === true) return true
+  if (row.type === 'section' || row.type === 'panel' || row.type === 'column') return true
+  if (row.id && ALL_SECTION_IDS.includes(row.id)) return true
+  return false
+}
+
 /**
  * Returns true if a task counts as an active commission.
- * A task must: live inside an active workflow section (not Backlog),
- * not be completed, and not be archived. Section rows (parent_id null)
- * and portfolio items are naturally excluded because they lack an active parent.
+ * A task must: be a real CARD (not a panel/section row), live inside an active
+ * workflow section (not Backlog), not be completed, and not be archived.
+ * Section rows (parent_id null) and portfolio items are naturally excluded
+ * because they lack an active parent; panel rows with an accidental active
+ * parent are excluded explicitly via isPanelRow.
  *
- * @param {{ parent_id?: string, parentId?: string, completed_state?: boolean, completed?: boolean, archived?: boolean }} task
+ * @param {{ id?: string, parent_id?: string, parentId?: string, completed_state?: boolean, completed?: boolean, archived?: boolean, is_section?: boolean, type?: string }} task
  * @returns {boolean}
  */
 export function isActiveCommission(task) {
   if (!task) return false
+  if (isPanelRow(task)) return false // never count panels/columns, only cards
   const parent = task.parent_id ?? task.parentId ?? null
   const completed = task.completed_state ?? task.completed ?? false
   const archived = task.archived ?? false
