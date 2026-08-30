@@ -5,7 +5,7 @@
 /* ─── Unlock Button (pill style, sticky in header area) ──────────────────── */
 .portal-nsfw-unlock-btn {
   position: fixed;
-  top: 16px;
+  top: 74px;          /* below the top nav bar so it doesn't cover it */
   right: 16px;
   z-index: 99999;
   display: inline-flex;

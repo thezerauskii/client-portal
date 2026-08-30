@@ -1647,6 +1647,8 @@
   flex-shrink: 0;
 }
 .portal-topnav-logo { width: 30px; height: 30px; border-radius: 50%; }
+.portal-topnav-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border, #2e2e36); }
+.portal-topnav-avatar--empty { display: inline-flex; align-items: center; justify-content: center; background: var(--surface, #1a1a1e); color: var(--text-muted, #888896); }
 .portal-topnav-name {
   font-size: 1rem;
   font-weight: 800;

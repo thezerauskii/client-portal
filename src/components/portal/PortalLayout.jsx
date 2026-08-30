@@ -180,7 +180,13 @@ export default function PortalLayout({ children }) {
       <header className="portal-topnav">
         <div className="portal-topnav-inner">
           <div className="portal-topnav-brand">
-            <img src="/logo-possum.svg" alt="" className="portal-topnav-logo" />
+            {avatarUrl ? (
+              <img src={avatarUrl} alt={displayName} className="portal-topnav-avatar" />
+            ) : (
+              <span className="portal-topnav-avatar portal-topnav-avatar--empty" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </span>
+            )}
             <span className="portal-topnav-name">{displayName}</span>
             <NavLink
               to={`/p/${slug}`}
