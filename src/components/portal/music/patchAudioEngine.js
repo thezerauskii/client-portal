@@ -48,7 +48,42 @@ export class PatchAudioEngine {
     if (original) jobs.push(loadAudioBuffer(original).then(b => { this.buffers['src-original'] = b }))
     if (master) jobs.push(loadAudioBuffer(master).then(b => { this.buffers['src-master'] = b }))
     await Promise.all(jobs)
+    // Si NO hay pistas reales, generamos audio de DEMO para que la consola
+    // (VU, casete, tiempo) funcione y se pueda ver/oír. Original = tono seco;
+    // Master = el mismo tono con más cuerpo/armónicos (simula "mejorado").
+    if (!this.buffers['src-original'] && !this.buffers['src-master']) {
+      this.buffers['src-original'] = this._makeDemoBuffer('original')
+      this.buffers['src-master'] = this._makeDemoBuffer('master')
+      this.isDemo = true
+    }
     return true
+  }
+
+  /** Genera un buffer musical sintético (demo) — loop de ~8s con dinámica. */
+  _makeDemoBuffer(kind) {
+    const ctx = this.ctx
+    const dur = 8, rate = ctx.sampleRate
+    const buf = ctx.createBuffer(1, Math.floor(dur * rate), rate)
+    const data = buf.getChannelData(0)
+    // progresión simple de notas (La menor) con envolvente por nota
+    const notes = [220, 261.63, 329.63, 220, 293.66, 349.23, 261.63, 220]
+    const noteLen = dur / notes.length
+    for (let i = 0; i < data.length; i++) {
+      const t = i / rate
+      const ni = Math.min(notes.length - 1, Math.floor(t / noteLen))
+      const f = notes[ni]
+      const local = (t - ni * noteLen) / noteLen
+      const env = Math.sin(Math.PI * local) // sube y baja por nota (dinámica → VU se mueve)
+      let s = Math.sin(2 * Math.PI * f * t) * 0.5
+      if (kind === 'master') {
+        // "master": + armónico + sub → más cuerpo y algo más fuerte
+        s += Math.sin(2 * Math.PI * f * 2 * t) * 0.18
+        s += Math.sin(2 * Math.PI * f * 0.5 * t) * 0.22
+        s *= 1.15
+      }
+      data[i] = Math.max(-1, Math.min(1, s * env * 0.7))
+    }
+    return buf
   }
 
   /** Ganancia de cada fuente según el crossfade (equal-power). */
@@ -94,6 +129,26 @@ export class PatchAudioEngine {
   _elapsed() {
     if (!this.startedAt) return 0
     return Math.min(this.ctx.currentTime - this.startedAt + this.offset, this._maxDuration())
+  }
+
+  /**
+   * Salta a una posición (ratio 0..1) reiniciando las voces activas desde ese
+   * offset. Si no hay nada sonando, solo recuerda el offset para el próximo play.
+   */
+  seek(ratio) {
+    const dur = this._maxDuration()
+    const off = Math.max(0, Math.min(1, ratio)) * dur
+    const active = Object.keys(this.voices)
+    if (active.length === 0) { this.startedAt = 0; this.offset = off; return }
+    // Reinicia cada voz activa desde el nuevo offset.
+    const effects = {}
+    for (const id of active) effects[id] = this.voices[id].effect || null
+    for (const id of active) this._stopVoice(id)
+    this.startedAt = 0; this.offset = 0
+    for (const id of active) {
+      const g = this._gainFor(id, active)
+      this._startVoice(id, g, off, effects[id])
+    }
   }
 
   _maxDuration() {

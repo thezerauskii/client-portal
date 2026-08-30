@@ -19,7 +19,7 @@ import './music.css'
  *  - onChange(modules): callback del editor.
  *  - synthPreset: preset para los módulos synth.
  */
-export default function Workbench({ modules = [], accent = '#22c55e', editable = false, onChange, synthPreset = {} }) {
+export default function Workbench({ modules = [], accent = '#22c55e', editable = false, showControls = false, onChange, synthPreset = {} }) {
   const boardRef = useRef(null)
   const [size, setSize] = useState({ w: 760, h: 420 })
   const drag = useRef(null) // { id, part } part: 'move'|'a'|'b'
@@ -92,20 +92,20 @@ export default function Workbench({ modules = [], accent = '#22c55e', editable =
             <React.Fragment key={m.id}>
               <WbPlug x={px(m.ax, 'x')} y={px(m.ay, 'y')} editable={editable} onDown={(e) => startDrag(e, m.id, 'a')} label="A" />
               <WbPlug x={px(m.bx, 'x')} y={px(m.by, 'y')} editable={editable} onDown={(e) => startDrag(e, m.id, 'b')} label="B" />
-              {editable && <WbDelete x={px((m.ax + m.bx) / 2, 'x')} y={px((m.ay + m.by) / 2, 'y')} onClick={() => onChange?.(modules.filter(x => x.id !== m.id))} />}
+              {showControls && <WbDelete x={px((m.ax + m.bx) / 2, 'x')} y={px((m.ay + m.by) / 2, 'y')} onClick={() => onChange?.(modules.filter(x => x.id !== m.id))} />}
             </React.Fragment>
           )
         }
         // synth
         return (
           <div key={m.id} className="wb-module wb-module--synth" style={{ left: `${m.x * 100}%`, top: `${m.y * 100}%` }}>
-            {editable && (
-              <div className="wb-module-bar" onPointerDown={(e) => startDrag(e, m.id, 'move')}>
+            {(editable || showControls) && (
+              <div className="wb-module-bar" onPointerDown={(e) => editable && startDrag(e, m.id, 'move')}>
                 <span>MINI-KORG</span>
-                <button className="wb-module-x" onClick={() => onChange?.(modules.filter(x => x.id !== m.id))} aria-label="Quitar">×</button>
+                {showControls && <button className="wb-module-x" onClick={() => onChange?.(modules.filter(x => x.id !== m.id))} aria-label="Quitar">×</button>}
               </div>
             )}
-            <WebAudioSynth preset={synthPreset} accent={accent} octaves={m.octaves || 2} keysHint={!editable} />
+            <WebAudioSynth preset={synthPreset} accent={accent} octaves={m.octaves || 2} keysHint={!showControls} />
           </div>
         )
       })}

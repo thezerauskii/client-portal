@@ -523,3 +523,24 @@
   .pm-root--vintage .pm-reveal.is-in .vt-signal line { animation: none; stroke-dashoffset: 0; opacity: 1; }
   .pm-root--vintage .pm-hero-content { transition: none; transform: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Fase 6 — ajustes: consola +50% más grande, mesa más alta, synth no cortado.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* La sección del comparador y la mesa se ensanchan (más grandes, se ven mejor) */
+.pm-root--vintage .pm-section--analog,
+.pm-root--vintage .pm-section:has(.pbc),
+.pm-root--vintage .pm-section:has(.wb-board) {
+  max-width: 1080px;   /* ~50% más que 720 */
+}
+
+/* Consola: usa todo el ancho disponible */
+.pm-root--vintage .pbc { max-width: 100%; }
+
+/* Mesa de trabajo: tablero más alto para que el mini-Korg quepa entero */
+.pm-root--vintage .wb-board { min-height: 560px; }
+/* El módulo synth no debe cortarse: limitar posición y permitir que se vea completo */
+.wb-module--synth { width: min(520px, 92%); }
+.wb-module--synth .synth-panel { padding: 12px; }
+.wb-module--synth .synth-keys { height: 110px; }

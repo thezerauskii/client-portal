@@ -59,8 +59,10 @@ export default function PatchbayCompare({ trackA, trackB, labelA = 'Original', l
 
   const urlA = trackA?.url, urlB = trackB?.url
 
+  // Cargamos el engine SIEMPRE (si no hay pistas reales, usa audio de DEMO) para
+  // que el VU, el casete y el tiempo funcionen y se puedan ver/oír.
   useEffect(() => {
-    if (unsupported || (!urlA && !urlB)) return
+    if (unsupported) return
     let cancelled = false
     const eng = new PatchAudioEngine()
     engineRef.current = eng
@@ -108,21 +110,22 @@ export default function PatchbayCompare({ trackA, trackB, labelA = 'Original', l
 
   const onMix = useCallback((v) => { setMix(v); engineRef.current?.setMix(v) }, [])
 
-  // ── Transporte: PLAY reproduce ambas pistas; STOP/PAUSE silencia ──
+  // ── Transporte: PLAY reproduce ambas pistas (o el demo); STOP silencia ──
   const onPlay = useCallback(() => {
+    // Conecta ambas fuentes a la salida. Con demo también hay buffers, así suena.
     let next = []
-    if (urlA) next = addCable(ports, next, 'src-original', 'sink-out')
-    if (urlB) next = addCable(ports, next, 'src-master', 'sink-out')
+    next = addCable(ports, next, 'src-original', 'sink-out')
+    next = addCable(ports, next, 'src-master', 'sink-out')
     setCables(next)
-  }, [ports, urlA, urlB])
+  }, [ports])
 
-  const onStop = useCallback(() => { setCables([]) }, [])
+  const onStop = useCallback(() => { setCables([]); setProgress(0); engineRef.current?.seek(0) }, [])
 
+  // Saltar a cualquier punto de la canción (click en el waveform o barra).
   const onSeek = useCallback((ratio) => {
-    // Reinicia la reproducción desde la posición (sencillo: re-arranca).
-    if (playing) onPlay()
+    engineRef.current?.seek(ratio)
     setProgress(ratio)
-  }, [playing, onPlay])
+  }, [])
 
   if (unsupported) {
     return (

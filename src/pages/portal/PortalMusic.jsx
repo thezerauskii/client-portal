@@ -56,9 +56,22 @@ function ContactSection({ enabled, socialLinks, platformConnections, style, acce
 
 /** Módulos de ejemplo para la mesa de trabajo cuando el artista no configuró aún. */
 const EXAMPLE_WORKBENCH = [
-  { id: 'wb_ex_cable', type: 'cable', ax: 0.12, ay: 0.22, bx: 0.62, by: 0.34 },
-  { id: 'wb_ex_synth', type: 'synth', x: 0.28, y: 0.42, octaves: 2 },
+  { id: 'wb_ex_cable', type: 'cable', ax: 0.1, ay: 0.16, bx: 0.55, by: 0.24 },
+  { id: 'wb_ex_synth', type: 'synth', x: 0.06, y: 0.32, octaves: 2 },
 ]
+
+/**
+ * WorkbenchPlayable — la mesa de trabajo en el portal, JUGABLE: el visitante
+ * puede arrastrar los plugs de los cables (estado local, no persiste). El
+ * mini-Korg suena. Es solo diversión visual; el layout "oficial" lo define el
+ * artista en el editor de Electron.
+ */
+function WorkbenchPlayable({ initial, accent, synthPreset }) {
+  const [modules, setModules] = useState(initial)
+  return (
+    <Workbench modules={modules} accent={accent} editable onChange={setModules} synthPreset={synthPreset} />
+  )
+}
 
 /** POST helper — fire-and-forget analytics/interaction endpoints. */
 function post(url, body) {
@@ -234,12 +247,12 @@ export default function PortalMusic() {
       {(data.workbench?.enabled || isVintage) && <>
       <Sep />
 
-      {/* ── MESA DE TRABAJO (módulos posicionables) ── */}
+      {/* ── MESA DE TRABAJO (módulos posicionables — jugable) ── */}
       <Reveal enabled={revealOn} className="pm-section">
         <h2 className="pm-h2">Mesa de trabajo</h2>
-        <p className="pm-sub">Juega con los módulos: cables y el mini-sintetizador del estudio.</p>
-        <Workbench
-          modules={(data.workbench?.modules?.length ? data.workbench.modules : EXAMPLE_WORKBENCH)}
+        <p className="pm-sub">Juega: arrastra los plugs de los cables y toca el mini-sintetizador.</p>
+        <WorkbenchPlayable
+          initial={(data.workbench?.modules?.length ? data.workbench.modules : EXAMPLE_WORKBENCH)}
           accent={accent}
           synthPreset={data.synth?.presets?.find(p => p.id === data.synth.defaultPresetId) || data.synth?.presets?.[0] || {}}
         />
