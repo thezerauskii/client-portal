@@ -10,7 +10,7 @@
   border-radius: 0 0 20px 20px;
 }
 .pm-hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.pm-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(13,13,18,0.5), rgba(13,13,18,0.92)); }
+.pm-hero-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(13,13,18,0.35), rgba(13,13,18,0.75)); pointer-events: none; }
 .pm-hero-content { position: relative; z-index: 1; text-align: center; padding: 2.5rem 1.25rem; max-width: 760px; }
 .pm-hero-title { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 900; letter-spacing: -0.02em; margin: 0 0 0.5rem; color: #fff; }
 .pm-hero-tagline { font-size: 1.05rem; color: rgba(255,255,255,0.85); margin: 0 0 1.25rem; }

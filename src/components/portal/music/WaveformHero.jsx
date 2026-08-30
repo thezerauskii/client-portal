@@ -37,27 +37,59 @@ export default function WaveformHero({ accent = '#22C55E' }) {
     }
     const c = hexToRgb(accent)
 
+    const rgba = (a) => `rgba(${c.r},${c.g},${c.b},${a})`
+
     function frame(t) {
       ctx.clearRect(0, 0, w, h)
-      const bars = Math.max(24, Math.floor(w / 12))
-      const bw = w / bars
+      const gap = 3
+      const barW = 6
+      const step = barW + gap
+      const bars = Math.max(16, Math.floor(w / step))
+      const totalW = bars * step
+      const offset = (w - totalW) / 2 + gap / 2
       const mid = h / 2
-      // three layered waveforms with different phases/alpha
-      const layers = [
-        { amp: 0.42, speed: 0.0016, freq: 0.9, alpha: 0.5 },
-        { amp: 0.30, speed: 0.0024, freq: 1.6, alpha: 0.35 },
-        { amp: 0.55, speed: 0.0011, freq: 0.5, alpha: 0.22 },
-      ]
-      for (const L of layers) {
-        for (let i = 0; i < bars; i++) {
-          const x = i * bw
-          const phase = t * L.speed + i * L.freq * 0.12
-          const v = (Math.sin(phase) * 0.5 + 0.5) * L.amp + 0.05
-          const bh = v * h
-          ctx.fillStyle = `rgba(${c.r},${c.g},${c.b},${L.alpha})`
-          ctx.fillRect(x, mid - bh / 2, Math.max(1, bw - 2), bh)
-        }
+      const maxBar = h * 0.72
+
+      // subtle center glow behind the bars
+      const grad = ctx.createRadialGradient(w / 2, mid, 0, w / 2, mid, Math.max(w, h) * 0.6)
+      grad.addColorStop(0, rgba(0.12))
+      grad.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.fillStyle = grad
+      ctx.fillRect(0, 0, w, h)
+
+      ctx.save()
+      ctx.shadowColor = rgba(0.55)
+      ctx.shadowBlur = 12
+      for (let i = 0; i < bars; i++) {
+        const x = offset + i * step
+        // layered sines create an organic, music-like envelope
+        const p1 = Math.sin(t * 0.0022 + i * 0.28)
+        const p2 = Math.sin(t * 0.0011 + i * 0.13 + 1.3)
+        const p3 = Math.sin(t * 0.0035 + i * 0.5 + 2.1)
+        const v = (p1 * 0.5 + p2 * 0.3 + p3 * 0.2) * 0.5 + 0.5 // 0..1
+        const bh = Math.max(barW, (0.14 + v * 0.86) * maxBar)
+        const y = mid - bh / 2
+        // vertical gradient per bar for a glossy look
+        const bg = ctx.createLinearGradient(0, y, 0, y + bh)
+        bg.addColorStop(0, rgba(0.95))
+        bg.addColorStop(0.5, rgba(0.75))
+        bg.addColorStop(1, rgba(0.35))
+        ctx.fillStyle = bg
+        roundRect(ctx, x, y, barW, bh, barW / 2)
+        ctx.fill()
       }
+      ctx.restore()
+    }
+
+    function roundRect(ctx, x, y, w2, h2, r) {
+      const rr = Math.min(r, w2 / 2, h2 / 2)
+      ctx.beginPath()
+      ctx.moveTo(x + rr, y)
+      ctx.arcTo(x + w2, y, x + w2, y + h2, rr)
+      ctx.arcTo(x + w2, y + h2, x, y + h2, rr)
+      ctx.arcTo(x, y + h2, x, y, rr)
+      ctx.arcTo(x, y, x + w2, y, rr)
+      ctx.closePath()
     }
 
     if (reduced) { frame(0); return () => ro.disconnect() }
