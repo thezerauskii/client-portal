@@ -337,6 +337,57 @@ export function normalizeSynth(s) {
   }
 }
 
+// ── Mesa de trabajo (workbench): módulos posicionables ──────────────────────
+/** Tipos de módulo que la mesa de trabajo sabe renderizar. */
+export const WORKBENCH_TYPES = ['cable', 'synth']
+
+/**
+ * Factory de un módulo nuevo. Posiciones relativas 0..1 sobre el tablero.
+ *  - cable: dos extremos (endA, endB) que el artista coloca libremente.
+ *  - synth: mini-Korg posicionable (x,y = esquina superior izquierda).
+ */
+export function makeWorkbenchModule(type = 'cable') {
+  if (type === 'synth') {
+    return { id: makeId('wb'), type: 'synth', x: 0.35, y: 0.4, octaves: 2 }
+  }
+  // cable por defecto
+  return { id: makeId('wb'), type: 'cable', ax: 0.2, ay: 0.3, bx: 0.7, by: 0.6, color: 'auto' }
+}
+
+/** Normaliza un módulo a una forma segura (clamp de posiciones 0..1). */
+export function normalizeWorkbenchModule(m) {
+  const d = (m && typeof m === 'object') ? m : {}
+  const type = WORKBENCH_TYPES.includes(d.type) ? d.type : 'cable'
+  const id = (typeof d.id === 'string' && d.id) ? d.id : makeId('wb')
+  const p = (v, def) => clampNum(v, 0, 1, def)
+  if (type === 'synth') {
+    return {
+      id, type: 'synth',
+      x: p(d.x, 0.35), y: p(d.y, 0.4),
+      octaves: [1, 2, 3].includes(d.octaves) ? d.octaves : 2,
+    }
+  }
+  return {
+    id, type: 'cable',
+    ax: p(d.ax, 0.2), ay: p(d.ay, 0.3),
+    bx: p(d.bx, 0.7), by: p(d.by, 0.6),
+    color: typeof d.color === 'string' ? d.color : 'auto',
+  }
+}
+
+/**
+ * Normaliza el bloque `workbench` (mesa de trabajo). Aditivo: ausente →
+ * enabled:false + sin módulos, así la página se ve como hoy (cero regresión).
+ * La mesa es opt-in; el artista la activa y coloca módulos en el editor.
+ */
+export function normalizeWorkbench(w) {
+  const d = (w && typeof w === 'object') ? w : {}
+  return {
+    enabled: typeof d.enabled === 'boolean' ? d.enabled : false,
+    modules: (Array.isArray(d.modules) ? d.modules : []).map(normalizeWorkbenchModule),
+  }
+}
+
 // ── Normalize the whole jsonb blob to a safe shape ───────────────────────────
 export function normalizeMusicStudio(data) {
   const d = (data && typeof data === 'object') ? data : {}
@@ -366,6 +417,7 @@ export function normalizeMusicStudio(data) {
     patchbay: normalizePatchbay(d.patchbay),
     page: normalizePage(d.page),
     synth: normalizeSynth(d.synth),
+    workbench: normalizeWorkbench(d.workbench),
     fxDemo: {
       audio: d.fxDemo?.audio || null,
       enabledDefaults: {

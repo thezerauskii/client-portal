@@ -152,11 +152,16 @@ export class PatchAudioEngine {
     }
   }
 
-  /** Nivel 0..1 del master para el VU (rms del dominio del tiempo). */
+  /**
+   * Nivel 0..1 del master para el VU (RMS del dominio del tiempo, amplificado).
+   * El RMS de música ronda 0.1–0.3, así que lo escalamos (×2.8) con clamp para
+   * que la aguja del VU se mueva de forma visible y llegue a rojo en los picos,
+   * como un VU analógico real.
+   */
   getLevel() {
     if (!this.analyser || !this._levelBuf) return 0
     this.analyser.getFloatTimeDomainData(this._levelBuf)
-    return rms(this._levelBuf)
+    return Math.min(1, rms(this._levelBuf) * 2.8)
   }
 
   /**

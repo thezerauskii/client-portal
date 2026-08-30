@@ -591,3 +591,47 @@
 .synth-key--black.is-on { background: linear-gradient(180deg, #6b5a2a, var(--accent, #22c55e)); }
 .synth-key-hint { font-size: 0.62rem; font-weight: 700; color: #8a8172; pointer-events: none; }
 .synth-hint { text-align: center; font-size: 0.74rem; color: var(--vt-label, #cdbfa3); margin: 10px 0 0; }
+
+/* ── Mesa de trabajo (Workbench): tablero + módulos posicionables (Fase 6) ── */
+.wb-board {
+  position: relative; width: 100%; min-height: 420px; border-radius: 14px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(184,146,90,0.08), transparent 60%),
+    linear-gradient(180deg, #2a2620, #17140f);
+  border: 1px solid #100f0d; overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
+}
+.wb-board--edit { cursor: default; }
+.wb-grain { position: absolute; inset: 0; pointer-events: none; opacity: 0.5;
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0 1px, transparent 1px 3px); }
+.wb-cables { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+
+/* Plug físico (jack metálico) — arrastrable en el editor */
+.wb-plug { position: absolute; transform: translate(-50%, -50%); z-index: 3; }
+.wb-plug.is-draggable { cursor: grab; touch-action: none; }
+.wb-plug.is-draggable:active { cursor: grabbing; }
+.wb-plug-ring {
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #4a4a52, #1a1a1e);
+  border: 2px solid #6b6b72; box-shadow: inset 0 0 4px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.5);
+}
+.wb-plug-hole { width: 12px; height: 12px; border-radius: 50%; background: #0c0c0f; box-shadow: inset 0 0 4px rgba(0,0,0,0.9); }
+
+.wb-cable-del {
+  position: absolute; transform: translate(-50%, -50%); z-index: 4;
+  width: 20px; height: 20px; border-radius: 50%; cursor: pointer;
+  background: rgba(201,80,63,0.9); color: #fff; border: none; font-size: 0.8rem; line-height: 1;
+}
+
+/* Módulo synth posicionable */
+.wb-module { position: absolute; transform: translate(0, 0); z-index: 2; max-width: 440px; }
+.wb-module--synth { width: min(440px, 80%); }
+.wb-module-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 8px; background: #14202a; border: 1px solid #10191f; border-bottom: none;
+  border-radius: 8px 8px 0 0; cursor: grab; touch-action: none;
+  font-family: 'Oswald','Arial Narrow',system-ui; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--vt-cream-face, #efe7d0);
+}
+.wb-module-bar:active { cursor: grabbing; }
+.wb-module-x { background: none; border: none; color: #c9503f; cursor: pointer; font-size: 1rem; line-height: 1; }
+.wb-empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 1rem; color: rgba(216,201,168,0.6); font-size: 0.85rem; }

@@ -12,6 +12,7 @@ import PortalMusicHeader from '../../components/portal/music/PortalMusicHeader.j
 import ContactPatch from '../../components/portal/music/ContactPatch.jsx'
 import WebAudioSynth from '../../components/portal/music/WebAudioSynth.jsx'
 import TubeGlow from '../../components/portal/music/TubeGlow.jsx'
+import Workbench from '../../components/portal/music/Workbench.jsx'
 import { useScrollReveal } from '../../components/portal/music/useScrollReveal.js'
 import { useTapeProgress } from '../../components/portal/music/useTapeProgress.js'
 import { useParallax } from '../../components/portal/music/useParallax.js'
@@ -52,6 +53,12 @@ function ContactSection({ enabled, socialLinks, platformConnections, style, acce
     </Reveal>
   )
 }
+
+/** Módulos de ejemplo para la mesa de trabajo cuando el artista no configuró aún. */
+const EXAMPLE_WORKBENCH = [
+  { id: 'wb_ex_cable', type: 'cable', ax: 0.12, ay: 0.22, bx: 0.62, by: 0.34 },
+  { id: 'wb_ex_synth', type: 'synth', x: 0.28, y: 0.42, octaves: 2 },
+]
 
 /** POST helper — fire-and-forget analytics/interaction endpoints. */
 function post(url, body) {
@@ -221,6 +228,21 @@ export default function PortalMusic() {
             </div>
           </div>
         )}
+      </Reveal>
+      </>}
+
+      {(data.workbench?.enabled || isVintage) && <>
+      <Sep />
+
+      {/* ── MESA DE TRABAJO (módulos posicionables) ── */}
+      <Reveal enabled={revealOn} className="pm-section">
+        <h2 className="pm-h2">Mesa de trabajo</h2>
+        <p className="pm-sub">Juega con los módulos: cables y el mini-sintetizador del estudio.</p>
+        <Workbench
+          modules={(data.workbench?.modules?.length ? data.workbench.modules : EXAMPLE_WORKBENCH)}
+          accent={accent}
+          synthPreset={data.synth?.presets?.find(p => p.id === data.synth.defaultPresetId) || data.synth?.presets?.[0] || {}}
+        />
       </Reveal>
       </>}
 

@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
-import PatchBay, { PatchToggles } from './PatchBay.jsx'
 import Knob from './Knob.jsx'
 import TapeReels from './TapeReels.jsx'
 import VuMeter from './VuMeter.jsx'
@@ -8,26 +7,25 @@ import TransportDisplay from './TransportDisplay.jsx'
 import CompareWaveform from './CompareWaveform.jsx'
 import VintageButton from './VintageButton.jsx'
 import PatchAudioEngine from './patchAudioEngine.js'
-import { basePorts, cableColorFor, vuAngle, addCable, removeCable } from '../../../shared/domain/patchGraph.js'
+import { basePorts, cableColorFor, addCable } from '../../../shared/domain/patchGraph.js'
 import { isWebAudioSupported } from './audioEngine.js'
 import './music.css'
 
 /**
- * PatchbayCompare — variante "consola vintage" del comparador Original/Master.
+ * PatchbayCompare — consola vintage del comparador Original/Master.
  *
- * En vez de un botón play, el cliente CONECTA cables de las señales (Original /
- * Master) a la salida para escuchar, y los DESCONECTA para silenciar. La perilla
- * hace crossfade cuando ambas suenan. VU con aguja/dot-matrix, bulbos que respiran,
- * casete girando y un display NOW PLAYING dan el alma analógica. La validación y
- * ruteo son puros (patchGraph); el audio lo ejecuta PatchAudioEngine.
+ * La PANTALLA muestra SOLO las 2 ondas superpuestas (limpia, sin cables encima).
+ * El transporte físico (PLAY/PAUSE/STOP) controla la reproducción. La perilla
+ * hace crossfade Original↔Master. VU con aguja que MONITOREA el nivel real en
+ * tiempo real, casete que gira mientras suena, y display NOW PLAYING.
  *
- * Props: trackA (original), trackB (master), labelA, labelB, accent,
- *        patchbay (bloque de config normalizado: surfaces, vuStyle, bulbs,
- *        vuMeter, tapeReels, transportDisplay, woodTone).
- * Cae a <audio controls> si no hay Web Audio.
+ * (Los cables conectables viven ahora en la "Mesa de trabajo" como módulos
+ * posicionables, no encima del waveform.)
+ *
+ * Props: trackA, trackB, labelA, labelB, accent, patchbay (config normalizado).
  */
 export default function PatchbayCompare({ trackA, trackB, labelA = 'Original', labelB = 'Master', accent = '#22c55e', patchbay = {} }) {
-  const W = 760, H = 240
+  const W = 760, H = 200
   const cfg = patchbay || {}
   const surfaces = cfg.surfaces || {}
   const bg = surfaces.background || { texture: 'paper' }
@@ -39,15 +37,12 @@ export default function PatchbayCompare({ trackA, trackB, labelA = 'Original', l
   const showDisplay = cfg.transportDisplay !== false
   const woodTone = cfg.woodTone || 'walnut'
 
-  // Puertos del patchbay modular: fuentes (Original/Master) + efecto (REVERB)
-  // + salida. El cliente puede cablear directo a OUT o pasar por el efecto.
+  // Puertos internos (solo para el motor de audio, NO se dibujan): fuentes → salida.
   const ports = React.useMemo(() => ([
-    { ...findPort('src-original'), x: 70, y: 40, color: cableColorFor('original', accent), label: (labelA || 'ORIGINAL').toUpperCase() },
-    { ...findPort('src-master'), x: W - 70, y: 40, color: cableColorFor('master', accent), label: (labelB || 'MASTER').toUpperCase() },
-    { ...findPort('fx-in', { hasEffect: true }), x: W / 2 - 60, y: H / 2, color: cableColorFor('effect', accent), label: 'REVERB' },
-    { ...findPort('fx-out', { hasEffect: true }), x: W / 2 + 60, y: H / 2, color: cableColorFor('effect', accent), label: 'REVERB' },
-    { ...findPort('sink-out'), x: W / 2, y: H - 40, label: 'OUT' },
-  ]), [accent, labelA, labelB])
+    { ...findPort('src-original'), color: cableColorFor('original', accent) },
+    { ...findPort('src-master'), color: cableColorFor('master', accent) },
+    { ...findPort('sink-out') },
+  ]), [accent])
 
   const [cables, setCables] = useState([])
   const [mix, setMix] = useState(0.5)
@@ -57,6 +52,7 @@ export default function PatchbayCompare({ trackA, trackB, labelA = 'Original', l
   const [progress, setProgress] = useState(0)
   const [duration, setDuration] = useState(0)
   const [peaks, setPeaks] = useState({ a: null, b: null })
+  const [playing, setPlaying] = useState(false)
   const engineRef = useRef(null)
   const rafRef = useRef(0)
   const unsupported = !isWebAudioSupported()
@@ -89,8 +85,10 @@ export default function PatchbayCompare({ trackA, trackB, labelA = 'Original', l
     const eng = engineRef.current
     if (!eng || !ready) return
     eng.applyRouting(ports, cables)
+    setPlaying(cables.length > 0)
   }, [cables, ports, ready])
 
+  // rAF: VU + progreso en tiempo real mientras suena; la aguja cae suave al parar.
   useEffect(() => {
     const eng = engineRef.current
     if (!eng || !ready) return
@@ -100,7 +98,7 @@ export default function PatchbayCompare({ trackA, trackB, labelA = 'Original', l
         const dur = eng._maxDuration ? eng._maxDuration() : 0
         setProgress(dur ? Math.min(1, eng._elapsed() / dur) : 0)
       } else {
-        setLevel(l => l * 0.85)
+        setLevel(l => l * 0.9)
       }
       rafRef.current = requestAnimationFrame(tick)
     }
@@ -110,25 +108,21 @@ export default function PatchbayCompare({ trackA, trackB, labelA = 'Original', l
 
   const onMix = useCallback((v) => { setMix(v); engineRef.current?.setMix(v) }, [])
 
-  const playing = cables.length > 0
-
-  // ── Transporte físico: conecta/desconecta cables reutilizando el patchbay ──
+  // ── Transporte: PLAY reproduce ambas pistas; STOP/PAUSE silencia ──
   const onPlay = useCallback(() => {
-    setCables(prev => {
-      let next = prev
-      for (const p of ports) {
-        if (p.role !== 'source') continue
-        const has = (urlA && p.id === 'src-original') || (urlB && p.id === 'src-master')
-        if (!has) continue
-        const already = next.some(c => c.fromPortId === p.id && c.toPortId === 'sink-out')
-        if (!already) next = addCable(ports, next, p.id, 'sink-out', p.color)
-      }
-      return next
-    })
+    let next = []
+    if (urlA) next = addCable(ports, next, 'src-original', 'sink-out')
+    if (urlB) next = addCable(ports, next, 'src-master', 'sink-out')
+    setCables(next)
   }, [ports, urlA, urlB])
 
   const onStop = useCallback(() => { setCables([]) }, [])
-  const onPause = useCallback(() => { setCables([]) }, [])
+
+  const onSeek = useCallback((ratio) => {
+    // Reinicia la reproducción desde la posición (sencillo: re-arranca).
+    if (playing) onPlay()
+    setProgress(ratio)
+  }, [playing, onPlay])
 
   if (unsupported) {
     return (
@@ -150,30 +144,29 @@ export default function PatchbayCompare({ trackA, trackB, labelA = 'Original', l
       }}
     >
       <div className="pbc-console">
-        {/* Columna izquierda: bulbos + VU */}
+        {/* Columna izquierda: bulbos + VU (monitorea en tiempo real) */}
         <aside className="pbc-rack pbc-rack--left" aria-hidden="true">
           {showBulbs && <div className="pbc-bulbs"><TubeGlow on level={playing ? level : null} /><TubeGlow on level={playing ? level : null} /></div>}
           {showVu && <VuMeter level={level} style={vuStyle} accent={accent} size={vuStyle === 'dotmatrix' ? 120 : 116} label="L" />}
         </aside>
 
-        {/* Centro: panel de metal con onda + jacks + cables + perilla + display */}
+        {/* Centro: pantalla de onda LIMPIA + transporte + casete/perilla + display */}
         <div className={`pbc-center pbc-panel--${panel.texture || 'metal'}`}>
           <div className="pbc-screws" aria-hidden="true" />
           <div className="pbc-stage" style={{ aspectRatio: `${W} / ${H}` }}>
             <div className="pbc-legend"><span style={{ color: '#6fb0c4' }}>{labelA}</span><span style={{ color: accent }}>{labelB}</span></div>
-            {/* Las 2 ondas superpuestas, detrás de los jacks/cables */}
             <CompareWaveform
               peaksA={peaks.a} peaksB={peaks.b}
               mix={mix} progress={progress}
               colorA="#6fb0c4" colorB={accent}
+              onSeek={onSeek}
             />
-            <PatchBay ports={ports} cables={cables} onChange={setCables} width={W} height={H} accent={accent} />
           </div>
           {/* Transporte físico estilo Tape Deck */}
           <div className="pbc-transport" role="group" aria-label="Controles de reproducción">
             <VintageButton variant="transport" icon="prev" label="REW" accent={accent} size={44} onClick={onStop} />
             <VintageButton variant="transport" icon="play" label="PLAY" accent={accent} size={52} active={playing} onClick={onPlay} />
-            <VintageButton variant="transport" icon="pause" label="PAUSE" accent={accent} size={44} onClick={onPause} />
+            <VintageButton variant="transport" icon="pause" label="PAUSE" accent={accent} size={44} onClick={onStop} />
             <VintageButton variant="transport" icon="stop" label="STOP" accent={accent} size={44} onClick={onStop} />
             <VintageButton variant="transport" icon="next" label="FF" accent={accent} size={44} onClick={onPlay} />
           </div>
@@ -201,21 +194,14 @@ export default function PatchbayCompare({ trackA, trackB, labelA = 'Original', l
         </aside>
       </div>
 
-      {/* Fallback accesible: conectar/desconectar por botón */}
-      <PatchToggles ports={ports} cables={cables} onChange={setCables} accent={accent} />
       {error && <p className="wf-status wf-status--err">{error}</p>}
-      {(!urlA && !urlB) ? (
-        <p className="pbc-hint">Vista previa de la consola. Sube tu <b>Original</b> y tu <b>Master</b> para que suene al conectar los cables.</p>
-      ) : (
-        <p className="pbc-hint">Conecta un cable de <b>Original</b> o <b>Master</b> a <b>OUT</b> para escuchar. Con ambos conectados, gira la perilla para comparar. Suelta el cable para silenciar.</p>
-      )}
     </div>
   )
 }
 
-function findPort(id, opts) {
-  const p = basePorts(opts).find(x => x.id === id)
+function findPort(id) {
+  const p = basePorts().find(x => x.id === id)
   if (p) return { ...p }
-  const isIn = id === 'sink-out' || id.endsWith('-in')
-  return { id, kind: isIn ? 'in' : 'out', role: id.startsWith('fx') ? 'effect' : (isIn ? 'sink' : 'source') }
+  const isIn = id === 'sink-out'
+  return { id, kind: isIn ? 'in' : 'out', role: isIn ? 'sink' : 'source' }
 }
