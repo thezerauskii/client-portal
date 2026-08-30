@@ -67,7 +67,7 @@ function ContentBlockView({ block, onOpenImage }) {
       <div className={block.type === 'gallery' ? 'psvc-block-gallery' : 'psvc-block-imgs'}>
         {imgs.map((url, i) => (
           <img key={i} src={url} alt={`img ${i + 1}`} loading="lazy"
-            onClick={() => onOpenImage && onOpenImage(imgs, i)} style={{ cursor: 'zoom-in' }} />
+            onClick={() => onOpenImage && onOpenImage(imgs, i)} style={{ cursor: 'pointer' }} />
         ))}
       </div>
     )
@@ -106,7 +106,7 @@ function ServiceCard({ svc, currency, onRequest, onOpenImage }) {
   return (
     <div className={`psvc-card ${!svc.available ? 'psvc-card--off' : ''}`}>
       {hasImg && (
-        <div className="psvc-img-wrap" onClick={() => { if (blur) { setRevealed(true); return } onOpenImage && onOpenImage(svc.images, 0) }} style={{ cursor: blur ? 'pointer' : 'zoom-in' }}>
+        <div className="psvc-img-wrap" onClick={() => { if (blur) { setRevealed(true); return } onOpenImage && onOpenImage(svc.images, 0) }} style={{ cursor: 'pointer' }}>
           <img src={svc.images[0]} alt={svc.title} className={blur ? 'psvc-img--blur' : ''} />
           {blur && (
             <div className="psvc-nsfw-overlay">
@@ -127,7 +127,7 @@ function ServiceCard({ svc, currency, onRequest, onOpenImage }) {
           <div className="psvc-thumbs">
             {svc.images.slice(1).map((url, i) => (
               <img key={i} src={url} alt={`${svc.title} ${i + 2}`} className={svc.nsfw && !revealed ? 'psvc-img--blur' : ''}
-                onClick={() => !blur && onOpenImage && onOpenImage(svc.images, i + 1)} style={{ cursor: blur ? 'default' : 'zoom-in' }} />
+                onClick={() => !blur && onOpenImage && onOpenImage(svc.images, i + 1)} style={{ cursor: blur ? 'default' : 'pointer' }} />
             ))}
           </div>
         )}
@@ -199,8 +199,8 @@ export default function PortalServices() {
         </div>
       )}
 
-      {data.bannerUrl && <img src={data.bannerUrl} alt="" className="psvc-banner-img" style={{ height: data.bannerHeight ? `${data.bannerHeight}px` : undefined, cursor: 'zoom-in' }} onClick={() => openImage([data.bannerUrl], 0)} />}
-      {data.headerImage && <img src={data.headerImage} alt="" className="psvc-header-img" style={{ height: data.headerHeight ? `${data.headerHeight}px` : undefined, cursor: 'zoom-in' }} onClick={() => openImage([data.headerImage], 0)} />}
+      {data.bannerUrl && <img src={data.bannerUrl} alt="" className="psvc-banner-img" style={{ height: data.bannerHeight ? `${data.bannerHeight}px` : undefined, cursor: 'pointer' }} onClick={() => openImage([data.bannerUrl], 0)} />}
+      {data.headerImage && <img src={data.headerImage} alt="" className="psvc-header-img" style={{ height: data.headerHeight ? `${data.headerHeight}px` : undefined, cursor: 'pointer' }} onClick={() => openImage([data.headerImage], 0)} />}
       <div className="psvc-header">
         <h1>Servicios y Precios</h1>
         {data.intro && <p>{data.intro}</p>}

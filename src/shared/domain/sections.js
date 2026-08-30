@@ -84,3 +84,52 @@ export function isActiveCommission(task) {
   const archived = task.archived ?? false
   return ACTIVE_SECTION_IDS.includes(parent) && !completed && !archived
 }
+
+/**
+ * Returns true if a task is a real commission CARD that should be counted in
+ * the "Comisiones activas" total. Every card in ANY real panel counts (fixed
+ * or custom, including Backlog) — the artist's mental model is "each card =
+ * one commission". Only excludes: panel/section rows, archived cards, and
+ * cards with no parent (orphans/section rows). Completed cards still count as
+ * commissions the artist has (they're work that exists); archived is the only
+ * thing that removes a card from the tally.
+ *
+ * @param {{ id?: string, parent_id?: string, parentId?: string, archived?: boolean, is_section?: boolean, type?: string }} task
+ * @returns {boolean}
+ */
+export function isCommissionCard(task) {
+  if (!task) return false
+  if (isPanelRow(task)) return false
+  const parent = task.parent_id ?? task.parentId ?? null
+  if (!parent) return false // orphan / section row
+  const archived = task.archived ?? false
+  return !archived
+}
+
+/**
+ * Count commission cards from a flat task list (portal) — every real card in
+ * any panel, excluding archived + panel rows.
+ * @param {Array} tasks
+ * @returns {number}
+ */
+export function countCommissionCards(tasks) {
+  return (Array.isArray(tasks) ? tasks : []).filter(isCommissionCard).length
+}
+
+/**
+ * Count commission cards from the section structure (Electron). Counts every
+ * card in every section (fixed + custom + backlog), excluding archived + panels.
+ * @param {Array<{ id?: string, items?: Array }>} sections
+ * @returns {number}
+ */
+export function countCommissionCardsFromSections(sections) {
+  if (!Array.isArray(sections)) return 0
+  let n = 0
+  for (const s of sections) {
+    for (const item of (s.items || [])) {
+      // item.archived may live on the card or in its fields; caller can pre-merge.
+      if (!isPanelRow(item) && !(item.archived ?? false)) n++
+    }
+  }
+  return n
+}

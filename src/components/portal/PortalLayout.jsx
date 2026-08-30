@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { NavLink, useParams, useLocation } from 'react-router-dom'
 import { usePortalContext } from './PortalDataProvider.jsx'
 import { usePortalTasks } from '../../hooks/usePortalTasks.js'
-import { isActiveCommission, REVIEW_SECTION_ID } from '../../shared/domain/sections.js'
+import { isCommissionCard, isPanelRow, REVIEW_SECTION_ID } from '../../shared/domain/sections.js'
 
 /* ─── Navigation items for the portal sidebar ─── */
 function MusicIcon() {
@@ -114,9 +114,10 @@ function StatsBar({ artistId }) {
   // "Active" = in a real workflow section (Nuevas / En Proceso / En Revisión),
   // not completed, not archived. Excludes Backlog + section rows + portfolio.
   const stats = useMemo(() => {
-    const commissions = (tasks || []).filter(isActiveCommission)
+    // Every real card in any panel counts as a commission (excl. archived/panels).
+    const commissions = (tasks || []).filter(isCommissionCard)
     const active = commissions.length
-    const inReview = commissions.filter(t => t.parent_id === REVIEW_SECTION_ID).length
+    const inReview = commissions.filter(t => (t.parent_id ?? t.parentId) === REVIEW_SECTION_ID).length
     const avgProgress = active > 0
       ? Math.round(commissions.reduce((sum, t) => sum + (STAGE_PROGRESS[t.stage] || 0), 0) / active)
       : 0

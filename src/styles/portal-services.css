@@ -108,7 +108,8 @@
 .psvc-block-button:hover { filter: brightness(1.08); }
 
 /* ─── Lightbox / visor ─── */
-.psvc-lightbox { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; }
+.psvc-lightbox { position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.92); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; animation: psvc-lb-in 0.15s ease; }
+@keyframes psvc-lb-in { from { opacity: 0; } to { opacity: 1; } }
 .psvc-lightbox-stage { position: relative; max-width: 92vw; max-height: 88vh; display: flex; align-items: center; justify-content: center; }
 .psvc-lightbox-img { max-width: 92vw; max-height: 88vh; object-fit: contain; border-radius: 8px; user-select: none; }
 .psvc-lightbox-close { position: absolute; top: 16px; right: 20px; background: rgba(255,255,255,0.1); color: #fff; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 1.6rem; line-height: 1; cursor: pointer; }

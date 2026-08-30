@@ -116,14 +116,17 @@ export default function PortalMusic() {
           <SpectrogramCompare trackA={featured.trackA} trackB={featured.trackB} labelA={featured.labelA} labelB={featured.labelB} accent={accent} />
         ) : (
           <div className="pm-compare-ph">
-            <div className="pm-compare-ph-tracks">
-              <div className="pm-compare-ph-track"><span className="pm-compare-ph-dot" style={{ background: '#60a5fa' }} /> {featured?.labelA || 'Original'}</div>
-              <div className="pm-compare-ph-track"><span className="pm-compare-ph-dot" style={{ background: accent }} /> {featured?.labelB || 'Master'}</div>
+            <div className="pm-compare-ph-wave" aria-hidden="true"><WaveformHero accent={accent} /></div>
+            <div className="pm-compare-ph-inner">
+              <div className="pm-compare-ph-tracks">
+                <div className="pm-compare-ph-track"><span className="pm-compare-ph-dot" style={{ background: '#60a5fa' }} /> {featured?.labelA || 'Original'}</div>
+                <div className="pm-compare-ph-track"><span className="pm-compare-ph-dot" style={{ background: accent }} /> {featured?.labelB || 'Master'}</div>
+              </div>
+              <div className="pm-compare-ph-knob" aria-hidden="true" style={{ borderColor: accent }}>
+                <span className="pm-compare-ph-knob-tick" style={{ background: accent }} />
+              </div>
+              <p className="pm-compare-ph-note">Aquí aparecerá el comparador Original vs. Master con una perilla analógica.</p>
             </div>
-            <div className="pm-compare-ph-knob" aria-hidden="true" style={{ borderColor: accent }}>
-              <span className="pm-compare-ph-knob-tick" style={{ background: accent }} />
-            </div>
-            <p className="pm-compare-ph-note">Aquí aparecerá el comparador Original vs. Master con una perilla analógica.</p>
           </div>
         )}
       </section>
