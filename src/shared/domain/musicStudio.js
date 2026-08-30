@@ -225,6 +225,15 @@ export function normalizeMusicStudio(data) {
   }
 }
 
+/** Example gigs so the preview is never empty (placeholders the artist edits). */
+export function makeExampleGigs() {
+  return [
+    { ...makeGig('basic'), title: 'Mezcla básica', description: 'Balance, EQ y dinámica de tu pista.', price: '30', deliveryDays: '3', revisions: '1', includes: ['Mezcla estéreo', '1 revisión', 'Entrega WAV'], sortOrder: 0 },
+    { ...makeGig('standard'), title: 'Mezcla + Master', description: 'Mezcla profesional y masterización lista para plataformas.', price: '60', deliveryDays: '5', revisions: '2', includes: ['Mezcla + master', '2 revisiones', 'WAV + MP3', 'Stems opcionales'], sortOrder: 1 },
+    { ...makeGig('pro'), title: 'Producción completa', description: 'De la idea a la entrega: producción, mezcla y master.', price: '150', deliveryDays: '10', revisions: '3', includes: ['Producción', 'Mezcla + master', '3 revisiones', 'Sesión de stems'], sortOrder: 2 },
+  ]
+}
+
 export function makeDefaultMusicStudio() {
   return normalizeMusicStudio({
     intro: 'Producción, mezcla y masterización. Escucha la diferencia.',
@@ -232,8 +241,16 @@ export function makeDefaultMusicStudio() {
       headline: 'Haz que tus canciones suenen profesionales',
       tagline: 'Mezcla y masterización con oído profesional.',
       ctaLabel: 'Contrátame en Fiverr',
-      metrics: [],
+      metrics: [
+        { value: '120+', label: 'Pistas mezcladas' },
+        { value: '★ 4.9', label: 'en Fiverr' },
+        { value: '48h', label: 'Entrega promedio' },
+      ],
     },
+    gigs: makeExampleGigs(),
+    testimonials: [
+      { ...makeTestimonial(), author: 'Cliente satisfecho', text: 'Mi track sonó como en la radio. Volveré.', rating: 5 },
+    ],
     interactions: { allowLikes: true, allowComments: true, requireApproval: true },
   })
 }
