@@ -11,8 +11,10 @@ import SectionSeparator from '../../components/portal/music/SectionSeparator.jsx
 import PortalMusicHeader from '../../components/portal/music/PortalMusicHeader.jsx'
 import ContactPatch from '../../components/portal/music/ContactPatch.jsx'
 import WebAudioSynth from '../../components/portal/music/WebAudioSynth.jsx'
+import TubeGlow from '../../components/portal/music/TubeGlow.jsx'
 import { useScrollReveal } from '../../components/portal/music/useScrollReveal.js'
 import { useTapeProgress } from '../../components/portal/music/useTapeProgress.js'
+import { useParallax } from '../../components/portal/music/useParallax.js'
 import { buildPreviewModel } from './musicPreviewModel.js'
 import './PortalMusic.css'
 
@@ -106,6 +108,9 @@ export default function PortalMusic() {
   }
 
   const isAnalog = data.theme === 'synth-analog'
+  // Modo vintage: por theme explícito O por el toggle de consola (patchbay.enabled),
+  // que es lo que el artista activa desde el editor.
+  const isVintage = data.theme === 'vintage-console' || !!data.patchbay?.enabled
   const heroIsExample = !!data.hero.__example
   const gigsAreExample = data.gigs.some(g => g.__example)
   const libIsExample = data.library.some(t => t.__example)
@@ -132,9 +137,11 @@ export default function PortalMusic() {
   }
 
   const pageHeader = data.page?.header || {}
+  // Parallax del contenido del hero (capa al frente, sutil) en modo vintage.
+  const [heroRef, heroParallax] = useParallax({ speed: 0.15, enabled: isVintage, max: 60 })
 
   return (
-    <div className={`pm-root ${isAnalog ? 'pm-root--analog' : ''}`} style={{ '--accent': accent }}>
+    <div className={`pm-root ${isAnalog ? 'pm-root--analog' : ''} ${isVintage ? 'pm-root--vintage' : ''}`} style={{ '--accent': accent }}>
       {/* Header sticky transformable (solo si el artista lo configuró) */}
       <PortalMusicHeader
         header={pageHeader}
@@ -151,14 +158,20 @@ export default function PortalMusic() {
         </div>
       )}
       {/* ── HERO ── */}
-      <section className="pm-hero" style={hero.bgType === 'image' && hero.bgUrl ? { backgroundImage: `url(${hero.bgUrl})` } : undefined}>
+      <section ref={heroRef} className={`pm-hero ${isVintage ? 'pm-hero--vintage-on' : ''}`} style={hero.bgType === 'image' && hero.bgUrl ? { backgroundImage: `url(${hero.bgUrl})` } : undefined}>
         {hero.bgType === 'video' && hero.bgUrl && (
           <video className="pm-hero-video" src={hero.bgUrl} autoPlay muted loop playsInline />
         )}
         {(hero.bgType === 'waveform' || heroIsExample) && <WaveformHero accent={accent} />}
         <div className="pm-hero-overlay" />
+        {isVintage && (
+          <>
+            <div className="pm-hero-bulb pm-hero-bulb--l" aria-hidden="true"><TubeGlow on size={40} /></div>
+            <div className="pm-hero-bulb pm-hero-bulb--r" aria-hidden="true"><TubeGlow on size={40} /></div>
+          </>
+        )}
         {heroIsExample && <div className="pm-hero-badge"><ExampleBadge /></div>}
-        <div className="pm-hero-content">
+        <div className="pm-hero-content" style={isVintage && heroParallax ? { transform: `translateY(${heroParallax}px)` } : undefined}>
           <h1 className="pm-hero-title">{hero.headline || studioName}</h1>
           {hero.tagline && <p className="pm-hero-tagline">{hero.tagline}</p>}
           {(hero.metrics || []).length > 0 && (
@@ -381,17 +394,17 @@ export default function PortalMusic() {
       </Reveal>
       </>}
 
-      {sectionVisible('synth') && (data.synth?.presets?.length > 0) && <>
+      {sectionVisible('synth') && (data.synth?.presets?.length > 0 || isVintage) && <>
       <Sep />
 
-      {/* ── MINI-SINTETIZADOR (opt-in) ── */}
+      {/* ── MINI-SINTETIZADOR — visible en modo vintage aunque no haya presets ── */}
       <Reveal enabled={revealOn} className="pm-section">
         <h2 className="pm-h2">Toca mi sonido</h2>
         <p className="pm-sub">Un mini-sintetizador con el sonido del artista. Toca con el ratón o tu teclado.</p>
         <WebAudioSynth
-          preset={data.synth.presets.find(p => p.id === data.synth.defaultPresetId) || data.synth.presets[0]}
+          preset={data.synth?.presets?.find(p => p.id === data.synth.defaultPresetId) || data.synth?.presets?.[0] || {}}
           accent={accent}
-          keysHint={data.synth.keysHint !== false}
+          keysHint={data.synth?.keysHint !== false}
         />
       </Reveal>
       </>}

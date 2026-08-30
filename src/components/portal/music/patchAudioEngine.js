@@ -18,8 +18,9 @@
  * de Web Audio no es unit-testeable (no hay AudioContext en jsdom), por eso se
  * mantiene lo más delgada posible.
  */
-import { getAudioContext, loadAudioBuffer, resumeContext } from './audioEngine.js'
+import { getAudioContext, loadAudioBuffer, resumeContext, makeReverbIR } from './audioEngine.js'
 import { resolveRouting, rms } from '../../../shared/domain/patchGraph.js'
+import { downsamplePeaks } from '../../../shared/domain/musicStudio.js'
 
 export class PatchAudioEngine {
   constructor() {
@@ -68,11 +69,14 @@ export class PatchAudioEngine {
   async applyRouting(ports, cables) {
     if (!this.ctx) return
     await resumeContext()
-    const { activeSources } = resolveRouting(ports, cables)
+    const { activeSources, chains } = resolveRouting(ports, cables)
+    const effectOf = (id) => (chains.find(c => c.source === id)?.effect || null)
 
-    // Detener voces que ya NO están activas.
+    // Detener voces que ya NO están activas o que cambiaron de cadena (directo↔efecto).
     for (const id of Object.keys(this.voices)) {
-      if (!activeSources.includes(id)) this._stopVoice(id)
+      if (!activeSources.includes(id) || this.voices[id].effect !== effectOf(id)) {
+        this._stopVoice(id)
+      }
     }
     // Arrancar/actualizar voces activas.
     const anyPlaying = Object.keys(this.voices).length > 0
@@ -81,7 +85,7 @@ export class PatchAudioEngine {
       if (this.voices[id]) {
         this.voices[id].gain.gain.value = g       // actualizar mezcla
       } else {
-        this._startVoice(id, g, anyPlaying ? this._elapsed() : 0)
+        this._startVoice(id, g, anyPlaying ? this._elapsed() : 0, effectOf(id))
       }
     }
     if (activeSources.length === 0) { this.startedAt = 0; this.offset = 0 }
@@ -99,24 +103,42 @@ export class PatchAudioEngine {
     )
   }
 
-  _startVoice(portId, gainVal, offset = 0) {
+  _startVoice(portId, gainVal, offset = 0, effectId = null) {
     const buf = this.buffers[portId]
     if (!buf) return
     const src = this.ctx.createBufferSource()
     src.buffer = buf
     const gain = this.ctx.createGain()
     gain.gain.value = gainVal
-    src.connect(gain); gain.connect(this.master)
+    src.connect(gain)
+    // Si la fuente pasa por un efecto (fx-*), insertamos el nodo entre gain y master.
+    let fxNode = null
+    if (effectId) {
+      fxNode = this._makeEffect(effectId)
+      if (fxNode) { gain.connect(fxNode); fxNode.connect(this.master) }
+      else gain.connect(this.master)
+    } else {
+      gain.connect(this.master)
+    }
     if (!this.startedAt) { this.startedAt = this.ctx.currentTime; this.offset = offset }
     src.start(0, offset)
-    this.voices[portId] = { src, gain }
+    this.voices[portId] = { src, gain, fx: fxNode, effect: effectId }
+  }
+
+  /** Crea un nodo de efecto para la cadena (por ahora: reverb por convolución). */
+  _makeEffect(/* effectId */) {
+    try {
+      const conv = this.ctx.createConvolver()
+      conv.buffer = makeReverbIR(this.ctx, 2.2, 2.4)
+      return conv
+    } catch { return null }
   }
 
   _stopVoice(portId) {
     const v = this.voices[portId]
     if (!v) return
     try { v.src.onended = null; v.src.stop() } catch { /* ignore */ }
-    try { v.src.disconnect(); v.gain.disconnect() } catch { /* ignore */ }
+    try { v.src.disconnect(); v.gain.disconnect(); v.fx && v.fx.disconnect() } catch { /* ignore */ }
     delete this.voices[portId]
   }
 
@@ -135,6 +157,26 @@ export class PatchAudioEngine {
     if (!this.analyser || !this._levelBuf) return 0
     this.analyser.getFloatTimeDomainData(this._levelBuf)
     return rms(this._levelBuf)
+  }
+
+  /**
+   * Peaks min/max de cada pista para dibujar las 2 ondas superpuestas.
+   * @param {number} n columnas
+   * @returns {{ a: {min,max}[]|null, b: {min,max}[]|null }}
+   */
+  getPeaks(n = 700) {
+    const bufA = this.buffers['src-original']
+    const bufB = this.buffers['src-master']
+    return {
+      a: bufA ? downsamplePeaks(bufA.getChannelData(0), n) : null,
+      b: bufB ? downsamplePeaks(bufB.getChannelData(0), n) : null,
+    }
+  }
+
+  /** Progreso 0..1 sobre la duración máxima (para el playhead del waveform). */
+  progress() {
+    const dur = this._maxDuration()
+    return dur ? Math.min(1, this._elapsed() / dur) : 0
   }
 
   /** ¿Hay algo sonando? */

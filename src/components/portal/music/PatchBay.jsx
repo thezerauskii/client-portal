@@ -96,18 +96,18 @@ export default function PatchBay({
       onPointerUp={onUp}
       onPointerCancel={() => setDrag(null)}
     >
-      {/* cables conectados */}
+      {/* cables conectados (físicos, con rebote al aterrizar) */}
       {cables.map(c => {
         const a = portById(c.fromPortId); const b = portById(c.toPortId)
         if (!a || !b) return null
-        return <SynthCable key={c.id} from={{ x: a.x, y: a.y }} to={{ x: b.x, y: b.y }} color={c.color || accent} animated />
+        return <SynthCable key={c.id} from={{ x: a.x, y: a.y }} to={{ x: b.x, y: b.y }} color={cableRubber(c.color)} />
       })}
 
       {/* cable en vuelo mientras se arrastra */}
       {drag && (() => {
         const a = portById(drag.fromId)
         if (!a) return null
-        return <SynthCable from={{ x: a.x, y: a.y }} to={{ x: drag.x, y: drag.y }} color={a.color || accent} animated={false} />
+        return <SynthCable from={{ x: a.x, y: a.y }} to={{ x: drag.x, y: drag.y }} color={cableRubber(a.color)} inFlight />
       })()}
 
       {/* jacks */}
@@ -131,6 +131,15 @@ export default function PatchBay({
       ))}
     </svg>
   )
+}
+
+/** Convierte el color de señal a un tono de goma física neutro (no neón). */
+const RUBBER = ['#3a3a3e', '#5a4632', '#6a5a3a', '#33383a']
+function cableRubber(seed) {
+  let h = 0
+  const s = String(seed || '')
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
+  return RUBBER[h % RUBBER.length]
 }
 
 /**

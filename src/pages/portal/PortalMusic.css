@@ -193,3 +193,333 @@
   .pm-reveal { opacity: 1; transform: none; transition: none; }
   .pm-tapebar-fill { transition: none; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MODO VINTAGE (theme: 'vintage-console') — paleta + materiales globales.
+   Solo aplica bajo .pm-root--vintage → cero regresión con el tema clásico.
+   Referencias: cámara Retro×Modern (beige/charcoal/navy/brass) + Wave Remedy.
+   ═══════════════════════════════════════════════════════════════════════ */
+.pm-root--vintage {
+  --vt-beige: #d8c9a8;
+  --vt-paper: #efe6cf;
+  --vt-charcoal: #1c1a17;
+  --vt-charcoal-2: #262320;
+  --vt-navy: #21303a;
+  --vt-brass: #b8925a;
+  --vt-brass-hot: #e8c07a;
+  --vt-ink: #2a2620;
+  --vt-cream-face: #efe7d0;
+  --vt-needle: #c24a3a;
+  --vt-led-green: #6fb26a;
+  --vt-led-red: #c9503f;
+  --vt-led-amber: #d99a3c;
+  --vt-screw: #8a8578;
+  --vt-cable-1: #3a3a3e;
+  --vt-cable-2: #5a4632;
+  --vt-cable-3: #6a5a3a;
+  /* fuente condensada editorial, sin dependencias nuevas */
+  --vt-font-cond: 'Oswald', 'Arial Narrow', 'Roboto Condensed', system-ui, sans-serif;
+}
+
+/* Fondo de página: papel/charcoal cálido con grano y viñeta (una vez, no anima) */
+.pm-root--vintage {
+  position: relative;
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(184,146,90,0.10), transparent 55%),
+    linear-gradient(180deg, #171512, #100f0d);
+  color: var(--vt-beige);
+}
+.pm-root--vintage::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  /* grano sutil por gradiente repetido (barato, no reanima) */
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 3px),
+    radial-gradient(140% 120% at 50% 50%, transparent 60%, rgba(0,0,0,0.45) 100%);
+  mix-blend-mode: overlay; opacity: 0.6;
+}
+.pm-root--vintage > * { position: relative; z-index: 1; }
+
+/* Titulares editoriales condensados */
+.pm-root--vintage .pm-h2 {
+  font-family: var(--vt-font-cond);
+  text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
+  color: var(--vt-beige);
+}
+.pm-root--vintage .pm-sub { color: rgba(216,201,168,0.72); }
+
+/* Secciones sobre panel beige/charcoal con canto */
+.pm-root--vintage .pm-section { color: var(--vt-beige); }
+
+/* Utilidades de material reutilizables por las secciones (5.4) */
+.pm-root--vintage .vt-plate {
+  position: relative; border-radius: 10px;
+  background: linear-gradient(180deg, var(--vt-charcoal-2), var(--vt-charcoal));
+  border: 1px solid #100f0d;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.05), 0 8px 22px rgba(0,0,0,0.5);
+}
+.pm-root--vintage .vt-plate--beige {
+  background: linear-gradient(180deg, var(--vt-paper), var(--vt-beige));
+  color: var(--vt-ink); border-color: #b3a684;
+}
+.pm-root--vintage .vt-plate--navy {
+  background: linear-gradient(180deg, #2a3d49, var(--vt-navy));
+  border-color: #14202a;
+}
+/* Tornillos en esquinas (aplicar .vt-screws a un contenedor relativo) */
+.pm-root--vintage .vt-screws::before,
+.pm-root--vintage .vt-screws::after {
+  content: ""; position: absolute; width: 11px; height: 11px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #b8b2a4, var(--vt-screw));
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4), 0 1px 1px rgba(0,0,0,0.5);
+  top: 9px; pointer-events: none;
+}
+.pm-root--vintage .vt-screws::before { left: 9px; }
+.pm-root--vintage .vt-screws::after { right: 9px; }
+
+/* Botón físico de latón (CTA vintage) */
+.pm-root--vintage .pm-cta {
+  background: linear-gradient(180deg, var(--vt-brass-hot), var(--vt-brass)) !important;
+  color: #2a1f0d !important; font-family: var(--vt-font-cond);
+  text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
+  border: 1px solid #7a5f30;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.4), 0 4px 0 #6b5228, 0 6px 10px rgba(0,0,0,0.5);
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.pm-root--vintage .pm-cta:active {
+  transform: translateY(3px);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 1px 0 #6b5228;
+}
+@media (prefers-reduced-motion: reduce) {
+  .pm-root--vintage .pm-cta { transition: none; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MODO VINTAGE — re-vestido de CADA sección (5.4). Solo CSS sobre la
+   estructura existente. Todo bajo .pm-root--vintage → cero regresión.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── HERO: foto con overlay cálido + viñeta, título editorial ── */
+.pm-root--vintage .pm-hero {
+  border: 1px solid #100f0d;
+  background-color: var(--vt-charcoal);
+  box-shadow: inset 0 0 80px rgba(0,0,0,0.6), 0 10px 30px rgba(0,0,0,0.5);
+}
+.pm-root--vintage .pm-hero-overlay {
+  background:
+    radial-gradient(120% 100% at 50% 0%, rgba(184,146,90,0.14), transparent 55%),
+    linear-gradient(to bottom, rgba(20,18,14,0.45), rgba(16,15,13,0.9));
+}
+.pm-root--vintage .pm-hero-title {
+  font-family: var(--vt-font-cond); letter-spacing: 0.01em;
+  color: var(--vt-paper); text-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+.pm-root--vintage .pm-hero-tagline { color: rgba(232,224,200,0.85); }
+/* Métricas como mini-diales de latón */
+.pm-root--vintage .pm-metric {
+  padding: 10px 16px; border-radius: 10px;
+  background: linear-gradient(180deg, var(--vt-charcoal-2), #14120f);
+  border: 1px solid #0d0c0a; box-shadow: inset 0 1px 1px rgba(255,255,255,0.06);
+}
+.pm-root--vintage .pm-metric-val { color: var(--vt-brass-hot) !important; font-family: var(--vt-font-cond); }
+.pm-root--vintage .pm-metric-label { color: rgba(216,201,168,0.7); text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.66rem; }
+
+/* Bulbos en las esquinas del hero (encendidos, respiran) */
+.pm-root--vintage .pm-hero-bulb { position: absolute; top: 14px; z-index: 2; opacity: 0.9; pointer-events: none; }
+.pm-root--vintage .pm-hero-bulb--l { left: 18px; }
+.pm-root--vintage .pm-hero-bulb--r { right: 18px; }
+
+/* ── PAQUETES: cartuchos con bisel metálico + tornillos ── */
+.pm-root--vintage .pm-gig {
+  position: relative;
+  background: linear-gradient(180deg, var(--vt-charcoal-2), var(--vt-charcoal));
+  border: 1px solid #100f0d; border-radius: 12px;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.06), 0 6px 18px rgba(0,0,0,0.5);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+.pm-root--vintage .pm-gig::before,
+.pm-root--vintage .pm-gig::after {
+  content: ""; position: absolute; width: 9px; height: 9px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #b8b2a4, var(--vt-screw));
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.4); top: 10px;
+}
+.pm-root--vintage .pm-gig::before { left: 10px; }
+.pm-root--vintage .pm-gig::after { right: 10px; }
+.pm-root--vintage .pm-gig:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.6); }
+.pm-root--vintage .pm-gig-title { font-family: var(--vt-font-cond); color: var(--vt-paper); }
+.pm-root--vintage .pm-gig-tier {
+  background: var(--vt-paper); color: var(--vt-ink);
+  border-radius: 3px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 800;
+}
+.pm-root--vintage .pm-gig-price {
+  color: var(--vt-led-green) !important; font-family: 'Oswald','Courier New',monospace;
+  font-variant-numeric: tabular-nums; text-shadow: 0 0 6px rgba(111,178,106,0.4);
+}
+.pm-root--vintage .pm-gig-includes li::marker { color: var(--vt-brass); }
+.pm-root--vintage .pm-gig-cta {
+  border-color: var(--vt-brass) !important; color: var(--vt-brass-hot) !important;
+  font-family: var(--vt-font-cond); text-transform: uppercase; letter-spacing: 0.05em;
+}
+
+/* ── LIBRERÍA: cada pista como casete crema ── */
+.pm-root--vintage .pm-track {
+  background: linear-gradient(180deg, var(--vt-paper), #ddd0b0);
+  border: 1px solid #b3a684; border-radius: 10px; color: var(--vt-ink);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+}
+.pm-root--vintage .pm-track-title { font-family: 'Caveat','Segoe Script',cursive; color: var(--vt-ink); font-size: 1.3rem; }
+.pm-root--vintage .pm-track-cat { color: #6a5a3a; }
+.pm-root--vintage .pm-track-desc { color: #5a4e38; }
+.pm-root--vintage .pm-like { color: var(--vt-led-red); }
+
+/* ── VIDEO: marco monitor CRT ── */
+.pm-root--vintage .pm-video {
+  border-radius: 14px; padding: 10px;
+  background: linear-gradient(180deg, #2a2620, #14120f);
+  border: 1px solid #0d0c0a;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.7), 0 8px 20px rgba(0,0,0,0.5);
+  position: relative; overflow: hidden;
+}
+.pm-root--vintage .pm-video::after {
+  content: ""; position: absolute; inset: 10px; pointer-events: none; border-radius: 8px;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,0.08) 0 2px, transparent 2px 4px);
+}
+
+/* ── SOUNDCLOUD: placa atornillada ── */
+.pm-root--vintage .pm-soundcloud {
+  display: inline-block; padding: 12px 20px; border-radius: 8px;
+  background: linear-gradient(180deg, var(--vt-charcoal-2), var(--vt-charcoal));
+  border: 1px solid #100f0d; color: var(--vt-brass-hot);
+  font-family: var(--vt-font-cond); letter-spacing: 0.04em;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.06), 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* ── SETUP / VSTs: placa signal-flow ── */
+.pm-root--vintage .pm-tool {
+  background: linear-gradient(180deg, var(--vt-charcoal-2), var(--vt-charcoal));
+  border: 1px solid #100f0d; border-radius: 8px;
+}
+.pm-root--vintage .pm-tool-name { font-family: var(--vt-font-cond); color: var(--vt-paper); }
+.pm-root--vintage .pm-tool-cat { color: var(--vt-brass); text-transform: uppercase; letter-spacing: 0.06em; }
+.pm-root--vintage .pm-tool-note { color: rgba(216,201,168,0.7); }
+
+/* ── TESTIMONIOS: etiquetas de papel con esquina despegada ── */
+.pm-root--vintage .pm-testimonial {
+  position: relative; background: linear-gradient(180deg, var(--vt-paper), #e2d6b8);
+  color: var(--vt-ink); border: 1px solid #b3a684; border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+}
+.pm-root--vintage .pm-testimonial::after {
+  content: ""; position: absolute; top: 0; right: 0; width: 18px; height: 18px;
+  background: linear-gradient(225deg, rgba(0,0,0,0.16), transparent 60%), #d8c9a8;
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+.pm-root--vintage .pm-testimonial-text { color: #4a4030; font-style: italic; }
+.pm-root--vintage .pm-testimonial-author { color: var(--vt-ink); font-weight: 700; }
+.pm-root--vintage .pm-stars { color: var(--vt-brass) !important; text-shadow: 0 0 4px rgba(184,146,90,0.5); }
+
+/* ── CTA FINAL: bloque grande "NEED QUALITY SOUND?" ── */
+.pm-root--vintage .pm-final {
+  background:
+    radial-gradient(100% 120% at 50% 0%, rgba(184,146,90,0.12), transparent 60%),
+    linear-gradient(180deg, var(--vt-charcoal-2), var(--vt-charcoal));
+  border-top: 1px solid #100f0d; border-bottom: 1px solid #100f0d;
+  padding: 3rem 1.25rem;
+}
+.pm-root--vintage .pm-final .pm-h2 { font-size: clamp(1.6rem, 3.5vw, 2.6rem); }
+
+/* ── Placeholders de ejemplo re-vestidos ── */
+.pm-root--vintage .pm-example-badge {
+  background: var(--vt-paper); color: var(--vt-ink);
+  text-transform: uppercase; letter-spacing: 0.06em; font-weight: 800;
+}
+.pm-root--vintage .pm-hint,
+.pm-root--vintage .pm-wave-ph span { filter: sepia(0.2); }
+
+/* ── FX RACK: unidad de rack navy estilo Nomad ── */
+.pm-root--vintage .fx-rack {
+  background: linear-gradient(180deg, #2a3d49, var(--vt-navy));
+  border: 1px solid #14202a; border-radius: 10px;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.08), 0 8px 22px rgba(0,0,0,0.5);
+  position: relative;
+}
+.pm-root--vintage .fx-title { font-family: var(--vt-font-cond); color: var(--vt-cream-face); text-transform: uppercase; letter-spacing: 0.08em; }
+.pm-root--vintage .fx-unit {
+  background: linear-gradient(180deg, #23333d, #1a2831);
+  border: 1px solid #10191f; border-radius: 8px;
+}
+.pm-root--vintage .fx-unit--on { border-color: var(--vt-brass); box-shadow: 0 0 8px rgba(184,146,90,0.4); }
+.pm-root--vintage .fx-toggle span { color: var(--vt-cream-face); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.72rem; }
+.pm-root--vintage .fx-unit--on .fx-toggle span { color: var(--vt-brass-hot); }
+.pm-root--vintage .fx-knob { accent-color: var(--vt-brass); }
+.pm-root--vintage .fx-note { color: rgba(232,231,208,0.6); }
+/* LED por unidad activa */
+.pm-root--vintage .fx-toggle::before {
+  content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  background: #2a2420; margin-right: 6px; box-shadow: inset 0 0 2px rgba(0,0,0,0.8);
+}
+.pm-root--vintage .fx-unit--on .fx-toggle::before {
+  background: var(--vt-led-red); box-shadow: 0 0 6px var(--vt-led-red);
+}
+
+/* ── MINI-SINTETIZADOR: panel navy vintage ── */
+.pm-root--vintage .synth-panel {
+  background: linear-gradient(180deg, #2a3d49, var(--vt-navy));
+  border: 1px solid #14202a;
+  box-shadow: inset 0 1px 2px rgba(255,255,255,0.08), inset 0 -8px 16px rgba(0,0,0,0.45);
+}
+.pm-root--vintage .synth-lbl { color: var(--vt-cream-face); }
+.pm-root--vintage .synth-osc-btn { background: #1a2831; color: var(--vt-cream-face); border-color: #10191f; }
+.pm-root--vintage .synth-osc-btn.is-on { background: rgba(184,146,90,0.18); border-color: var(--vt-brass); color: var(--vt-brass-hot); }
+.pm-root--vintage .synth-oct-btn { background: #1a2831; color: var(--vt-cream-face); border-color: #10191f; }
+.pm-root--vintage .synth-oct-val { color: var(--vt-brass-hot); }
+.pm-root--vintage .synth-key--white { background: linear-gradient(180deg, var(--vt-paper), #ddd0b0); border-right-color: #b3a684; }
+.pm-root--vintage .synth-key--white.is-on { background: linear-gradient(180deg, var(--vt-brass-hot), var(--vt-brass)); }
+.pm-root--vintage .synth-hint { color: rgba(232,231,208,0.65); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MODO VINTAGE — animaciones de scroll "modo creativo" (5.7).
+   GPU-friendly (transform/opacity). prefers-reduced-motion las congela.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Power-on del hero: título fade-up + bulbos flicker→encienden al cargar */
+.pm-hero--vintage-on .pm-hero-title { animation: pm-fade-up 0.7s ease both; }
+.pm-hero--vintage-on .pm-hero-tagline { animation: pm-fade-up 0.7s ease 0.12s both; }
+.pm-hero--vintage-on .pm-metrics { animation: pm-fade-up 0.7s ease 0.24s both; }
+.pm-hero--vintage-on .pm-hero-bulb { animation: pm-bulb-on 1.1s ease both; }
+@keyframes pm-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes pm-bulb-on {
+  0% { opacity: 0; } 8% { opacity: 0.9; } 12% { opacity: 0.2; } 18% { opacity: 1; }
+  24% { opacity: 0.5; } 30% { opacity: 0.95; } 100% { opacity: 0.9; }
+}
+
+/* El hero-content usa translateY del parallax → transición suave */
+.pm-root--vintage .pm-hero-content { transition: transform 0.1s linear; will-change: transform; }
+
+/* Flicker de bulbo al revelar cada sección (bulbo decorativo opcional) */
+.pm-root--vintage .pm-reveal.is-in .pm-section-bulb { animation: pm-bulb-on 0.9s ease both; }
+
+/* Barra de progreso re-vestida como tira de cinta */
+.pm-root--vintage .pm-tapebar { height: 5px; background: rgba(20,16,12,0.6); }
+.pm-root--vintage .pm-tapebar-fill {
+  background: repeating-linear-gradient(90deg, var(--vt-brass) 0 8px, var(--vt-brass-hot) 8px 12px) !important;
+  box-shadow: 0 0 6px rgba(184,146,90,0.6);
+}
+
+/* Diagramas signal-flow (Setup): se dibujan al entrar en viewport */
+.pm-root--vintage .pm-reveal.is-in .vt-signal path,
+.pm-root--vintage .pm-reveal.is-in .vt-signal line {
+  stroke-dasharray: 200; stroke-dashoffset: 200; animation: vt-draw 1.1s ease forwards;
+}
+@keyframes vt-draw { to { stroke-dashoffset: 0; } }
+.pm-root--vintage .vt-signal { stroke: var(--vt-brass); fill: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pm-hero--vintage-on .pm-hero-title,
+  .pm-hero--vintage-on .pm-hero-tagline,
+  .pm-hero--vintage-on .pm-metrics,
+  .pm-hero--vintage-on .pm-hero-bulb,
+  .pm-root--vintage .pm-reveal.is-in .pm-section-bulb,
+  .pm-root--vintage .pm-reveal.is-in .vt-signal path,
+  .pm-root--vintage .pm-reveal.is-in .vt-signal line { animation: none; stroke-dashoffset: 0; opacity: 1; }
+  .pm-root--vintage .pm-hero-content { transition: none; transform: none !important; }
+}

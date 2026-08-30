@@ -158,6 +158,22 @@
   text-shadow: 0 1px 0 rgba(0,0,0,0.6);
 }
 
+/* Cable físico: plug metálico + rebote al conectar */
+.cable-plug-base { fill: #14140f; }
+.cable-plug-metal { fill: #9a948a; }
+.cable-plug-band { fill: #6b665c; }
+.cable-plug-tip { fill: #d9d4c8; }
+.synth-cable.is-landed { animation: cable-drop 0.32s cubic-bezier(.34,1.56,.64,1); transform-origin: center; }
+@keyframes cable-drop {
+  0% { transform: translateY(-6px); opacity: 0.6; }
+  60% { transform: translateY(2px); }
+  100% { transform: translateY(0); opacity: 1; }
+}
+.synth-cable.is-flight { opacity: 0.85; }
+@media (prefers-reduced-motion: reduce) {
+  .synth-cable.is-landed { animation: none; }
+}
+
 /* Fallback accesible: toggles de conexión */
 .pb-toggles { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
 .pb-toggle {
@@ -296,9 +312,14 @@
 .pbc-screws::before { left: 8px; }
 .pbc-screws::after { right: 8px; }
 
-.pbc-stage { position: relative; width: 100%; background: rgba(10,10,14,0.62); border-radius: 8px; }
+.pbc-stage { position: relative; width: 100%; background: rgba(10,10,14,0.62); border-radius: 8px; overflow: hidden; }
+.pbc-wave-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer; z-index: 0; }
+.pbc-stage .patchbay { z-index: 1; }
+.pbc-legend { z-index: 2; }
 .pbc-legend { position: absolute; top: 6px; left: 10px; right: 10px; display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; z-index: 1; pointer-events: none; letter-spacing: 0.05em; }
 .pbc-controls { display: flex; align-items: center; justify-content: center; gap: 22px; margin-top: 14px; flex-wrap: wrap; }
+/* Fila de transporte (Tape Deck): botones físicos centrados */
+.pbc-transport { display: flex; align-items: flex-end; justify-content: center; gap: 10px; margin-top: 14px; padding: 10px 12px; border-radius: 10px; background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.28)); border: 1px solid rgba(0,0,0,0.4); box-shadow: inset 0 1px 2px rgba(255,255,255,0.06); }
 .pbc-hint { position: relative; text-align: center; font-size: 0.74rem; color: var(--vt-label, #cdbfa3); margin: 12px 0 0; }
 
 /* ── VU meter (needle + dotmatrix) ── */

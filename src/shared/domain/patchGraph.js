@@ -20,12 +20,17 @@
  * @param {{ hasEffect?: boolean, effectLabel?: string }} [opts]
  * @returns {Array} lista de puertos
  */
-export function basePorts({ hasEffect = false, effectLabel = 'FX' } = {}) {
+export function basePorts({ hasEffect = false, effectLabel = 'FX', hasSynth = false } = {}) {
   const ports = [
     { id: 'src-original', kind: 'out', role: 'source', label: 'ORIGINAL' },
     { id: 'src-master', kind: 'out', role: 'source', label: 'MASTER' },
     { id: 'sink-out', kind: 'in', role: 'sink', label: 'OUT' },
   ]
+  if (hasSynth) {
+    // El sinte del artista es una fuente más que se puede cablear a la salida
+    // (directo o pasando por un efecto), igual que Original/Master.
+    ports.push({ id: 'synth-out', kind: 'out', role: 'source', label: 'SYNTH' })
+  }
   if (hasEffect) {
     ports.push({ id: 'fx-in', kind: 'in', role: 'effect', label: effectLabel })
     ports.push({ id: 'fx-out', kind: 'out', role: 'effect', label: effectLabel })
