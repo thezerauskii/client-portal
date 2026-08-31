@@ -332,12 +332,7 @@
 
 /* ── respeta prefers-reduced-motion: nada se mueve solo ── */
 @media (prefers-reduced-motion: reduce) {
-  .mk-vinyl-disc.is-spinning,
-  .mk-marquee-track,
-  .mk-countdown-btn,
-  .mk-audiocard.is-active .mk-audiocard-play,
-  .mk-neon { animation: none !important; }
-  .mk-iconrow-item, .mk-tier, .mk-audiocard, .mk-neon-btn, .mk-vinyl-arm, .mk-faq-chevron, .mk-faq-a { transition: none !important; }
+  .mk-iconrow-item, .mk-tier, .mk-audiocard, .mk-neon-btn, .mk-faq-chevron { transition: none !important; }
 }
 
 /* ── HUD compacto SoundCloud / Spotify (widget tipo Tumblr) ── */

@@ -861,7 +861,7 @@ export function makeExampleLayout(assets = null) {
       label: 'Arrastra para revelar', labelBefore: 'Demo', labelAfter: 'Master',
     } } },
     { type: 'vinyl-player', w: 376, h: 360, extra: { props: {
-      coverUrl: assets.vinyl || '', title: 'Último single', subtitle: 'Pulsa para girar', url: '', autospin: false,
+      coverUrl: assets.vinyl || '', title: 'Último single', subtitle: 'Gira solo — pulsa para parar', url: '', autospin: true,
     } } },
   ])
 
@@ -910,12 +910,40 @@ export function makeExampleLayout(assets = null) {
   full('cta-banner-neon', 200, { props: { text: '¿LISTO PARA SONAR PRO?', buttonLabel: 'Contrátame en Fiverr', url: '', color: 'amber' } })
 
   const height = Math.ceil((y + 40) / 24) * 24 // margen inferior, múltiplo de grid
+
+  // ── Cables físicos decorativos (patchbay): un par de jacks conectados por un
+  // cable con gravedad. Son jugables (arrastrar/enchufar) en la página. ──
+  addExampleCables(mods, { width: 1200, height, z })
+
   return normalizeLayout({
     enabled: true,
     mode: 'free',
     canvas: { width: 1200, height, grid: 24, snap: true, showGrid: true, bg: 'river-styx' },
     modules: mods,
   })
+}
+
+/**
+ * addExampleCables — agrega 2 jacks (agujeros) y 1 cable conectado entre ellos,
+ * cerca de la parte superior del lienzo, como detalle de patchbay físico. El
+ * cable cuelga con gravedad y es arrastrable/enchufable. Muta `mods`.
+ */
+function addExampleCables(mods, { width, height, z = 900 }) {
+  // Dos jacks cercanos en la esquina superior derecha + un cable corto que
+  // cuelga entre ellos (patchbay físico, no cruza toda la página).
+  const ax0 = 980, ay0 = 120, bx0 = 1110, by0 = 150
+  const jackA = makeModule('jack', ax0, ay0); jackA.w = 40; jackA.h = 40; jackA.z = z++
+  const jackB = makeModule('jack', bx0, by0); jackB.w = 40; jackB.h = 40; jackB.z = z++
+  const cx = (jx) => (jx + 20) / width
+  const cy = (jy) => (jy + 20) / height
+  const cable = makeModule('cable', 0, 0)
+  cable.z = z++
+  cable.props = {
+    ...cable.props,
+    ax: cx(ax0), ay: cy(ay0), bx: cx(bx0), by: cy(by0),
+    endAJack: jackA.id, endBJack: jackB.id,
+  }
+  mods.push(jackA, jackB, cable)
 }
 
 /**
@@ -964,7 +992,7 @@ export function makeShowcaseLayout(assets = null) {
   ] } })
   // Vinilo + reveal lado a lado.
   b.row([
-    { type: 'vinyl-player', w: 376, h: 380, extra: { props: { coverUrl: assets.vinyl || '', title: 'Último single', subtitle: 'Pulsa para girar', autospin: false } } },
+    { type: 'vinyl-player', w: 376, h: 380, extra: { props: { coverUrl: assets.vinyl || '', title: 'Último single', subtitle: 'Gira solo', autospin: true } } },
     { type: 'reveal-slider', w: 704, h: 380, extra: { props: { beforeUrl: assets.revealBefore || '', afterUrl: assets.revealAfter || '', label: 'Arrastra', labelBefore: 'Demo', labelAfter: 'Master' } } },
   ])
   // FX rack (sube tu pista) + Spotify HUD.
@@ -1009,7 +1037,7 @@ export function makeExampleLayoutAlt(assets = null) {
       { coverUrl: assets.card1 || '', title: 'Track 1', subtitle: 'Master', url: '', audio: null },
       { coverUrl: assets.card2 || '', title: 'Track 2', subtitle: 'Mezcla', url: '', audio: null },
     ] } } },
-    { type: 'vinyl-player', w: 376, h: 340, extra: { props: { coverUrl: assets.vinyl || '', title: 'Single', subtitle: 'Pulsa', autospin: false } } },
+    { type: 'vinyl-player', w: 376, h: 340, extra: { props: { coverUrl: assets.vinyl || '', title: 'Single', subtitle: 'Gira solo', autospin: true } } },
   ])
   b.row([
     { type: 'video', w: 704, h: 320, extra: { props: { url: '' } } },

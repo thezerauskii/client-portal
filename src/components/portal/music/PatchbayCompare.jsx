@@ -8,7 +8,7 @@ import CompareWaveform from './CompareWaveform.jsx'
 import VintageButton from './VintageButton.jsx'
 import PatchAudioEngine from './patchAudioEngine.js'
 import { basePorts, cableColorFor, addCable } from '../../../shared/domain/patchGraph.js'
-import { isWebAudioSupported } from './audioEngine.js'
+import { isWebAudioSupported, resumeContext } from './audioEngine.js'
 import './music.css'
 
 /**
@@ -85,7 +85,8 @@ export default function PatchbayCompare({ trackA, trackB, labelA = 'Original', l
 
   useEffect(() => {
     const eng = engineRef.current
-    if (!eng || !ready) return
+    if (!eng) return
+    // No exigimos `ready`: applyRouting reanuda el contexto y arranca voces.
     eng.applyRouting(ports, cables)
     setPlaying(cables.length > 0)
   }, [cables, ports, ready])
@@ -112,7 +113,8 @@ export default function PatchbayCompare({ trackA, trackB, labelA = 'Original', l
 
   // ── Transporte: PLAY reproduce ambas pistas (o el demo); STOP silencia ──
   const onPlay = useCallback(() => {
-    // Conecta ambas fuentes a la salida. Con demo también hay buffers, así suena.
+    // El click reanuda el AudioContext (autoplay policy) y conecta ambas fuentes.
+    resumeContext?.()
     let next = []
     next = addCable(ports, next, 'src-original', 'sink-out')
     next = addCable(ports, next, 'src-master', 'sink-out')
