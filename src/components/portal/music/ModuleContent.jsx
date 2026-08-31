@@ -202,19 +202,25 @@ function IconRow({ p, onCta, editable }) {
   )
 }
 
-/** Tocadiscos: la portada gira al pulsar. Si hay audio subido, lo reproduce
- *  localmente (HTMLAudio) al girar y para al detener. La aguja baja al sonar. */
+/** Tocadiscos: el disco GIRA visualmente (autospin o al reproducir). Si hay
+ *  audio subido, el botón lo reproduce/pausa (requiere gesto de usuario). */
 function VinylPlayer({ p, onCta, editable }) {
-  const [spinning, setSpinning] = useState(!!p.autospin)
-  const audioRef = useRef(null)
   const audioUrl = p.audio?.url || ''
-  useEffect(() => { setSpinning(!!p.autospin) }, [p.autospin])
-  useEffect(() => {
+  const [playing, setPlaying] = useState(false)
+  const audioRef = useRef(null)
+  const spinning = playing || (!!p.autospin)
+  const toggle = (e) => {
+    e.stopPropagation()
     const el = audioRef.current
-    if (!el) return
-    if (spinning) { el.play?.().catch(() => {}) } else { el.pause?.() }
-  }, [spinning])
-  const toggle = (e) => { e.stopPropagation(); setSpinning(s => !s) }
+    if (audioUrl && el) {
+      if (el.paused) { el.play?.().then(() => setPlaying(true)).catch(() => setPlaying(false)) }
+      else { el.pause?.(); setPlaying(false) }
+    } else {
+      setPlaying(s => !s)
+    }
+  }
+  const hasAudio = !!audioUrl
+  const label = hasAudio ? (playing ? 'Parar' : 'Reproducir') : (spinning ? 'Parar' : 'Girar')
   return (
     <div className="mk-vinyl">
       <div className="mk-vinyl-deck">
@@ -222,16 +228,16 @@ function VinylPlayer({ p, onCta, editable }) {
           {p.coverUrl ? <img className="mk-vinyl-cover" src={p.coverUrl} alt={p.title || ''} /> : <span className="mk-vinyl-cover mk-vinyl-cover--ph"><VintageIcon name="vinyl" size={40} /></span>}
           <span className="mk-vinyl-hole" />
         </div>
-        <span className={`mk-vinyl-arm ${spinning ? 'is-playing' : ''}`} aria-hidden="true" />
+        <span className={`mk-vinyl-arm ${playing ? 'is-playing' : ''}`} aria-hidden="true" />
       </div>
       <div className="mk-vinyl-info">
         <span className="mk-vinyl-title">{p.title || ''}</span>
         <span className="mk-vinyl-sub">{p.subtitle || ''}</span>
       </div>
       <button type="button" className="mk-vinyl-btn" onClick={toggle} onPointerDown={(e) => e.stopPropagation()}>
-        <VintageIcon name={spinning ? 'pause' : 'play'} size={16} /> {spinning ? 'Parar' : (audioUrl ? 'Reproducir' : 'Girar')}
+        <VintageIcon name={(hasAudio ? playing : spinning) ? 'pause' : 'play'} size={16} /> {label}
       </button>
-      {audioUrl ? <audio ref={audioRef} src={audioUrl} onEnded={() => setSpinning(false)} preload="none" /> : null}
+      {audioUrl ? <audio ref={audioRef} src={audioUrl} crossOrigin="anonymous" onEnded={() => setPlaying(false)} onPause={() => setPlaying(false)} onPlay={() => setPlaying(true)} preload="none" /> : null}
       {p.url && !editable ? <a className="mk-vinyl-link" href={p.url} target="_blank" rel="noopener noreferrer" onClick={() => onCta?.(p.url)}>Escuchar</a> : null}
     </div>
   )
@@ -425,7 +431,7 @@ function AudioCards({ p, onCta, editable }) {
           </div>
         ))}
       </div>
-      {activeUrl ? <audio ref={audioRef} src={activeUrl} onEnded={() => setActive(-1)} preload="none" /> : null}
+      {activeUrl ? <audio ref={audioRef} src={activeUrl} crossOrigin="anonymous" onEnded={() => setActive(-1)} preload="none" /> : null}
     </div>
   )
 }
