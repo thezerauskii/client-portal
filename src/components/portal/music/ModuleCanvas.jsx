@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react'
 import ModuleContent from './ModuleContent.jsx'
+import ModuleDecor from './ModuleDecor.jsx'
 import SynthCable from './SynthCable.jsx'
-import { cablePath } from '../../../shared/domain/musicStudio.js'
+import { cablePath, effectiveZ } from '../../../shared/domain/musicStudio.js'
 import './modules.css'
 
 const CONTENT_TYPES = new Set([
@@ -11,6 +12,7 @@ const CONTENT_TYPES = new Set([
   'icon-row', 'vinyl-player', 'reveal-slider', 'marquee-ticker', 'price-tiers',
   'faq-accordion', 'process-steps', 'countdown-offer', 'audio-cards', 'cta-banner-neon',
 ])
+const DECOR_TYPES = new Set(['glow-light', 'panel-frame'])
 const CABLE_TYPES = new Set(['cable', 'jack'])
 
 /**
@@ -61,7 +63,31 @@ export default function ModuleCanvas({ canvas = {}, modules = [], accent = '#22c
     ...modules.map(m => (m.y || 0) + (m.h || 0) + 40)
   )
 
-  const sorted = [...modules].sort((a, b) => (a.z || 0) - (b.z || 0))
+  // Parallax al scroll (solo si canvas.parallax): guarda el desplazamiento del
+  // lienzo dentro del viewport para mover los módulos-fondo más lento.
+  const [scrollY, setScrollY] = useState(0)
+  const parallaxOn = !!canvas.parallax && !(typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+  useEffect(() => {
+    if (!parallaxOn) return
+    let raf = 0, ticking = false
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      raf = requestAnimationFrame(() => {
+        ticking = false
+        const el = boardRef.current
+        if (!el) return
+        const r = el.getBoundingClientRect()
+        // 0 cuando el lienzo entra por abajo; crece al scrollear hacia arriba.
+        setScrollY(-r.top)
+      })
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', onScroll) }
+  }, [parallaxOn])
+
+  const sorted = [...modules].sort((a, b) => effectiveZ(a) - effectiveZ(b))
   const jacks = modules.filter(m => m.type === 'jack')
   // Aplica overrides locales del visitante encima de las props originales.
   const cables = modules.filter(m => m.type === 'cable').map(m => (
@@ -203,22 +229,31 @@ export default function ModuleCanvas({ canvas = {}, modules = [], accent = '#22c
           </div>
         ))}
 
-        {/* Módulos de contenido/audio */}
-        {sorted.filter(m => !CABLE_TYPES.has(m.type)).map(mod => (
-          <div
-            key={mod.id}
-            className={`mk-module mk-module--${mod.type}`}
-            style={{
-              left: mod.x, top: mod.y, width: mod.w, height: mod.h, zIndex: mod.z || 1,
-              transform: mod.rotation ? `rotate(${mod.rotation}deg)` : undefined,
-            }}
-            data-module-id={mod.id}
-          >
-            {CONTENT_TYPES.has(mod.type)
-              ? <ModuleContent mod={mod} accent={accent} onCta={onCta} />
-              : (renderAudioModule ? renderAudioModule(mod) : <ModulePlaceholder type={mod.type} />)}
-          </div>
-        ))}
+        {/* Módulos de contenido/audio/decoración */}
+        {sorted.filter(m => !CABLE_TYPES.has(m.type)).map(mod => {
+          // Parallax: desplaza el módulo en Y según su factor (0..1) y el scroll.
+          const par = parallaxOn ? (Number(mod.parallax) || 0) : 0
+          const py = par ? Math.round(scrollY * par * -0.35) : 0
+          const tf = [mod.rotation ? `rotate(${mod.rotation}deg)` : '', py ? `translateY(${py}px)` : ''].filter(Boolean).join(' ')
+          return (
+            <div
+              key={mod.id}
+              className={`mk-module mk-module--${mod.type} mk-layer--${mod.layer || 'mid'}`}
+              style={{
+                left: mod.x, top: mod.y, width: mod.w, height: mod.h, zIndex: effectiveZ(mod),
+                transform: tf || undefined,
+                willChange: par ? 'transform' : undefined,
+              }}
+              data-module-id={mod.id}
+            >
+              {DECOR_TYPES.has(mod.type)
+                ? <ModuleDecor mod={mod} accent={accent} />
+                : CONTENT_TYPES.has(mod.type)
+                ? <ModuleContent mod={mod} accent={accent} onCta={onCta} />
+                : (renderAudioModule ? renderAudioModule(mod) : <ModulePlaceholder type={mod.type} />)}
+            </div>
+          )
+        })}
         {children}
       </div>
     </div>

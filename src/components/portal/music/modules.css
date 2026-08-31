@@ -387,3 +387,24 @@
 .mk-socials { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; height: 100%; }
 .mk-social-btn { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 12px; background: rgba(0,0,0,0.25); border: 1px solid var(--mk-tea); color: var(--mk-ink); transition: transform 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
 .mk-social-btn:hover { transform: translateY(-3px); color: var(--mk-orange); border-color: var(--mk-orange); box-shadow: 0 6px 18px rgba(210,104,61,0.28); }
+
+/* ══════════════════════════════════════════════════════════════════════════
+ * Fase 15 — decoración de fondo: luces (glow) y paneles/marcos vintage.
+ * ════════════════════════════════════════════════════════════════════════ */
+.mk-glow { width: 100%; height: 100%; pointer-events: none; border-radius: 50%; }
+.mk-glow--radial { background: radial-gradient(circle at 50% 50%, var(--glow-color) 0%, transparent 70%); opacity: var(--glow-op, 0.6); filter: blur(18px); }
+.mk-glow--beam { background: linear-gradient(180deg, var(--glow-color), transparent 80%); opacity: var(--glow-op, 0.6); filter: blur(22px); border-radius: 40% 40% 50% 50% / 60% 60% 40% 40%; }
+.mk-glow--flicker.is-on { animation: mk-glow-flicker 3.4s ease-in-out infinite; }
+@keyframes mk-glow-flicker { 0%,100% { opacity: var(--glow-op, 0.6); } 45% { opacity: calc(var(--glow-op, 0.6) * 0.55); } 60% { opacity: calc(var(--glow-op, 0.6) * 0.9); } }
+
+.mk-panel { position: relative; width: 100%; height: 100%; box-sizing: border-box; background: var(--panel-color); }
+.mk-panel--solid { border: none; }
+.mk-panel--frame { border: 3px solid var(--panel-border); box-shadow: inset 0 2px 6px rgba(255,255,255,0.06), inset 0 -3px 8px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.4); background: linear-gradient(160deg, color-mix(in srgb, var(--panel-color) 88%, #fff 12%), var(--panel-color) 55%, color-mix(in srgb, var(--panel-color) 80%, #000 20%)); }
+.mk-panel--screen { border: 3px solid var(--panel-border); background: radial-gradient(120% 100% at 50% 0%, #10251f, #08120f); box-shadow: inset 0 0 30px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(111,176,196,0.12); }
+.mk-panel--slot { border: 2px solid var(--panel-border); background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--panel-color) 90%, #000 10%) 0 8px, var(--panel-color) 8px 16px); box-shadow: inset 0 2px 6px rgba(0,0,0,0.5); }
+.mk-panel-screw { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #7c7f87, #2a2a2e); box-shadow: inset 0 0 2px rgba(0,0,0,0.8); }
+.mk-panel-screw::after { content: ''; position: absolute; inset: 3px; border-top: 1px solid rgba(0,0,0,0.6); transform: rotate(45deg); }
+.mk-panel-screw--tl { top: 8px; left: 8px; } .mk-panel-screw--tr { top: 8px; right: 8px; }
+.mk-panel-screw--bl { bottom: 8px; left: 8px; } .mk-panel-screw--br { bottom: 8px; right: 8px; }
+.mk-panel-label { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); font-family: var(--mk-font-display); text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.7rem; color: var(--mk-ink-dim); }
+@media (prefers-reduced-motion: reduce) { .mk-glow--flicker.is-on { animation: none; } }

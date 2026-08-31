@@ -537,9 +537,15 @@ export const MODULE_TYPES = [
   // Fase 14 — módulos interactivos vintage (diseño, no audio real)
   'icon-row', 'vinyl-player', 'reveal-slider', 'marquee-ticker', 'price-tiers',
   'faq-accordion', 'process-steps', 'countdown-offer', 'audio-cards', 'cta-banner-neon',
+  // Fase 15 — decoración de fondo / superficies (capas)
+  'glow-light', 'panel-frame',
   // patchbay físico
   'cable', 'jack',
 ]
+
+/** Capas del lienzo: agrupan el z-index en rangos (back < mid < front). */
+export const MODULE_LAYERS = ['back', 'mid', 'front']
+export const LAYER_Z_BASE = { back: 0, mid: 1000, front: 2000 }
 
 /** Tamaños/props por defecto por tipo (w,h en px lógicos). */
 const MODULE_DEFAULTS = {
@@ -629,6 +635,17 @@ const MODULE_DEFAULTS = {
   ] } },
   // Banner CTA con glow neón pulsante.
   'cta-banner-neon': { w: 1104, h: 200, props: { text: '¿LISTO PARA SONAR PRO?', buttonLabel: 'Contrátame ahora', url: '', color: 'amber' } },
+  // ── Fase 15 — decoración de fondo ──
+  // Luz/glow: mancha de luz radial resizeable y movible. color, intensidad,
+  // forma (radial/beam), on/off, parpadeo opcional. Va en capa 'back' por defecto.
+  'glow-light': { w: 420, h: 420, layer: 'back', props: {
+    color: '#D2683D', intensity: 0.6, shape: 'radial', on: true, flicker: false, blend: 'screen',
+  } },
+  // Panel/marco vintage: superficie donde montar módulos encima. variant:
+  // solid|frame|screen|slot; color, borde, radio, tornillos. Capa 'back'.
+  'panel-frame': { w: 520, h: 320, layer: 'back', props: {
+    variant: 'frame', color: '#2B2F2E', border: '#594C3D', radius: 16, screws: true, shape: 'rect', label: '',
+  } },
   cable: { w: 0, h: 0, props: { ax: 0.2, ay: 0.3, bx: 0.7, by: 0.5, endAJack: null, endBJack: null } },
   jack: { w: 40, h: 40, props: { label: '' } },
 }
@@ -640,6 +657,8 @@ export function makeModule(type = 'text', x = 40, y = 40) {
   return {
     id: makeId('mod'), type: t,
     x, y, w: def.w, h: def.h, z: 1, rotation: 0,
+    layer: MODULE_LAYERS.includes(def.layer) ? def.layer : 'mid',
+    parallax: 0,
     props: JSON.parse(JSON.stringify(def.props)),
     dataRef: null,
   }
@@ -661,9 +680,19 @@ export function normalizeModule(m) {
     h: Math.max(16, num(d.h, def.h)),
     z: Math.round(num(d.z, 1)),
     rotation: num(d.rotation, 0),
+    // Capa (back/mid/front). Si no viene, usa la de por defecto del tipo o 'mid'.
+    layer: MODULE_LAYERS.includes(d.layer) ? d.layer : (MODULE_LAYERS.includes(def.layer) ? def.layer : 'mid'),
+    // Factor de parallax al scroll: 0 = quieto (normal), 1 = se mueve mucho.
+    parallax: Math.max(0, Math.min(1, num(d.parallax, 0))),
     props: (d.props && typeof d.props === 'object') ? { ...def.props, ...d.props } : JSON.parse(JSON.stringify(def.props)),
     dataRef: (typeof d.dataRef === 'string' && d.dataRef) ? d.dataRef : null,
   }
+}
+
+/** z-index efectivo de un módulo combinando su capa y su z local. Puro. */
+export function effectiveZ(mod) {
+  const base = LAYER_Z_BASE[mod?.layer] ?? LAYER_Z_BASE.mid
+  return base + (Math.round(Number(mod?.z)) || 0)
 }
 
 /**
@@ -709,6 +738,7 @@ export function normalizeLayout(l) {
       grid: Math.max(8, Math.min(80, num(c.grid, 24))),
       snap: typeof c.snap === 'boolean' ? c.snap : true,
       showGrid: typeof c.showGrid === 'boolean' ? c.showGrid : false,
+      parallax: typeof c.parallax === 'boolean' ? c.parallax : false,
       bg: CANVAS_BG.includes(c.bg) ? c.bg : 'river-styx',
     },
     modules: (Array.isArray(d.modules) ? d.modules : []).map(normalizeModule).filter(Boolean),
@@ -746,7 +776,7 @@ export function resizeModule(mod, w, h, { grid = 24, snap = false } = {}) {
 }
 
 /** Tipos que NO ocupan caja rectangular (se excluyen de la detección de solapes). */
-const NON_BOX_TYPES = new Set(['cable', 'jack'])
+const NON_BOX_TYPES = new Set(['cable', 'jack', 'glow-light', 'panel-frame'])
 
 /** ¿Dos rectángulos {x,y,w,h} se intersectan? (bordes que se tocan NO cuentan). */
 export function rectsOverlap(a, b, tolerance = 0) {
@@ -769,7 +799,9 @@ export function rectsOverlap(a, b, tolerance = 0) {
 export function layoutOverlaps(modules, { tolerance = 1 } = {}) {
   const boxes = (Array.isArray(modules) ? modules : [])
     .map((m, idx) => ({ idx, m }))
-    .filter(({ m }) => m && !NON_BOX_TYPES.has(m.type) && m.w > 0 && m.h > 0)
+    // Excluimos cables/jacks, decoración, y la capa de FONDO (back): son
+    // superficies/luces detrás del contenido y PUEDEN solaparse a propósito.
+    .filter(({ m }) => m && !NON_BOX_TYPES.has(m.type) && m.layer !== 'back' && m.w > 0 && m.h > 0)
   const pairs = []
   for (let i = 0; i < boxes.length; i++) {
     for (let j = i + 1; j < boxes.length; j++) {
@@ -982,11 +1014,116 @@ function makeLayoutBuilder({ pad = 48, col = 1104, gap = 32, startY = 32 } = {})
     for (const c of cols) { mods.push({ ...makeModule(c.type, x, y), w: c.w, h: c.h, z: z++, ...(c.extra || {}) }); x += c.w + g; if (c.h > maxH) maxH = c.h }
     y += maxH + gap
   }
-  const build = (bg = 'river-styx') => {
+  // Coloca un módulo en posición ABSOLUTA (para decoración de fondo: glow/panel).
+  // No avanza el cursor `y`. Útil para luces y paneles detrás del contenido.
+  const place = (type, x, py, w, h, extra = {}) => { mods.push({ ...makeModule(type, x, py), w, h, z: z++, ...extra }) }
+  const build = (bg = 'river-styx', canvasExtra = {}) => {
     const height = Math.ceil((y + 40) / 24) * 24
-    return normalizeLayout({ enabled: true, mode: 'free', canvas: { width: 1200, height, grid: 24, snap: true, showGrid: true, bg }, modules: mods })
+    return normalizeLayout({ enabled: true, mode: 'free', canvas: { width: 1200, height, grid: 24, snap: true, showGrid: true, bg, ...canvasExtra }, modules: mods })
   }
-  return { full, row, build }
+  return { full, row, place, build, get y() { return y } }
+}
+
+/**
+ * makeExampleMinimal — diseño LIMPIO/menos cargado: hero, iconos, comparador,
+ * precios, CTA. Fondo con un par de luces suaves. Ideal "menos es más".
+ */
+export function makeExampleMinimal(assets = null) {
+  if (!assets) assets = EXAMPLE_ASSETS
+  const b = makeLayoutBuilder()
+  // Luces de fondo (capa back), suaves.
+  b.place('glow-light', 40, 120, 520, 520, { layer: 'back', parallax: 0.5, props: { color: '#CA9C68', intensity: 0.4, shape: 'radial', on: true } })
+  b.place('glow-light', 760, 900, 520, 520, { layer: 'back', parallax: 0.35, props: { color: '#D2683D', intensity: 0.32, shape: 'radial', on: true } })
+  b.full('hero-combo', 300, { props: {
+    headline: 'Sonido con carácter', tagline: 'Mezcla y master, simple y directo.', align: 'center',
+    metrics: [{ value: '★ 4.9', label: 'Rating' }, { value: '48h', label: 'Entrega' }], ctaLabel: 'Contrátame', ctaUrl: '',
+  } })
+  b.full('icon-row', 180, { props: { title: 'Lo que hago', items: [
+    { icon: 'sliders', label: 'Mezcla', url: '' }, { icon: 'knob', label: 'Master', url: '' }, { icon: 'vinyl', label: 'Producción', url: '' },
+  ] } })
+  b.full('comparator', 560, { dataRef: null })
+  b.full('price-tiers', 340, {})
+  b.full('cta-banner-neon', 200, { props: { text: '¿EMPEZAMOS?', buttonLabel: 'Escríbeme', url: '', color: 'amber' } })
+  return b.build('candle', { parallax: true })
+}
+
+/**
+ * makeExampleLoaded — diseño CARGADO: todo lo que ofrece el estudio, con paneles
+ * de fondo, luces, capas y parallax. Muestra el máximo de módulos.
+ */
+export function makeExampleLoaded(assets = null) {
+  if (!assets) assets = EXAMPLE_ASSETS
+  const b = makeLayoutBuilder()
+  // Luces + paneles de fondo (capa back).
+  b.place('glow-light', 0, 40, 620, 620, { layer: 'back', parallax: 0.6, props: { color: '#EE8814', intensity: 0.5, shape: 'radial', on: true, flicker: true } })
+  b.place('glow-light', 700, 700, 620, 620, { layer: 'back', parallax: 0.45, props: { color: '#E02E0B', intensity: 0.42, shape: 'radial', on: true } })
+  b.place('panel-frame', 24, 700, 1152, 720, { layer: 'back', parallax: 0.15, props: { variant: 'frame', color: '#2B2F2E', border: '#594C3D', shape: 'rounded', radius: 20, screws: true, label: 'STUDIO RACK' } })
+  b.full('image', 300, { props: { url: assets.header || '', alt: 'Header', fit: 'cover', shape: 'rect', radius: 16 } })
+  b.full('hero-combo', 280, { props: {
+    headline: 'Muevo ideas con sonido', tagline: 'Todo mi arsenal en una página.', align: 'center',
+    metrics: [{ value: '8+', label: 'Años' }, { value: '120+', label: 'Proyectos' }, { value: '★ 4.9', label: 'Rating' }], ctaLabel: 'Contrátame en Fiverr', ctaUrl: '',
+  } })
+  b.full('marquee-ticker', 72, { props: { text: 'MEZCLA · MASTER · PRODUCCIÓN · SOUND DESIGN', speed: 26, separator: '✦' } })
+  b.full('icon-row', 180, { props: { title: 'Lo que hago', items: [
+    { icon: 'vinyl', label: 'Producción', url: '' }, { icon: 'sliders', label: 'Mezcla', url: '' }, { icon: 'knob', label: 'Master', url: '' }, { icon: 'mic', label: 'Grabación', url: '' }, { icon: 'headphones', label: 'Escucha', url: '' },
+  ] } })
+  b.full('process-steps', 240, {})
+  b.full('comparator', 560, { dataRef: null })
+  b.row([
+    { type: 'reveal-slider', w: 704, h: 360, extra: { props: { beforeUrl: assets.revealBefore || '', afterUrl: assets.revealAfter || '', label: 'Arrastra', labelBefore: 'Demo', labelAfter: 'Master' } } },
+    { type: 'vinyl-player', w: 376, h: 360, extra: { props: { coverUrl: assets.vinyl || '', title: 'Último single', subtitle: 'Gira solo', autospin: true } } },
+  ])
+  b.row([
+    { type: 'fx-rack', w: 540, h: 340 },
+    { type: 'synth', w: 540, h: 340, extra: { props: { octaves: 2 } } },
+  ])
+  b.full('audio-cards', 340, { props: { title: 'Escucha mi trabajo', items: [
+    { coverUrl: assets.card1 || '', title: 'EP — Neon', subtitle: 'Mezcla + master', url: '', audio: null },
+    { coverUrl: assets.card2 || '', title: 'Single — Río', subtitle: 'Master', url: '', audio: null },
+    { coverUrl: assets.card3 || '', title: 'Beat — Lo-fi', subtitle: 'Producción', url: '', audio: null },
+  ] } })
+  b.row([
+    { type: 'spotify', w: 540, h: 200, extra: { props: { title: 'En Spotify', url: '' } } },
+    { type: 'soundcloud', w: 540, h: 200, extra: { props: { title: 'En SoundCloud', url: '' } } },
+  ])
+  b.full('price-tiers', 340, {})
+  b.row([
+    { type: 'faq-accordion', w: 704, h: 340 },
+    { type: 'countdown-offer', w: 376, h: 340, extra: { props: { text: 'Oferta de lanzamiento', buttonLabel: 'Aprovechar', url: '' } } },
+  ])
+  b.full('socials', 140, { props: { style: 'icons', links: [
+    { platform: 'spotify', url: '' }, { platform: 'youtube', url: '' }, { platform: 'soundcloud', url: '' }, { platform: 'instagram', url: '' },
+  ] } })
+  b.full('cta-banner-neon', 200, { props: { text: '¿LISTO PARA SONAR PRO?', buttonLabel: 'Contrátame ahora', url: '', color: 'orange' } })
+  return b.build('ember', { parallax: true })
+}
+
+/**
+ * makeExampleSales — diseño DIRECTO PARA COMPRAR: precios arriba, prueba social,
+ * urgencia y CTAs por todos lados. Menos "juguete", más conversión.
+ */
+export function makeExampleSales(assets = null) {
+  if (!assets) assets = EXAMPLE_ASSETS
+  const b = makeLayoutBuilder()
+  b.place('glow-light', 300, 60, 600, 380, { layer: 'back', parallax: 0.4, props: { color: '#D2683D', intensity: 0.45, shape: 'radial', on: true } })
+  b.full('hero-combo', 260, { props: {
+    headline: 'Tu track, listo para publicar', tagline: 'Mezcla + master profesional en 48h. Precio claro, cero vueltas.', align: 'center',
+    metrics: [{ value: '★ 4.9', label: '+300 reseñas' }, { value: '48h', label: 'Entrega' }, { value: '100%', label: 'Satisfacción' }], ctaLabel: 'Contratar ahora', ctaUrl: '',
+  } })
+  b.full('price-tiers', 340, {})
+  b.full('countdown-offer', 200, { props: { text: 'Oferta de esta semana', buttonLabel: 'Aprovechar ahora', url: '' } })
+  b.full('audio-cards', 340, { props: { title: 'Antes / Después de mis clientes', items: [
+    { coverUrl: assets.card1 || '', title: 'Trap', subtitle: 'Master', url: '', audio: null },
+    { coverUrl: assets.card2 || '', title: 'Pop', subtitle: 'Mezcla + master', url: '', audio: null },
+    { coverUrl: assets.card3 || '', title: 'Lo-fi', subtitle: 'Producción', url: '', audio: null },
+  ] } })
+  b.row([
+    { type: 'faq-accordion', w: 704, h: 320 },
+    { type: 'testimonial', w: 376, h: 320, extra: { dataRef: null } },
+  ])
+  b.full('comparator', 560, { dataRef: null })
+  b.full('cta-banner-neon', 220, { props: { text: 'RESERVA TU CUPO ESTA SEMANA', buttonLabel: 'Contratar en Fiverr', url: '', color: 'orange' } })
+  return b.build('records', { parallax: true })
 }
 
 /**
