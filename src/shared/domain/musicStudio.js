@@ -561,6 +561,102 @@ export function makeExampleLayout() {
   })
 }
 
+/**
+ * layoutFromStudio(studio) — "Importar diseño actual": convierte los datos ya
+ * existentes de music_studio (hero, comparisons, gigs, library, testimonials,
+ * synth, fxDemo, soundcloud, video, tools) en un LAYOUT de módulos posicionados
+ * en una columna (modo libre), con estilo vintage. Cada elemento de colección
+ * (comparación, gig, pista, testimonio) se vuelve su propio módulo con `dataRef`
+ * al id original, para que el panel siga editando el dato real. Puro/testeable.
+ */
+export function layoutFromStudio(studio) {
+  const s = normalizeMusicStudio(studio || {})
+  const W = 1200
+  const PAD = 48
+  const COL = W - PAD * 2 // ancho de columna útil
+  const mods = []
+  let y = 40
+  let z = 1
+  const push = (type, h, extra = {}, w = COL, x = PAD) => {
+    const m = makeModule(type, x, y)
+    m.w = w; m.h = h; m.z = z++
+    if (extra.props) m.props = { ...m.props, ...extra.props }
+    if (extra.dataRef) m.dataRef = extra.dataRef
+    mods.push(m)
+    y += h + 32
+    return m
+  }
+
+  // HERO combinado (título + tagline + métricas + CTA) desde el hero actual.
+  push('hero-combo', 300, { props: {
+    headline: s.hero?.headline || 'Tu título aquí',
+    tagline: s.hero?.tagline || '',
+    align: 'center',
+    metrics: (s.hero?.metrics || []).map(m => ({ value: m.value, label: m.label })),
+    ctaLabel: s.hero?.ctaLabel || 'Contrátame en Fiverr',
+    ctaUrl: s.hero?.fiverrUrl || '',
+  } })
+  push('divider', 24, { props: { style: 'orange-rule' } })
+
+  // COMPARADORES (cada comparison → un módulo comparator con dataRef).
+  for (const c of (s.comparisons || [])) {
+    push('comparator', 460, { dataRef: c.id })
+  }
+
+  // GIGS (cada gig → un módulo gig con dataRef; en filas de a 3).
+  const gigs = s.gigs || []
+  if (gigs.length) {
+    const gw = Math.floor((COL - 24 * 2) / 3)
+    const rowH = 380
+    gigs.forEach((g, i) => {
+      const col = i % 3
+      const row = Math.floor(i / 3)
+      const m = makeModule('gig', PAD + col * (gw + 24), y + row * (rowH + 24))
+      m.w = gw; m.h = rowH; m.z = z++; m.dataRef = g.id
+      mods.push(m)
+    })
+    // Avanzar y por debajo de la última fila.
+    y = mods.filter(x => x.type === 'gig').reduce((mx, x) => Math.max(mx, x.y + x.h), 0) + 32
+  }
+
+  // LIBRERÍA (cada pista → un módulo library-track con dataRef).
+  for (const t of (s.library || [])) {
+    push('library-track', 140, { dataRef: t.id })
+  }
+
+  // FX demo (si hay audio).
+  if (s.fxDemo?.audio?.url) push('fx-rack', 220, {})
+
+  // SoundCloud / Video (si están configurados).
+  if (s.soundcloudUser) push('soundcloud', 80, {})
+  if (s.videoDemoUrl) push('video', 320, {})
+
+  // SYNTH (si hay presets).
+  if ((s.synth?.presets || []).length) push('synth', 320, { props: { octaves: 2 } })
+
+  // TESTIMONIOS (cada uno → módulo testimonial con dataRef).
+  for (const t of (s.testimonials || [])) {
+    push('testimonial', 180, { dataRef: t.id })
+  }
+
+  // REDES.
+  push('socials', 130, { props: { style: s.patchbay?.contactStyle || 'patchbay' } })
+
+  // BANNER CTA final.
+  push('banner-cta', 160, { props: {
+    text: '¿Listo para empezar?',
+    buttonLabel: s.hero?.ctaLabel || 'Contrátame en Fiverr',
+    url: s.hero?.fiverrUrl || '',
+  } })
+
+  return normalizeLayout({
+    enabled: true,
+    mode: 'free',
+    canvas: { width: W, grid: 24, snap: true, bg: 'river-styx' },
+    modules: mods,
+  })
+}
+
 /** Conecta un extremo del cable (endA|endB) a un jack, o lo desconecta (jackId=null). */
 export function plugConnect(cableMod, end, jackId) {
   const key = end === 'B' ? 'endBJack' : 'endAJack'
