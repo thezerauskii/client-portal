@@ -531,33 +531,38 @@ export function resizeModule(mod, w, h, { grid = 24, snap = false } = {}) {
  * a los primeros elementos existentes (comparador/testimonio) cuando aplica.
  * enabled:true para que se vea de inmediato. Puro y testeable.
  */
-export function makeExampleLayout() {
+export function makeExampleLayout(assets = {}) {
+  // `assets` opcional: { header, project1, project2, avatar } con URLs de R2
+  // (las sube el botón "Subir imágenes del ejemplo"). Si no hay, quedan vacías.
   const m = (type, x, y, w, h, extra = {}) => ({ ...makeModule(type, x, y), w, h, ...extra })
   return normalizeLayout({
     enabled: true,
     mode: 'free',
-    canvas: { width: 1200, grid: 24, snap: true, bg: 'river-styx' },
+    canvas: { width: 1200, height: 1720, grid: 24, snap: true, bg: 'river-styx' },
     modules: [
-      m('hero-combo', 48, 40, 1104, 300, { z: 2, props: {
+      // Header alargado (banner de imagen) al inicio.
+      m('image', 48, 32, 1104, 280, { z: 1, props: { url: assets.header || '', alt: 'Header', fit: 'cover', shape: 'rect', radius: 16 } }),
+      m('hero-combo', 48, 340, 1104, 280, { z: 3, props: {
         headline: 'Muevo ideas con sonido', tagline: 'Mezcla y masterización con oído profesional.', align: 'center',
         metrics: [{ value: '8+', label: 'Años' }, { value: '120+', label: 'Proyectos' }, { value: '★ 4.9', label: 'Rating' }],
         ctaLabel: 'Contrátame en Fiverr', ctaUrl: '',
       } }),
-      m('divider', 48, 356, 1104, 24, { z: 1, props: { style: 'orange-rule' } }),
-      m('services', 48, 400, 1104, 200, { z: 2, props: { items: [
+      m('divider', 48, 636, 1104, 24, { z: 1, props: { style: 'orange-rule' } }),
+      m('services', 48, 680, 1104, 200, { z: 2, props: { items: [
         { icon: 'waveform', title: 'Mezcla', desc: 'Balance, espacio y claridad.' },
         { icon: 'knob', title: 'Master', desc: 'Volumen competitivo y pegada.' },
         { icon: 'play', title: 'Producción', desc: 'De la idea al track final.' },
       ] } }),
-      m('skills', 48, 608, 520, 200, { z: 2, props: { items: [{ label: 'Mezcla', pct: 92 }, { label: 'Master', pct: 88 }, { label: 'Sound design', pct: 80 }] } }),
-      m('comparator', 600, 608, 552, 460, { z: 2, dataRef: null }),
-      m('projects', 48, 832, 520, 260, { z: 2, props: { items: [
-        { imageUrl: '', title: 'EP — Neon', subtitle: 'Mezcla + master', url: '' },
-        { imageUrl: '', title: 'Single — Río', subtitle: 'Master', url: '' },
+      m('skills', 48, 904, 520, 200, { z: 2, props: { items: [{ label: 'Mezcla', pct: 92 }, { label: 'Master', pct: 88 }, { label: 'Sound design', pct: 80 }] } }),
+      // Comparador de masters como default (transporte + perilla).
+      m('comparator', 600, 904, 552, 460, { z: 2, dataRef: null }),
+      m('projects', 48, 1128, 520, 300, { z: 2, props: { items: [
+        { imageUrl: assets.project1 || '', title: 'EP — Neon', subtitle: 'Mezcla + master', url: '' },
+        { imageUrl: assets.project2 || '', title: 'Single — Río', subtitle: 'Master', url: '' },
       ] } }),
-      m('testimonial', 48, 1116, 520, 180, { z: 2, dataRef: null }),
-      m('socials', 600, 1092, 552, 130, { z: 2, props: { style: 'patchbay' } }),
-      m('banner-cta', 48, 1320, 1104, 160, { z: 2, props: { text: '¿LISTO PARA EMPEZAR?', buttonLabel: 'Contrátame en Fiverr', url: '' } }),
+      m('testimonial', 48, 1452, 520, 180, { z: 2, dataRef: null }),
+      m('socials', 600, 1400, 552, 130, { z: 2, props: { style: 'patchbay' } }),
+      m('banner-cta', 48, 1656, 1104, 160, { z: 2, props: { text: '¿LISTO PARA EMPEZAR?', buttonLabel: 'Contrátame en Fiverr', url: '' } }),
     ],
   })
 }
