@@ -23,6 +23,7 @@ export default function Workbench({ modules = [], accent = '#22c55e', editable =
   const boardRef = useRef(null)
   const [size, setSize] = useState({ w: 760, h: 420 })
   const drag = useRef(null) // { id, part } part: 'move'|'a'|'b'
+  const [grab, setGrab] = useState(null) // { id, part } para resaltar el jack agarrado
 
   useEffect(() => {
     const el = boardRef.current
@@ -50,6 +51,7 @@ export default function Workbench({ modules = [], accent = '#22c55e', editable =
     if (!editable) return
     e.preventDefault(); e.stopPropagation()
     drag.current = { id, part }
+    if (part === 'a' || part === 'b') setGrab({ id, part })
     e.currentTarget.setPointerCapture?.(e.pointerId)
   }
   const onMove = (e) => {
@@ -66,7 +68,7 @@ export default function Workbench({ modules = [], accent = '#22c55e', editable =
       return { ...m, x, y } // synth: mover esquina
     }))
   }
-  const endDrag = () => { drag.current = null }
+  const endDrag = () => { drag.current = null; setGrab(null) }
 
   const px = (rel, dim) => rel * (dim === 'x' ? size.w : size.h)
 
@@ -77,12 +79,15 @@ export default function Workbench({ modules = [], accent = '#22c55e', editable =
 
       {/* Capa de cables (SVG) — se dibuja sobre el tablero */}
       <svg className="wb-cables" viewBox={`0 0 ${size.w} ${size.h}`} preserveAspectRatio="none" aria-hidden="true">
-        {modules.filter(m => m.type === 'cable').map(m => (
-          <SynthCable key={m.id}
-            from={{ x: px(m.ax, 'x'), y: px(m.ay, 'y') }}
-            to={{ x: px(m.bx, 'x'), y: px(m.by, 'y') }}
-            color="#3a3a3e" sag={40} />
-        ))}
+        {modules.filter(m => m.type === 'cable').map(m => {
+          const grabbed = grab?.id === m.id ? (grab.part === 'a' ? 'A' : 'B') : null
+          return (
+            <SynthCable key={m.id}
+              from={{ x: px(m.ax, 'x'), y: px(m.ay, 'y') }}
+              to={{ x: px(m.bx, 'x'), y: px(m.by, 'y') }}
+              color="#2b2b30" restLength={Math.max(size.w, size.h) * 0.7} grabbed={grabbed} />
+          )
+        })}
       </svg>
 
       {/* Módulos interactivos (plugs arrastrables, synth) */}
@@ -117,18 +122,16 @@ export default function Workbench({ modules = [], accent = '#22c55e', editable =
   )
 }
 
-/** Plug físico (cabeza de jack metálica). Arrastrable si editable. */
+/** Zona de agarre transparente sobre el jack SVG. Arrastrable si editable. */
 function WbPlug({ x, y, editable, onDown, label }) {
   return (
     <div
-      className={`wb-plug ${editable ? 'is-draggable' : ''}`}
+      className={`wb-plug wb-plug--hit ${editable ? 'is-draggable' : ''}`}
       style={{ left: x, top: y }}
       onPointerDown={onDown}
       role={editable ? 'button' : undefined}
       aria-label={editable ? `Mover extremo ${label}` : undefined}
-    >
-      <span className="wb-plug-ring"><span className="wb-plug-hole" /></span>
-    </div>
+    />
   )
 }
 

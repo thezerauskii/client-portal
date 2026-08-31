@@ -79,10 +79,68 @@ export function knobAngle(x) {
   return -135 + t * 270
 }
 
-/** Bézier path for a synth patch cable between two points (with gravity sag). */
-export function cablePath(sx, sy, tx, ty, sag = 40) {
-  const dx = Math.abs(tx - sx) * 0.4
-  return `M ${sx} ${sy} C ${sx + dx} ${sy + sag}, ${tx - dx} ${ty + sag}, ${tx} ${ty}`
+/**
+ * Distancia euclídea entre dos puntos (pura, testeable).
+ */
+export function dist2(ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay
+  return Math.sqrt(dx * dx + dy * dy)
+}
+
+/**
+ * cableSag — cuánto cuelga (px) un cable entre dos puntos, con GRAVEDAD.
+ * Modela una cuerda de longitud de reposo `restLength`: cuanto más juntos están
+ * los extremos (menos tensa), más cuelga; cuanto más separados (chord ≈ largo),
+ * casi no cuelga. `gravity` escala el efecto. Nunca negativo. Puro/testeable.
+ *
+ * @param {number} chord  distancia entre extremos
+ * @param {number} restLength  longitud "natural" del cable (>= chord ideal)
+ * @param {number} gravity  factor 0..1 (default 0.55)
+ */
+export function cableSag(chord, restLength = 260, gravity = 0.55) {
+  const c = Math.max(0, Number(chord) || 0)
+  const L = Math.max(1, Number(restLength) || 1)
+  // slack = cuánto "sobra" de cable respecto a la línea recta (0..1).
+  const slack = Math.max(0, Math.min(1, (L - c) / L))
+  // La flecha de una catenaria crece con el slack; le damos una curva agradable.
+  // Base proporcional al largo para que se sienta pesado, + empuje por slack.
+  return (0.12 * L + 0.9 * L * slack) * gravity
+}
+
+/**
+ * cablePath — curva SVG de un cable con GRAVEDAD (cuelga hacia abajo). Usa una
+ * catenaria aproximada con dos Béziers: el punto más bajo va bajo el punto medio
+ * de la cuerda, desplazado por `sag`. Se puede pasar `sag` fijo (compat) o
+ * dejar que lo calcule por gravedad con `restLength`.
+ *
+ * Firma flexible (compatible con el uso anterior de 5 args):
+ *   cablePath(sx, sy, tx, ty, sag)
+ *   cablePath(sx, sy, tx, ty, { restLength, gravity })
+ */
+export function cablePath(sx, sy, tx, ty, sagOrOpts = 40) {
+  const chord = dist2(sx, sy, tx, ty)
+  let sag
+  if (sagOrOpts && typeof sagOrOpts === 'object') {
+    sag = cableSag(chord, sagOrOpts.restLength ?? 260, sagOrOpts.gravity ?? 0.55)
+  } else {
+    sag = Number(sagOrOpts) || 0
+  }
+  // Punto medio + punto más bajo (gravedad = siempre hacia +y).
+  const mx = (sx + tx) / 2
+  const my = (sy + ty) / 2 + sag
+  // Dos curvas cuadráticas suaves que pasan por el punto bajo → aspecto de cuerda.
+  const c1x = sx + (mx - sx) * 0.5, c1y = sy + (my - sy) * 0.9
+  const c2x = tx + (mx - tx) * 0.5, c2y = ty + (my - ty) * 0.9
+  return `M ${sx} ${sy} Q ${c1x} ${c1y} ${mx} ${my} Q ${c2x} ${c2y} ${tx} ${ty}`
+}
+
+/** Punto más bajo del cable (para colocar sombra/etiqueta). Puro. */
+export function cableLowestPoint(sx, sy, tx, ty, sagOrOpts = 40) {
+  const chord = dist2(sx, sy, tx, ty)
+  const sag = (sagOrOpts && typeof sagOrOpts === 'object')
+    ? cableSag(chord, sagOrOpts.restLength ?? 260, sagOrOpts.gravity ?? 0.55)
+    : (Number(sagOrOpts) || 0)
+  return { x: (sx + tx) / 2, y: (sy + ty) / 2 + sag }
 }
 
 // ── Downsample audio samples to N min/max peak pairs (for Canvas waveform) ──
@@ -453,7 +511,7 @@ const MODULE_DEFAULTS = {
   // Ticker marquesina: texto que se desplaza solo.
   'marquee-ticker': { w: 1104, h: 72, props: { text: 'MEZCLA · MASTER · PRODUCCIÓN · SOUND DESIGN', speed: 30, separator: '✦' } },
   // Tabla de precios (3 niveles) con hover glow.
-  'price-tiers': { w: 1104, h: 420, props: { tiers: [
+  'price-tiers': { w: 1104, h: 340, props: { tiers: [
     { name: 'Básico', price: '30', period: '/track', features: ['Mezcla estéreo', '1 revisión', 'WAV'], ctaLabel: 'Elegir', url: '', featured: false },
     { name: 'Pro', price: '60', period: '/track', features: ['Mezcla + master', '2 revisiones', 'WAV + MP3'], ctaLabel: 'Elegir', url: '', featured: true },
     { name: 'Deluxe', price: '150', period: '/proyecto', features: ['Producción', 'Mezcla + master', '3 revisiones'], ctaLabel: 'Elegir', url: '', featured: false },
@@ -710,7 +768,7 @@ export function makeExampleLayout(assets = {}) {
   ])
 
   // ── Tarjetas de audio (portadas + play decorativo) ──
-  full('audio-cards', 320, { props: { title: 'Escucha mi trabajo', items: [
+  full('audio-cards', 340, { props: { title: 'Escucha mi trabajo', items: [
     { coverUrl: assets.card1 || '', title: 'EP — Neon', subtitle: 'Mezcla + master', url: '' },
     { coverUrl: assets.card2 || '', title: 'Single — Río', subtitle: 'Master', url: '' },
     { coverUrl: assets.card3 || '', title: 'Beat — Lo-fi', subtitle: 'Producción', url: '' },
@@ -730,7 +788,7 @@ export function makeExampleLayout(assets = {}) {
   ])
 
   // ── Precios (3 niveles con hover glow) ──
-  full('price-tiers', 420, {})
+  full('price-tiers', 340, {})
 
   // ── FAQ (izq) + testimonio (der) ──
   row([

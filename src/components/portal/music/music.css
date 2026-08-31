@@ -637,3 +637,30 @@
 .wb-module-bar:active { cursor: grabbing; }
 .wb-module-x { background: none; border: none; color: #c9503f; cursor: pointer; font-size: 1rem; line-height: 1; }
 .wb-empty { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 1rem; color: rgba(216,201,168,0.6); font-size: 0.85rem; }
+
+/* Zona de agarre transparente sobre el jack SVG (el jack se dibuja en el SVG). */
+.wb-plug--hit { width: 30px; height: 30px; border-radius: 50%; background: transparent; }
+
+/* ── Jack TS 2.5mm en las puntas del cable: animación plug-and-play ── */
+.sc-jack { transition: transform 0.18s ease; transform-box: fill-box; }
+.sc-jack.is-grabbed { animation: sc-jack-lift 0.9s ease-in-out infinite; }
+.sc-jack.is-plugged { animation: sc-jack-seat 0.35s ease-out 1; }
+.sc-jack-halo { animation: sc-halo-pulse 1.2s ease-in-out infinite; }
+
+@keyframes sc-jack-lift {
+  0%, 100% { transform: translateY(-1px) scale(1.06); }
+  50% { transform: translateY(-3px) scale(1.1); }
+}
+@keyframes sc-jack-seat {
+  0% { transform: translateX(-6px) scale(1.12); }
+  60% { transform: translateX(1px) scale(0.98); }
+  100% { transform: translateX(0) scale(1); }
+}
+@keyframes sc-halo-pulse {
+  0%, 100% { opacity: 0.25; r: 12px; }
+  50% { opacity: 0.85; r: 15px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-jack.is-grabbed, .sc-jack.is-plugged, .sc-jack-halo { animation: none !important; }
+}

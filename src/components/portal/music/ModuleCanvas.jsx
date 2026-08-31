@@ -111,9 +111,8 @@ export default function ModuleCanvas({ canvas = {}, modules = [], accent = '#22c
           <svg className="mk-cables" viewBox={`0 0 ${width} ${logicalHeight}`} width={width} height={logicalHeight} aria-hidden="true">
             {cables.map(cab => {
               const a = cableEnd(cab, 'A'); const b = cableEnd(cab, 'B')
-              // Si un extremo está SUELTO (sin jack), el cable cuelga (sag mayor).
-              const loose = !cab.props?.endAJack || !cab.props?.endBJack
-              return <SynthCable key={cab.id} from={a} to={b} color="#3a3a3e" sag={loose ? 70 : 36} />
+              const plugged = { A: !!cab.props?.endAJack, B: !!cab.props?.endBJack }
+              return <SynthCable key={cab.id} from={a} to={b} color="#2a2a2e" restLength={340} plugged={plugged} />
             })}
           </svg>
         )}
