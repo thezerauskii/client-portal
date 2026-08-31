@@ -472,6 +472,9 @@ export function normalizeLayout(l) {
   const num = (v, dflt) => (Number.isFinite(Number(v)) ? Number(v) : dflt)
   return {
     enabled: typeof d.enabled === 'boolean' ? d.enabled : false,
+    // Modo de composición: 'free' = lienzo libre (x,y), 'stack' = apilado vertical
+    // por orden (el artista decide qué va primero). Default 'free'.
+    mode: (d.mode === 'stack' || d.mode === 'free') ? d.mode : 'free',
     canvas: {
       width: Math.max(320, Math.min(3000, num(c.width, 1200))),
       grid: Math.max(8, Math.min(80, num(c.grid, 24))),

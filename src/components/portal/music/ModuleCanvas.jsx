@@ -31,6 +31,7 @@ export default function ModuleCanvas({ canvas = {}, modules = [], accent = '#22c
   const width = canvas.width || 1200
   const grid = canvas.grid || 24
   const bg = canvas.bg || 'river-styx'
+  const mode = canvas.mode || 'free'
   const boardRef = useRef(null)
   const [scale, setScale] = useState(1)
 
@@ -71,6 +72,28 @@ export default function ModuleCanvas({ canvas = {}, modules = [], accent = '#22c
     const rx = which === 'A' ? (cab.props?.ax ?? 0.2) : (cab.props?.bx ?? 0.7)
     const ry = which === 'A' ? (cab.props?.ay ?? 0.3) : (cab.props?.by ?? 0.5)
     return { x: rx * width, y: ry * logicalHeight }
+  }
+
+  // ── Modo APILADO: los módulos fluyen en una columna vertical por orden ──
+  // (z asc, luego y). Ancho completo, alto natural. No hay cables/jacks aquí.
+  if (mode === 'stack') {
+    const flow = [...modules]
+      .filter(m => m.type !== 'cable' && m.type !== 'jack')
+      .sort((a, b) => (a.z || 0) - (b.z || 0) || (a.y || 0) - (b.y || 0))
+    return (
+      <div className={`mk-canvas mk-canvas--stackmode mk-bg--${bg}`} style={{ '--accent': accent }}>
+        <div className="mk-flow">
+          {flow.map(mod => (
+            <div key={mod.id} className={`mk-flow-item mk-module--${mod.type}`} style={{ minHeight: mod.h }} data-module-id={mod.id}>
+              {CONTENT_TYPES.has(mod.type)
+                ? <ModuleContent mod={mod} accent={accent} onCta={onCta} />
+                : (renderAudioModule ? renderAudioModule(mod) : <ModulePlaceholder type={mod.type} />)}
+            </div>
+          ))}
+          {children}
+        </div>
+      </div>
+    )
   }
 
   return (
