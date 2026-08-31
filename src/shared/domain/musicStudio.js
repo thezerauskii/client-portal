@@ -666,7 +666,29 @@ export function normalizeModule(m) {
   }
 }
 
-const CANVAS_BG = ['river-styx', 'carbon', 'tea', 'wood']
+/**
+ * CANVAS_BG — fondos del lienzo. Los primeros son los tonos base; los nuevos
+ * (Fase 15) son diseños vintage cálidos inspirados en paletas analógicas:
+ *  - ember: naranjas/rojos intensos (Dynamite Red / Jack and Coke).
+ *  - candle: pared cálida a la luz de vela (Chocolate Eclair / Candied Yams).
+ *  - records: tienda de vinilos naranja sobre negro.
+ *  - radio-room: cuarto de radio vintage, verde-azulado + madera.
+ *  - cozy: crema ilustrado, acogedor (estilo Mila Rowan).
+ */
+export const CANVAS_BG = ['river-styx', 'carbon', 'tea', 'wood', 'ember', 'candle', 'records', 'radio-room', 'cozy']
+
+/** Etiquetas legibles de cada fondo (para el selector del editor). */
+export const CANVAS_BG_LABELS = {
+  'river-styx': 'River Styx (base)',
+  carbon: 'Carbón',
+  tea: 'Té',
+  wood: 'Madera',
+  ember: 'Brasa (naranja/rojo)',
+  candle: 'Vela (cálido)',
+  records: 'Tienda de vinilos',
+  'radio-room': 'Cuarto de radio',
+  cozy: 'Acogedor (crema)',
+}
 
 /**
  * Normaliza el bloque `layout` (constructor de módulos). Aditivo: ausente →

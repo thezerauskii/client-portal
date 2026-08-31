@@ -41,6 +41,38 @@
     radial-gradient(60% 40% at 50% 8%, rgba(224,138,92,0.28), transparent 60%),
     linear-gradient(180deg, #a17e56, var(--mk-wood) 60%, #6f5334);
 }
+/* ── Fase 15 — fondos vintage cálidos (referencias del usuario) ── */
+.mk-bg--ember {
+  background:
+    radial-gradient(45% 32% at 18% 14%, rgba(238,136,20,0.42), transparent 62%),
+    radial-gradient(50% 36% at 82% 26%, rgba(224,46,11,0.40), transparent 64%),
+    radial-gradient(55% 40% at 40% 88%, rgba(148,17,8,0.55), transparent 70%),
+    radial-gradient(120% 100% at 50% 0%, #2a0d06, #110b0b 70%);
+}
+.mk-bg--candle {
+  background:
+    radial-gradient(40% 50% at 82% 55%, rgba(247,163,102,0.42), transparent 60%),
+    radial-gradient(60% 60% at 20% 30%, rgba(105,70,71,0.35), transparent 65%),
+    linear-gradient(150deg, #2a2530, #0d1824 65%, #060a10);
+}
+.mk-bg--records {
+  background:
+    radial-gradient(70% 45% at 50% 0%, rgba(242,90,52,0.30), transparent 60%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 26px),
+    linear-gradient(180deg, #17120f, #0c0a09);
+}
+.mk-bg--radio-room {
+  background:
+    radial-gradient(50% 34% at 50% 6%, rgba(240,208,120,0.28), transparent 58%),
+    radial-gradient(60% 50% at 15% 90%, rgba(58,84,74,0.5), transparent 66%),
+    linear-gradient(165deg, #3a4a3f, #24312c 55%, #171f1c);
+}
+.mk-bg--cozy {
+  background:
+    radial-gradient(60% 45% at 80% 12%, rgba(224,138,92,0.22), transparent 62%),
+    radial-gradient(70% 55% at 15% 85%, rgba(144,109,75,0.28), transparent 66%),
+    linear-gradient(170deg, #4a4038, #35302a 60%, #26221d);
+}
 /* Capa VHS: viñeta + líneas de escaneo sutiles (analógico). */
 .mk-canvas::before {
   content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
