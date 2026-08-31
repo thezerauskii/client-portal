@@ -664,3 +664,9 @@
 @media (prefers-reduced-motion: reduce) {
   .sc-jack.is-grabbed, .sc-jack.is-plugged, .sc-jack-halo { animation: none !important; }
 }
+
+/* ── FxRack: subir pista del visitante (preview en caché) ── */
+.fx-upload { display: flex; gap: 8px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+.fx-upload-btn { cursor: pointer; font-size: 0.8rem; font-weight: 700; padding: 8px 14px; border-radius: 999px; background: var(--mk-orange, #D2683D); color: #1a120b; border: none; font-family: 'Oswald','Arial Narrow',system-ui; }
+.fx-upload-btn:hover { filter: brightness(1.08); }
+.fx-upload-clear { cursor: pointer; font-size: 0.76rem; padding: 7px 12px; border-radius: 999px; background: transparent; color: var(--mk-amber, #CA9C68); border: 1px solid var(--mk-tea, #594C3D); }

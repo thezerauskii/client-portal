@@ -6,6 +6,8 @@ import FxRack from './FxRack.jsx'
 import WebAudioSynth from './WebAudioSynth.jsx'
 import Workbench from './Workbench.jsx'
 import ContactPatch from './ContactPatch.jsx'
+import SocialIcon from './SocialIcon.jsx'
+import { videoEmbed, spotifyEmbedUrl, soundcloudEmbedUrl, SOCIAL_PLATFORMS } from '../../../shared/domain/musicStudio.js'
 
 /**
  * ModuleAudio — renderiza los MÓDULOS DE AUDIO/INTERACTIVOS envolviendo los
@@ -63,8 +65,9 @@ export default function ModuleAudio({ mod, data = {}, accent = '#22c55e', handle
     }
 
     case 'fx-rack':
-      if (!data.fxDemo?.audio?.url) return <div className="mk-module-ph">FX demo</div>
-      return <FxRack audio={data.fxDemo.audio} accent={accent} defaults={data.fxDemo.enabledDefaults} />
+      // Siempre renderiza: aunque el artista no ponga demo, el visitante puede
+      // subir su propia pista para escuchar el preview con efectos.
+      return <FxRack audio={data.fxDemo?.audio} accent={accent} defaults={data.fxDemo?.enabledDefaults || {}} allowUpload />
 
     case 'synth': {
       const preset = data.synth?.presets?.find(x => x.id === data.synth.defaultPresetId) || data.synth?.presets?.[0] || {}
@@ -93,16 +96,39 @@ export default function ModuleAudio({ mod, data = {}, accent = '#22c55e', handle
       )
     }
 
-    case 'soundcloud':
-      if (!data.soundcloudUser) return <div className="mk-module-ph">SoundCloud</div>
-      return <a className="mk-soundcloud" href={`https://soundcloud.com/${data.soundcloudUser}`} target="_blank" rel="noopener noreferrer">@{data.soundcloudUser} en SoundCloud →</a>
+    case 'soundcloud': {
+      const scEmbed = soundcloudEmbedUrl({ url: p.url, user: p.user || data.soundcloudUser })
+      const scLink = p.url || (p.user || data.soundcloudUser ? `https://soundcloud.com/${(p.user || data.soundcloudUser).replace(/^@/, '')}` : '')
+      return (
+        <div className="mk-hud mk-hud--soundcloud">
+          <div className="mk-hud-head"><SocialIcon name="soundcloud" size={20} /><span>{p.title || 'SoundCloud'}</span></div>
+          {scEmbed
+            ? <iframe className="mk-hud-embed" title="SoundCloud" src={scEmbed} allow="autoplay" />
+            : <div className="mk-hud-ph">Pega un enlace de SoundCloud o tu usuario.</div>}
+          {scLink && <a className="mk-hud-link" href={scLink} target="_blank" rel="noopener noreferrer">Abrir en SoundCloud →</a>}
+        </div>
+      )
+    }
+
+    case 'spotify': {
+      const spEmbed = spotifyEmbedUrl(p.url)
+      return (
+        <div className="mk-hud mk-hud--spotify">
+          <div className="mk-hud-head"><SocialIcon name="spotify" size={20} /><span>{p.title || 'Spotify'}</span></div>
+          {spEmbed
+            ? <iframe className="mk-hud-embed" title="Spotify" src={spEmbed} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture" loading="lazy" />
+            : <div className="mk-hud-ph">Pega un enlace de Spotify (track, álbum o playlist).</div>}
+          {p.url && <a className="mk-hud-link" href={p.url} target="_blank" rel="noopener noreferrer">Abrir en Spotify →</a>}
+        </div>
+      )
+    }
 
     case 'video': {
-      const url = data.videoDemoUrl
-      if (!url) return <div className="mk-module-ph">Video</div>
-      return /youtube\.com|youtu\.be/.test(url)
-        ? <div className="mk-video"><iframe src={url.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')} title="Video demo" frameBorder="0" allow="accelerometer; encrypted-media" allowFullScreen /></div>
-        : <video className="mk-video" src={url} controls />
+      const url = p.url || data.videoDemoUrl
+      const emb = videoEmbed(url)
+      if (!emb) return <div className="mk-module-ph">Video</div>
+      if (emb.kind === 'file') return <video className="mk-video" src={emb.src} controls playsInline />
+      return <div className="mk-video"><iframe src={emb.src} title="Video" frameBorder="0" allow="accelerometer; autoplay; encrypted-media; picture-in-picture" allowFullScreen /></div>
     }
 
     case 'testimonial': {
@@ -117,8 +143,22 @@ export default function ModuleAudio({ mod, data = {}, accent = '#22c55e', handle
       )
     }
 
-    case 'socials':
-      return <ContactPatch socialLinks={socialLinks} platformConnections={platformConnections} style={p.style || data.patchbay?.contactStyle || 'patchbay'} accent={accent} />
+    case 'socials': {
+      const links = (p.links || []).filter(l => l && l.url)
+      if (links.length > 0) {
+        return (
+          <div className="mk-socials">
+            {links.map((l, i) => (
+              <a key={i} className="mk-social-btn" href={l.url} target="_blank" rel="noopener noreferrer"
+                 title={(SOCIAL_PLATFORMS.find(s => s.id === l.platform)?.label) || l.platform}>
+                <SocialIcon name={l.platform} size={26} />
+              </a>
+            ))}
+          </div>
+        )
+      }
+      return <ContactPatch socialLinks={socialLinks} platformConnections={platformConnections} style={data.patchbay?.contactStyle || 'patchbay'} accent={accent} />
+    }
 
     default:
       return null

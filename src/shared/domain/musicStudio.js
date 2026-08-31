@@ -80,6 +80,85 @@ export function knobAngle(x) {
 }
 
 /**
+ * youtubeEmbedUrl — extrae el ID de un enlace de YouTube (watch, youtu.be,
+ * shorts, embed, con o sin parámetros) y devuelve la URL /embed correcta.
+ * Devuelve null si no parece YouTube. Puro/testeable.
+ */
+export function youtubeEmbedUrl(url) {
+  if (typeof url !== 'string' || !url) return null
+  const patterns = [
+    /(?:youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/|youtube-nocookie\.com\/embed\/)([A-Za-z0-9_-]{11})/,
+  ]
+  for (const re of patterns) {
+    const m = url.match(re)
+    if (m && m[1]) return `https://www.youtube.com/embed/${m[1]}`
+  }
+  return null
+}
+
+/**
+ * videoEmbed — decide cómo mostrar un video: { kind:'youtube', src } para
+ * YouTube (iframe) o { kind:'file', src } para un archivo/URL directa (<video>).
+ * Devuelve null si no hay url. Puro/testeable.
+ */
+export function videoEmbed(url) {
+  if (typeof url !== 'string' || !url.trim()) return null
+  const yt = youtubeEmbedUrl(url)
+  if (yt) return { kind: 'youtube', src: yt }
+  if (/vimeo\.com\/(\d+)/.test(url)) {
+    const id = url.match(/vimeo\.com\/(\d+)/)[1]
+    return { kind: 'vimeo', src: `https://player.vimeo.com/video/${id}` }
+  }
+  return { kind: 'file', src: url }
+}
+
+/**
+ * spotifyEmbedUrl — convierte un enlace de Spotify (track/album/artist/playlist,
+ * open.spotify.com o spotify:) en su URL /embed. Devuelve null si no es Spotify.
+ */
+export function spotifyEmbedUrl(url) {
+  if (typeof url !== 'string' || !url) return null
+  // open.spotify.com/track/ID  (con o sin locale /intl-xx/)
+  let m = url.match(/open\.spotify\.com\/(?:intl-[a-z]{2}\/)?(track|album|artist|playlist|episode|show)\/([A-Za-z0-9]+)/)
+  if (m) return `https://open.spotify.com/embed/${m[1]}/${m[2]}`
+  // URI: spotify:track:ID
+  m = url.match(/spotify:(track|album|artist|playlist|episode|show):([A-Za-z0-9]+)/)
+  if (m) return `https://open.spotify.com/embed/${m[1]}/${m[2]}`
+  return null
+}
+
+/**
+ * soundcloudEmbedUrl — dado un enlace de SoundCloud (o un usuario), devuelve la
+ * URL del reproductor embebible (player.soundcloud.com). Si sólo hay usuario,
+ * devuelve el embed del perfil. Devuelve null si no hay nada usable.
+ */
+export function soundcloudEmbedUrl({ url, user } = {}) {
+  const target = (typeof url === 'string' && url.trim())
+    ? url.trim()
+    : (typeof user === 'string' && user.trim() ? `https://soundcloud.com/${user.trim().replace(/^@/, '')}` : '')
+  if (!target) return null
+  const enc = encodeURIComponent(target)
+  return `https://w.soundcloud.com/player/?url=${enc}&color=%23D2683D&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&visual=false`
+}
+
+/**
+ * SOCIAL_PLATFORMS — catálogo de redes soportadas por el módulo `socials`.
+ * `id` se usa como nombre de icono (VintageIcon/SocialIcon) y clave. Puro.
+ */
+export const SOCIAL_PLATFORMS = [
+  { id: 'spotify', label: 'Spotify' },
+  { id: 'youtube', label: 'YouTube' },
+  { id: 'soundcloud', label: 'SoundCloud' },
+  { id: 'instagram', label: 'Instagram' },
+  { id: 'tiktok', label: 'TikTok' },
+  { id: 'twitter', label: 'X / Twitter' },
+  { id: 'bandcamp', label: 'Bandcamp' },
+  { id: 'applemusic', label: 'Apple Music' },
+  { id: 'discord', label: 'Discord' },
+  { id: 'website', label: 'Sitio web' },
+]
+
+/**
  * Distancia euclídea entre dos puntos (pura, testeable).
  */
 export function dist2(ax, ay, bx, by) {
@@ -454,7 +533,7 @@ export const MODULE_TYPES = [
   'banner-cta', 'avatar', 'divider',
   // audio (envuelven componentes existentes)
   'comparator', 'library-track', 'fx-rack', 'synth', 'workbench', 'gig',
-  'soundcloud', 'video', 'testimonial', 'socials',
+  'soundcloud', 'spotify', 'video', 'testimonial', 'socials',
   // Fase 14 — módulos interactivos vintage (diseño, no audio real)
   'icon-row', 'vinyl-player', 'reveal-slider', 'marquee-ticker', 'price-tiers',
   'faq-accordion', 'process-steps', 'countdown-offer', 'audio-cards', 'cta-banner-neon',
@@ -488,24 +567,35 @@ const MODULE_DEFAULTS = {
   synth: { w: 520, h: 320, props: { octaves: 2 } },
   workbench: { w: 760, h: 480, props: {} },
   gig: { w: 300, h: 380, props: {} },
-  soundcloud: { w: 360, h: 80, props: {} },
-  video: { w: 560, h: 320, props: {} },
+  // SoundCloud: HUD compacto tipo widget. url = enlace a track/perfil de SoundCloud.
+  soundcloud: { w: 420, h: 180, props: { user: '', url: '', title: 'Escúchame en SoundCloud' } },
+  // Spotify: HUD compacto. url = enlace a track/álbum/artista/playlist de Spotify.
+  spotify: { w: 420, h: 180, props: { url: '', title: 'Escúchame en Spotify' } },
+  // Video: url por-módulo (YouTube/Vimeo/archivo). Ya no depende del global.
+  video: { w: 560, h: 320, props: { url: '' } },
   testimonial: { w: 360, h: 180, props: {} },
-  socials: { w: 480, h: 120, props: { style: 'patchbay' } },
+  // Redes: iconos editables por-módulo. Cada link {platform, url}. Si `links`
+  // está vacío, el render cae a las redes globales del perfil (socialLinks).
+  socials: { w: 640, h: 140, props: { style: 'icons', links: [
+    { platform: 'spotify', url: '' },
+    { platform: 'youtube', url: '' },
+    { platform: 'instagram', url: '' },
+  ] } },
   // ── Fase 14 — módulos interactivos vintage ──
   // Fila de iconos grandes (como en la primera imagen de referencia).
   'icon-row': { w: 1104, h: 180, props: {
     title: '',
     items: [
-      { icon: 'vinyl', label: 'Producción' },
-      { icon: 'sliders', label: 'Mezcla' },
-      { icon: 'knob', label: 'Master' },
-      { icon: 'mic', label: 'Grabación' },
-      { icon: 'headphones', label: 'Escucha' },
+      { icon: 'vinyl', label: 'Producción', url: '' },
+      { icon: 'sliders', label: 'Mezcla', url: '' },
+      { icon: 'knob', label: 'Master', url: '' },
+      { icon: 'mic', label: 'Grabación', url: '' },
+      { icon: 'headphones', label: 'Escucha', url: '' },
     ],
   } },
-  // Tocadiscos: la portada gira al pulsar (diseño, no audio real).
-  'vinyl-player': { w: 360, h: 400, props: { coverUrl: '', title: 'Mi último single', subtitle: 'Escúchalo', url: '', autospin: false } },
+  // Tocadiscos: la portada gira. `audio` = pista subida (se reproduce local);
+  // `url` = enlace externo opcional. Diseño + reproducción local.
+  'vinyl-player': { w: 360, h: 400, props: { coverUrl: '', title: 'Mi último single', subtitle: 'Escúchalo', url: '', audio: null, autospin: false } },
   // Slider revelador: arrastra para descubrir la imagen "después".
   'reveal-slider': { w: 560, h: 360, props: { beforeUrl: '', afterUrl: '', label: 'Arrastra para revelar', labelBefore: 'Antes', labelAfter: 'Después' } },
   // Ticker marquesina: texto que se desplaza solo.
@@ -533,9 +623,9 @@ const MODULE_DEFAULTS = {
   'countdown-offer': { w: 760, h: 200, props: { deadline: '', text: 'Oferta por tiempo limitado', buttonLabel: 'Aprovechar', url: '', expiredText: 'La oferta terminó' } },
   // Tarjetas de audio (portada + título + botón play decorativo).
   'audio-cards': { w: 1104, h: 320, props: { title: 'Escucha mi trabajo', items: [
-    { coverUrl: '', title: 'Track 1', subtitle: 'Master', url: '' },
-    { coverUrl: '', title: 'Track 2', subtitle: 'Mezcla', url: '' },
-    { coverUrl: '', title: 'Track 3', subtitle: 'Producción', url: '' },
+    { coverUrl: '', title: 'Track 1', subtitle: 'Master', url: '', audio: null },
+    { coverUrl: '', title: 'Track 2', subtitle: 'Mezcla', url: '', audio: null },
+    { coverUrl: '', title: 'Track 3', subtitle: 'Producción', url: '', audio: null },
   ] } },
   // Banner CTA con glow neón pulsante.
   'cta-banner-neon': { w: 1104, h: 200, props: { text: '¿LISTO PARA SONAR PRO?', buttonLabel: 'Contrátame ahora', url: '', color: 'amber' } },
@@ -681,10 +771,24 @@ export function layoutHasOverlaps(modules, opts) {
  * a los primeros elementos existentes (comparador/testimonio) cuando aplica.
  * enabled:true para que se vea de inmediato. Puro y testeable.
  */
-export function makeExampleLayout(assets = {}) {
-  // `assets` opcional: { header, project1, project2, avatar, vinyl, revealBefore,
-  // revealAfter, card1, card2, card3 } con URLs de R2 (las sube el botón
-  // "Cargar ejemplo con imágenes"). Si no hay, quedan vacías.
+/** Imágenes por defecto del ejemplo (servidas por el portal en /example/*). */
+export const EXAMPLE_ASSETS = {
+  header: '/example/header.jpg',
+  project1: '/example/reel1.jpg',
+  project2: '/example/reel2.jpg',
+  vinyl: '/example/studio.jpg',
+  revealBefore: '/example/reel2.jpg',
+  revealAfter: '/example/reel1.jpg',
+  card1: '/example/reel1.jpg',
+  card2: '/example/studio.jpg',
+  card3: '/example/reel2.jpg',
+}
+
+export function makeExampleLayout(assets = null) {
+  // Si no se pasan assets, usa las imágenes de ejemplo servidas por el portal.
+  // `assets` opcional: { header, project1, project2, vinyl, revealBefore,
+  // revealAfter, card1, card2, card3 }.
+  if (!assets) assets = EXAMPLE_ASSETS
   //
   // Layout en flujo VERTICAL sin solapes: mantengo un cursor `y` y coloco cada
   // bloque debajo del anterior. Las filas de columnas comparten `y` pero nunca
@@ -812,6 +916,113 @@ export function makeExampleLayout(assets = {}) {
     canvas: { width: 1200, height, grid: 24, snap: true, showGrid: true, bg: 'river-styx' },
     modules: mods,
   })
+}
+
+/**
+ * makeLayoutBuilder — helper interno para componer layouts en flujo vertical
+ * sin solapes. Devuelve { full, row, build }.
+ */
+function makeLayoutBuilder({ pad = 48, col = 1104, gap = 32, startY = 32 } = {}) {
+  const mods = []
+  let y = startY
+  let z = 1
+  const full = (type, h, extra = {}) => { mods.push({ ...makeModule(type, pad, y), w: col, h, z: z++, ...extra }); y += h + gap }
+  const row = (cols, { gap: g = 24 } = {}) => {
+    let x = pad; let maxH = 0
+    for (const c of cols) { mods.push({ ...makeModule(c.type, x, y), w: c.w, h: c.h, z: z++, ...(c.extra || {}) }); x += c.w + g; if (c.h > maxH) maxH = c.h }
+    y += maxH + gap
+  }
+  const build = (bg = 'river-styx') => {
+    const height = Math.ceil((y + 40) / 24) * 24
+    return normalizeLayout({ enabled: true, mode: 'free', canvas: { width: 1200, height, grid: 24, snap: true, showGrid: true, bg }, modules: mods })
+  }
+  return { full, row, build }
+}
+
+/**
+ * makeShowcaseLayout — diseño tipo SHOWCASE centrado en la MÚSICA: hero, iconos,
+ * comparador consola grande, tarjetas de audio, vinilo, reveal, precios y CTA
+ * neón. Usa las imágenes de ejemplo. Segundo preset seleccionable en el editor.
+ */
+export function makeShowcaseLayout(assets = null) {
+  if (!assets) assets = EXAMPLE_ASSETS
+  const b = makeLayoutBuilder()
+  b.full('image', 320, { props: { url: assets.header || '', alt: 'Header', fit: 'cover', shape: 'rect', radius: 16 } })
+  b.full('hero-combo', 260, { props: {
+    headline: 'SHOWCASE', tagline: 'Escucha, compara y siente el sonido.', align: 'center',
+    metrics: [{ value: '★ 4.9', label: 'Rating' }, { value: '120+', label: 'Tracks' }, { value: '48h', label: 'Entrega' }],
+    ctaLabel: 'Contrátame', ctaUrl: '',
+  } })
+  b.full('marquee-ticker', 72, { props: { text: 'ESCUCHA · COMPARA · SIENTE · MEZCLA · MASTER', speed: 24, separator: '◆' } })
+  // Comparador consola a ancho completo (protagonista del showcase).
+  b.full('comparator', 560, { dataRef: null })
+  // Tarjetas de audio (reproducibles) protagonistas.
+  b.full('audio-cards', 340, { props: { title: 'Mis tracks', items: [
+    { coverUrl: assets.card1 || '', title: 'Neon', subtitle: 'Master', url: '', audio: null },
+    { coverUrl: assets.card2 || '', title: 'Río', subtitle: 'Mezcla', url: '', audio: null },
+    { coverUrl: assets.card3 || '', title: 'Lo-fi', subtitle: 'Producción', url: '', audio: null },
+  ] } })
+  // Vinilo + reveal lado a lado.
+  b.row([
+    { type: 'vinyl-player', w: 376, h: 380, extra: { props: { coverUrl: assets.vinyl || '', title: 'Último single', subtitle: 'Pulsa para girar', autospin: false } } },
+    { type: 'reveal-slider', w: 704, h: 380, extra: { props: { beforeUrl: assets.revealBefore || '', afterUrl: assets.revealAfter || '', label: 'Arrastra', labelBefore: 'Demo', labelAfter: 'Master' } } },
+  ])
+  // FX rack (sube tu pista) + Spotify HUD.
+  b.row([
+    { type: 'fx-rack', w: 704, h: 320 },
+    { type: 'spotify', w: 376, h: 320, extra: { props: { title: 'En Spotify', url: '' } } },
+  ])
+  b.full('icon-row', 180, { props: { title: 'Servicios', items: [
+    { icon: 'vinyl', label: 'Producción', url: '' }, { icon: 'sliders', label: 'Mezcla', url: '' },
+    { icon: 'knob', label: 'Master', url: '' }, { icon: 'mic', label: 'Grabación', url: '' }, { icon: 'headphones', label: 'Escucha', url: '' },
+  ] } })
+  b.full('price-tiers', 340, {})
+  b.full('socials', 140, { props: { style: 'icons', links: [
+    { platform: 'spotify', url: '' }, { platform: 'youtube', url: '' }, { platform: 'soundcloud', url: '' }, { platform: 'instagram', url: '' },
+  ] } })
+  b.full('cta-banner-neon', 200, { props: { text: 'ESCUCHA MÁS EN VIVO', buttonLabel: 'Contáctame', url: '', color: 'orange' } })
+  return b.build('carbon')
+}
+
+/**
+ * makeExampleLayoutAlt — segundo ejemplo con ORDEN DIFERENTE (precios arriba,
+ * proceso y FAQ al centro, comparador y media abajo). Mismo set de módulos.
+ */
+export function makeExampleLayoutAlt(assets = null) {
+  if (!assets) assets = EXAMPLE_ASSETS
+  const b = makeLayoutBuilder()
+  b.full('hero-combo', 260, { props: {
+    headline: 'Tu música, al siguiente nivel', tagline: 'Precios claros, proceso simple.', align: 'center',
+    metrics: [{ value: '3-5', label: 'Días' }, { value: '★ 4.9', label: 'Rating' }, { value: '150+', label: 'Clientes' }],
+    ctaLabel: 'Ver precios', ctaUrl: '',
+  } })
+  // Precios primero (orden distinto).
+  b.full('price-tiers', 340, {})
+  b.full('process-steps', 240, {})
+  b.row([
+    { type: 'faq-accordion', w: 704, h: 340 },
+    { type: 'countdown-offer', w: 376, h: 340, extra: { props: { text: 'Oferta de lanzamiento', buttonLabel: 'Aprovechar', url: '' } } },
+  ])
+  b.full('comparator', 560, { dataRef: null })
+  b.row([
+    { type: 'audio-cards', w: 704, h: 340, extra: { props: { title: 'Escucha', items: [
+      { coverUrl: assets.card1 || '', title: 'Track 1', subtitle: 'Master', url: '', audio: null },
+      { coverUrl: assets.card2 || '', title: 'Track 2', subtitle: 'Mezcla', url: '', audio: null },
+    ] } } },
+    { type: 'vinyl-player', w: 376, h: 340, extra: { props: { coverUrl: assets.vinyl || '', title: 'Single', subtitle: 'Pulsa', autospin: false } } },
+  ])
+  b.row([
+    { type: 'video', w: 704, h: 320, extra: { props: { url: '' } } },
+    { type: 'soundcloud', w: 376, h: 320, extra: { props: { title: 'SoundCloud', url: '' } } },
+  ])
+  b.full('icon-row', 180, { props: { title: 'Lo que hago', items: [
+    { icon: 'mic', label: 'Grabar', url: '' }, { icon: 'sliders', label: 'Mezclar', url: '' }, { icon: 'knob', label: 'Masterizar', url: '' }, { icon: 'disc', label: 'Entregar', url: '' },
+  ] } })
+  b.full('socials', 140, { props: { style: 'icons', links: [
+    { platform: 'instagram', url: '' }, { platform: 'tiktok', url: '' }, { platform: 'youtube', url: '' }, { platform: 'spotify', url: '' },
+  ] } })
+  b.full('cta-banner-neon', 200, { props: { text: '¿EMPEZAMOS?', buttonLabel: 'Escríbeme', url: '', color: 'amber' } })
+  return b.build('wood')
 }
 
 /**

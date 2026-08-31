@@ -147,7 +147,7 @@ export default function ModuleContent({ mod, accent = '#22c55e', onCta }) {
 
     // ── Fase 14 — módulos interactivos vintage (idénticos en Electron/portal) ──
     case 'icon-row':
-      return <IconRow p={p} />
+      return <IconRow p={p} onCta={onCta} />
     case 'vinyl-player':
       return <VinylPlayer p={p} onCta={onCta} />
     case 'reveal-slider':
@@ -179,28 +179,41 @@ export default function ModuleContent({ mod, accent = '#22c55e', onCta }) {
  * Respetan prefers-reduced-motion vía CSS (clases .mk-*).
  * ──────────────────────────────────────────────────────────────────────────*/
 
-/** Fila de iconos grandes con "encendido" al pasar el cursor. */
-function IconRow({ p }) {
+/** Fila de iconos grandes con "encendido" al pasar el cursor. Clickeables si tienen url. */
+function IconRow({ p, onCta, editable }) {
   const items = p.items || []
   return (
     <div className="mk-iconrow">
       {p.title ? <h4 className="mk-iconrow-title">{p.title}</h4> : null}
       <div className="mk-iconrow-grid">
-        {items.map((it, i) => (
-          <div className="mk-iconrow-item" key={i} style={{ '--i': i }}>
-            <span className="mk-iconrow-icon"><VintageIcon name={it.icon || 'note'} size={44} strokeWidth={1.4} /></span>
-            <span className="mk-iconrow-label">{it.label || ''}</span>
-          </div>
-        ))}
+        {items.map((it, i) => {
+          const inner = (
+            <>
+              <span className="mk-iconrow-icon"><VintageIcon name={it.icon || 'note'} size={44} strokeWidth={1.4} /></span>
+              <span className="mk-iconrow-label">{it.label || ''}</span>
+            </>
+          )
+          return (it.url && !editable)
+            ? <a className="mk-iconrow-item mk-iconrow-item--link" key={i} style={{ '--i': i }} href={it.url} target="_blank" rel="noopener noreferrer" onClick={() => onCta?.(it.url)}>{inner}</a>
+            : <div className={`mk-iconrow-item ${it.url ? 'mk-iconrow-item--link' : ''}`} key={i} style={{ '--i': i }}>{inner}</div>
+        })}
       </div>
     </div>
   )
 }
 
-/** Tocadiscos: la portada gira al pulsar (o auto). Aguja que baja al reproducir. */
+/** Tocadiscos: la portada gira al pulsar. Si hay audio subido, lo reproduce
+ *  localmente (HTMLAudio) al girar y para al detener. La aguja baja al sonar. */
 function VinylPlayer({ p, onCta, editable }) {
   const [spinning, setSpinning] = useState(!!p.autospin)
+  const audioRef = useRef(null)
+  const audioUrl = p.audio?.url || ''
   useEffect(() => { setSpinning(!!p.autospin) }, [p.autospin])
+  useEffect(() => {
+    const el = audioRef.current
+    if (!el) return
+    if (spinning) { el.play?.().catch(() => {}) } else { el.pause?.() }
+  }, [spinning])
   const toggle = (e) => { e.stopPropagation(); setSpinning(s => !s) }
   return (
     <div className="mk-vinyl">
@@ -216,8 +229,9 @@ function VinylPlayer({ p, onCta, editable }) {
         <span className="mk-vinyl-sub">{p.subtitle || ''}</span>
       </div>
       <button type="button" className="mk-vinyl-btn" onClick={toggle} onPointerDown={(e) => e.stopPropagation()}>
-        <VintageIcon name={spinning ? 'pause' : 'play'} size={16} /> {spinning ? 'Parar' : 'Girar'}
+        <VintageIcon name={spinning ? 'pause' : 'play'} size={16} /> {spinning ? 'Parar' : (audioUrl ? 'Reproducir' : 'Girar')}
       </button>
+      {audioUrl ? <audio ref={audioRef} src={audioUrl} onEnded={() => setSpinning(false)} preload="none" /> : null}
       {p.url && !editable ? <a className="mk-vinyl-link" href={p.url} target="_blank" rel="noopener noreferrer" onClick={() => onCta?.(p.url)}>Escuchar</a> : null}
     </div>
   )
@@ -288,7 +302,11 @@ function PriceTiers({ p, onCta, editable }) {
           <span className="mk-tier-name">{t.name || ''}</span>
           <span className="mk-tier-price"><b>${t.price || '0'}</b><em>{t.period || ''}</em></span>
           <ul className="mk-tier-features">
-            {(t.features || []).map((f, j) => <li key={j}><VintageIcon name="signal" size={13} /> {f}</li>)}
+            {(t.features || []).map((f, j) => {
+              const text = typeof f === 'string' ? f : (f?.text || '')
+              const icon = (typeof f === 'object' && f?.icon) ? f.icon : 'signal'
+              return <li key={j}><VintageIcon name={icon} size={16} /> {text}</li>
+            })}
           </ul>
           {t.url && !editable
             ? <a className="mk-tier-cta" href={t.url} target="_blank" rel="noopener noreferrer" onClick={() => onCta?.(t.url)}>{t.ctaLabel || 'Elegir'}</a>
@@ -376,10 +394,19 @@ function CountdownOffer({ p, onCta, editable }) {
   )
 }
 
-/** Tarjetas de audio: portada + botón play decorativo (pulso al pulsar). */
+/** Tarjetas de audio: portada + play. Si la tarjeta tiene audio subido, lo
+ *  reproduce localmente; sólo una suena a la vez. */
 function AudioCards({ p, onCta, editable }) {
   const [active, setActive] = useState(-1)
+  const audioRef = useRef(null)
   const items = p.items || []
+  const activeUrl = active >= 0 ? (items[active]?.audio?.url || '') : ''
+  useEffect(() => {
+    const el = audioRef.current
+    if (!el) return
+    if (activeUrl) { el.play?.().catch(() => {}) } else { el.pause?.() }
+  }, [activeUrl, active])
+  const toggle = (i) => setActive(a => (a === i ? -1 : i))
   return (
     <div className="mk-audiocards">
       {p.title ? <h4 className="mk-audiocards-title">{p.title}</h4> : null}
@@ -388,7 +415,7 @@ function AudioCards({ p, onCta, editable }) {
           <div className={`mk-audiocard ${active === i ? 'is-active' : ''}`} key={i}>
             <div className="mk-audiocard-cover">
               {it.coverUrl ? <img src={it.coverUrl} alt={it.title || ''} /> : <span className="mk-audiocard-ph"><VintageIcon name="disc" size={30} /></span>}
-              <button type="button" className="mk-audiocard-play" onClick={(e) => { e.stopPropagation(); setActive(active === i ? -1 : i) }} onPointerDown={(e) => e.stopPropagation()} aria-label={active === i ? 'Pausar' : 'Reproducir'}>
+              <button type="button" className="mk-audiocard-play" onClick={(e) => { e.stopPropagation(); toggle(i) }} onPointerDown={(e) => e.stopPropagation()} aria-label={active === i ? 'Pausar' : 'Reproducir'}>
                 <VintageIcon name={active === i ? 'pause' : 'play'} size={18} />
               </button>
             </div>
@@ -398,6 +425,7 @@ function AudioCards({ p, onCta, editable }) {
           </div>
         ))}
       </div>
+      {activeUrl ? <audio ref={audioRef} src={activeUrl} onEnded={() => setActive(-1)} preload="none" /> : null}
     </div>
   )
 }

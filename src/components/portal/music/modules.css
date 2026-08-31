@@ -37,7 +37,7 @@
 .mk-flow-item { position: relative; box-sizing: border-box; width: 100%; }
 
 /* Capa de cables + jacks (patchbay físico) */
-.mk-cables { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 5; }
+.mk-cables { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 60; }
 .mk-jack { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 3px; z-index: 6; }
 .mk-jack-ring { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #4a4a52, #1a1a1e); border: 2px solid #6b6b72; box-shadow: inset 0 0 4px rgba(0,0,0,0.6); }
 .mk-jack-hole { width: 12px; height: 12px; border-radius: 50%; background: #0c0c0f; box-shadow: inset 0 0 4px rgba(0,0,0,0.9); }
@@ -222,11 +222,11 @@
 .mk-tier.is-featured { border-color: var(--mk-orange); box-shadow: 0 0 0 1px var(--mk-orange), 0 10px 30px rgba(210,104,61,0.25); }
 .mk-tier-badge { position: absolute; top: -11px; left: 50%; transform: translateX(-50%); background: var(--mk-orange); color: #1a120b; font-size: 0.62rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 12px; border-radius: 999px; }
 .mk-tier-name { font-family: var(--mk-font-display); text-transform: uppercase; letter-spacing: 0.06em; color: var(--mk-amber); font-size: 1rem; }
-.mk-tier-price b { font-size: 2rem; color: var(--mk-ink); font-family: var(--mk-font-display); }
+.mk-tier-price b { font-size: 2.6rem; color: var(--mk-ink); font-family: var(--mk-font-display); }
 .mk-tier-price em { font-style: normal; font-size: 0.8rem; color: var(--mk-ink-dim); margin-left: 4px; }
-.mk-tier-features { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; flex: 1; }
-.mk-tier-features li { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--mk-ink); }
-.mk-tier-features li svg { color: var(--mk-orange); flex: none; }
+.mk-tier-features { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; flex: 1; justify-content: center; }
+.mk-tier-features li { display: flex; align-items: center; gap: 10px; font-size: 1rem; line-height: 1.3; color: var(--mk-ink); }
+.mk-tier-features li svg { width: 18px; height: 18px; color: var(--mk-orange); flex: none; }
 .mk-tier-cta { text-align: center; padding: 10px; border-radius: 999px; background: var(--mk-orange); color: #1a120b; font-weight: 800; text-decoration: none; font-family: var(--mk-font-display); }
 .mk-tier-cta--dim { opacity: 0.6; }
 .mk-tier.is-featured .mk-tier-cta { box-shadow: 0 6px 18px rgba(210,104,61,0.5); }
@@ -299,3 +299,18 @@
   .mk-neon { animation: none !important; }
   .mk-iconrow-item, .mk-tier, .mk-audiocard, .mk-neon-btn, .mk-vinyl-arm, .mk-faq-chevron, .mk-faq-a { transition: none !important; }
 }
+
+/* ── HUD compacto SoundCloud / Spotify (widget tipo Tumblr) ── */
+.mk-hud { display: flex; flex-direction: column; gap: 8px; height: 100%; box-sizing: border-box; padding: 12px; border-radius: 12px; background: var(--mk-carbon); border: 1px solid var(--mk-tea); }
+.mk-hud-head { display: flex; align-items: center; gap: 8px; font-family: var(--mk-font-display); text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.82rem; color: var(--mk-ink); }
+.mk-hud--soundcloud .mk-hud-head { color: var(--mk-orange); }
+.mk-hud--spotify .mk-hud-head { color: #1DB954; }
+.mk-hud-embed { flex: 1; width: 100%; min-height: 80px; border: none; border-radius: 8px; background: #0d0a07; }
+.mk-hud-ph { flex: 1; display: grid; place-items: center; text-align: center; padding: 10px; color: var(--mk-ink-dim); font-size: 0.8rem; border: 1px dashed var(--mk-tea); border-radius: 8px; }
+.mk-hud-link { font-size: 0.76rem; color: var(--mk-amber); text-decoration: none; }
+.mk-hud-link:hover { text-decoration: underline; }
+
+/* ── Redes: fila de iconos de plataforma editables ── */
+.mk-socials { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: center; height: 100%; }
+.mk-social-btn { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 12px; background: rgba(0,0,0,0.25); border: 1px solid var(--mk-tea); color: var(--mk-ink); transition: transform 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+.mk-social-btn:hover { transform: translateY(-3px); color: var(--mk-orange); border-color: var(--mk-orange); box-shadow: 0 6px 18px rgba(210,104,61,0.28); }
