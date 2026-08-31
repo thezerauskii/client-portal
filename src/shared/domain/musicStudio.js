@@ -485,6 +485,7 @@ export function normalizeLayout(l) {
     mode: (d.mode === 'stack' || d.mode === 'free') ? d.mode : 'free',
     canvas: {
       width: Math.max(320, Math.min(3000, num(c.width, 1200))),
+      height: Math.max(0, Math.min(20000, num(c.height, 0))), // 0 = auto (por contenido)
       grid: Math.max(8, Math.min(80, num(c.grid, 24))),
       snap: typeof c.snap === 'boolean' ? c.snap : true,
       bg: CANVAS_BG.includes(c.bg) ? c.bg : 'river-styx',
