@@ -670,3 +670,10 @@
 .fx-upload-btn { cursor: pointer; font-size: 0.8rem; font-weight: 700; padding: 8px 14px; border-radius: 999px; background: var(--mk-orange, #D2683D); color: #1a120b; border: none; font-family: 'Oswald','Arial Narrow',system-ui; }
 .fx-upload-btn:hover { filter: brightness(1.08); }
 .fx-upload-clear { cursor: pointer; font-size: 0.76rem; padding: 7px 12px; border-radius: 999px; background: transparent; color: var(--mk-amber, #CA9C68); border: 1px solid var(--mk-tea, #594C3D); }
+
+/* ── Sinte: barra "usar teclado" (activar modo tocar vs armonías) ── */
+.synth-usebar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.synth-use-btn { cursor: pointer; font-size: 0.78rem; font-weight: 700; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--accent, #D2683D); background: transparent; color: var(--accent, #D2683D); font-family: 'Oswald','Arial Narrow',system-ui; transition: background 0.15s, color 0.15s; }
+.synth-use-btn.is-on { background: var(--accent, #D2683D); color: #1a120b; box-shadow: 0 0 12px rgba(210,104,61,0.5); }
+.synth-use-hint { font-size: 0.72rem; color: var(--mk-ink-dim, #A99B84); }
+.synth.is-activated { box-shadow: 0 0 0 2px var(--accent, #D2683D); border-radius: 16px; }

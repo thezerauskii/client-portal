@@ -32,6 +32,52 @@ export const QWERTY_KEYS = {
 }
 
 /**
+ * HARMONY_STYLES — escalas/acordes por estilo para el modo "armonías al teclear"
+ * (cuando el sinte NO está activo y el usuario escribe fuera de un campo).
+ * Cada estilo define grados (semitonos desde la tónica) que suenan bien juntos.
+ */
+export const HARMONY_STYLES = {
+  // Alegre: mayor / pentatónica mayor — arpegios luminosos.
+  happy: { scale: [0, 2, 4, 7, 9, 12, 16, 19], chord: [0, 4, 7, 11] },
+  // Gótico: menor armónica / disminuido — tensión oscura.
+  gothic: { scale: [0, 1, 3, 5, 7, 8, 11, 12], chord: [0, 3, 6, 8] },
+  // Etéreo/soñador: lidio / add9.
+  dreamy: { scale: [0, 2, 4, 6, 7, 9, 11, 12], chord: [0, 4, 7, 14] },
+  // Lo-fi/jazzy: menor dórico con séptimas.
+  lofi: { scale: [0, 2, 3, 5, 7, 9, 10, 12], chord: [0, 3, 7, 10] },
+}
+export const HARMONY_STYLE_IDS = Object.keys(HARMONY_STYLES)
+
+/**
+ * harmonyForKey — dado un carácter tecleado, una tónica base y un estilo,
+ * devuelve un ARPEGIO: lista de { midi, delayMs, holdMs } que, tocados en
+ * secuencia rápida, suenan como una pequeña armonía. Puro/determinista por
+ * carácter (misma tecla → mismo arpegio), para que "escribir" suene musical.
+ *
+ * @param {string} ch  carácter (una letra/dígito)
+ * @param {number} baseMidi  tónica (p.ej. 48 = C3)
+ * @param {string} styleId  'happy'|'gothic'|'dreamy'|'lofi'
+ * @returns {Array<{midi:number, delayMs:number, holdMs:number}>}
+ */
+export function harmonyForKey(ch, baseMidi = 48, styleId = 'happy') {
+  const style = HARMONY_STYLES[styleId] || HARMONY_STYLES.happy
+  const code = typeof ch === 'string' && ch.length ? ch.toLowerCase().charCodeAt(0) : 0
+  if (!code) return []
+  // Índice de grado a partir del carácter (determinista).
+  const root = style.scale[code % style.scale.length]
+  // Espacio/enter/puntuación → acorde completo; letras → arpegio de 2-3 notas.
+  const isSpace = ch === ' ' || ch === '\n' || ch === '\t'
+  const oct = ((code >> 3) % 2) * 12 // varía la octava un poco según la tecla
+  if (isSpace) {
+    // Acorde: todas las notas juntas.
+    return style.chord.map((iv, i) => ({ midi: baseMidi + root + iv + oct, delayMs: i * 8, holdMs: 520 }))
+  }
+  // Arpegio: 3 grados de la escala partiendo del grado del carácter.
+  const steps = [0, 2, 4].map(s => style.scale[(code + s) % style.scale.length])
+  return steps.map((deg, i) => ({ midi: baseMidi + deg + oct, delayMs: i * 55, holdMs: 260 }))
+}
+
+/**
  * Build the list of playable keys for a keyboard spanning `octaves` starting at
  * `baseMidi`. Returns [{ midi, isBlack, index }] for rendering.
  * @param {number} baseMidi lowest note (e.g. 48 = C3)

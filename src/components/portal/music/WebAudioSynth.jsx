@@ -1,9 +1,18 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import Knob from './Knob.jsx'
 import SynthAudioEngine from './synthAudioEngine.js'
-import { buildKeyboard, QWERTY_KEYS, WAVEFORMS, noteToFreq } from '../../../shared/domain/synthEngine.js'
+import { buildKeyboard, QWERTY_KEYS, WAVEFORMS, noteToFreq, harmonyForKey, HARMONY_STYLE_IDS } from '../../../shared/domain/synthEngine.js'
 import { isWebAudioSupported } from './audioEngine.js'
 import './music.css'
+
+/** ¿El foco está en un campo donde el usuario escribe texto? (no sonar ahí). */
+function isTypingTarget(el) {
+  if (!el) return false
+  const tag = (el.tagName || '').toLowerCase()
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return true
+  if (el.isContentEditable) return true
+  return false
+}
 
 /**
  * WebAudioSynth — mini-sintetizador tocable. El cliente toca "el sonido del
@@ -25,8 +34,11 @@ export default function WebAudioSynth({
 }) {
   const unsupported = !isWebAudioSupported()
   const engineRef = useRef(null)
+  const rootRef = useRef(null)
   const [active, setActive] = useState(() => new Set()) // midis sonando (para resaltar)
   const heldKeys = useRef(new Set())                     // teclas QWERTY abajo (anti-repeat)
+  const [activated, setActivated] = useState(false)
+  const styleRef = useRef(0)
 
   // Perillas: si editable, salen del preset; si no, controlan solo el sonido en vivo.
   const [live, setLive] = useState(() => ({
@@ -72,19 +84,43 @@ export default function WebAudioSynth({
     setActive(prev => { const n = new Set(prev); n.delete(midi); return n })
   }, [])
 
-  // Teclado QWERTY.
+  // Toca un pequeño arpegio/acorde (armonía) a partir de un carácter.
+  const playHarmony = useCallback((ch) => {
+    const styleId = HARMONY_STYLE_IDS[styleRef.current % HARMONY_STYLE_IDS.length]
+    styleRef.current++
+    const notes = harmonyForKey(ch, baseMidi, styleId)
+    for (const n of notes) {
+      setTimeout(() => {
+        press(n.midi)
+        setTimeout(() => release(n.midi), n.holdMs)
+      }, n.delayMs)
+    }
+  }, [baseMidi, press, release])
+
+  // Teclado QWERTY con DOS modos: activated → notas; !activated + fuera de campo
+  // → armonías; escribiendo en input → silencio.
   useEffect(() => {
     if (unsupported) return
     const onKeyDown = (e) => {
-      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return
-      const semi = QWERTY_KEYS[e.key?.toLowerCase()]
-      if (semi == null) return
-      const midi = baseMidi + semi
-      if (heldKeys.current.has(midi)) return
-      heldKeys.current.add(midi)
-      press(midi)
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      if (isTypingTarget(e.target)) return
+      if (activated) {
+        if (e.repeat) return
+        const semi = QWERTY_KEYS[e.key?.toLowerCase()]
+        if (semi == null) return
+        const midi = baseMidi + semi
+        if (heldKeys.current.has(midi)) return
+        heldKeys.current.add(midi)
+        press(midi)
+      } else {
+        if (e.repeat) return
+        const ch = e.key
+        if (!ch || ch.length !== 1) return
+        playHarmony(ch)
+      }
     }
     const onKeyUp = (e) => {
+      if (!activated) return
       const semi = QWERTY_KEYS[e.key?.toLowerCase()]
       if (semi == null) return
       const midi = baseMidi + semi
@@ -94,7 +130,14 @@ export default function WebAudioSynth({
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
     return () => { window.removeEventListener('keydown', onKeyDown); window.removeEventListener('keyup', onKeyUp) }
-  }, [unsupported, baseMidi, press, release])
+  }, [unsupported, baseMidi, press, release, activated, playHarmony])
+
+  useEffect(() => {
+    if (!activated) return
+    const onDocDown = (e) => { if (rootRef.current && !rootRef.current.contains(e.target)) setActivated(false) }
+    document.addEventListener('pointerdown', onDocDown)
+    return () => document.removeEventListener('pointerdown', onDocDown)
+  }, [activated])
 
   if (unsupported) {
     return <div className="synth wf-fallback"><p className="wf-note">Tu navegador no soporta el mini-sintetizador (Web Audio).</p></div>
@@ -105,8 +148,17 @@ export default function WebAudioSynth({
   const whiteW = 100 / whites.length
 
   return (
-    <div className="synth" style={{ '--accent': accent }}>
+    <div className={`synth ${activated ? 'is-activated' : ''}`} style={{ '--accent': accent }} ref={rootRef}
+      onPointerDown={() => { if (!activated) setActivated(true) }}>
       <div className="synth-panel">
+        {/* Barra de estado: activar/usar el teclado del sinte */}
+        <div className="synth-usebar">
+          <button type="button" className={`synth-use-btn ${activated ? 'is-on' : ''}`}
+            onClick={(e) => { e.stopPropagation(); setActivated(a => !a) }}>
+            {activated ? '● Tocando (teclado = notas)' : 'Usar teclado ▶'}
+          </button>
+          <span className="synth-use-hint">{activated ? 'Clic fuera para soltar' : 'Sin activar: al escribir suenan armonías'}</span>
+        </div>
         {/* Controles / perillas vintage */}
         <div className="synth-controls">
           <div className="synth-osc">
@@ -168,7 +220,7 @@ export default function WebAudioSynth({
             )
           })}
         </div>
-        {keysHint && <p className="synth-hint">Toca con el ratón, con el dedo, o usa tu teclado (A W S E D F...).</p>}
+        {keysHint && <p className="synth-hint">{activated ? 'Toca con el ratón, el dedo, o tu teclado (A W S E D F...).' : 'Pulsa "Usar teclado" para tocar notas. Si no, al escribir en la página suenan armonías.'}</p>}
       </div>
     </div>
   )

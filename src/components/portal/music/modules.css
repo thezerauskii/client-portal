@@ -263,8 +263,10 @@
 .mk-vinyl-cover { width: 64%; height: auto; aspect-ratio: 1 / 1; border-radius: 50%; object-fit: cover; border: 2px solid var(--mk-wood); }
 .mk-vinyl-cover--ph { display: grid; place-items: center; background: var(--mk-tea); color: var(--mk-amber); }
 .mk-vinyl-hole { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #0b0906; box-shadow: inset 0 0 3px rgba(255,255,255,0.15); }
-.mk-vinyl-arm { position: absolute; top: -4px; right: 6px; width: 5px; height: 46%; background: linear-gradient(180deg, #cbc3b5, #6d6255); border-radius: 3px; transform-origin: top center; transform: rotate(18deg); transition: transform 0.5s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
-.mk-vinyl-arm.is-playing { transform: rotate(-6deg); }
+/* Aguja: PARADA = levantada a un lado (rotate positivo, fuera del disco).
+ * REPRODUCIENDO = baja/se posa sobre el disco (rotate negativo, hacia dentro). */
+.mk-vinyl-arm { position: absolute; top: -4px; right: 6px; width: 5px; height: 46%; background: linear-gradient(180deg, #cbc3b5, #6d6255); border-radius: 3px; transform-origin: top center; transform: rotate(30deg); transition: transform 0.5s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.mk-vinyl-arm.is-playing { transform: rotate(-8deg); }
 .mk-vinyl-info { text-align: center; }
 .mk-vinyl-title { display: block; font-family: var(--mk-font-display); font-weight: 700; color: var(--mk-ink); }
 .mk-vinyl-sub { display: block; font-size: 0.75rem; color: var(--mk-ink-dim); }
