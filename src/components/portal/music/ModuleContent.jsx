@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import VintageIcon from './VintageIcon.jsx'
 
 /**
@@ -145,9 +145,273 @@ export default function ModuleContent({ mod, accent = '#22c55e', onCta }) {
     case 'divider':
       return <div className={`mk-divider mk-divider--${p.style || 'orange-rule'}`} aria-hidden="true" />
 
+    // ── Fase 14 — módulos interactivos vintage (idénticos en Electron/portal) ──
+    case 'icon-row':
+      return <IconRow p={p} />
+    case 'vinyl-player':
+      return <VinylPlayer p={p} onCta={onCta} />
+    case 'reveal-slider':
+      return <RevealSlider p={p} />
+    case 'marquee-ticker':
+      return <MarqueeTicker p={p} />
+    case 'price-tiers':
+      return <PriceTiers p={p} onCta={onCta} />
+    case 'faq-accordion':
+      return <FaqAccordion p={p} />
+    case 'process-steps':
+      return <ProcessSteps p={p} />
+    case 'countdown-offer':
+      return <CountdownOffer p={p} onCta={onCta} />
+    case 'audio-cards':
+      return <AudioCards p={p} onCta={onCta} />
+    case 'cta-banner-neon':
+      return <CtaBannerNeon p={p} onCta={onCta} />
+
     default:
       return null
   }
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+ * Fase 14 — subcomponentes interactivos vintage. IDÉNTICOS en Electron y portal.
+ * Controles = diseño/interacción, NO audio real: sliders revelan imágenes,
+ * botones disparan animación, cosas que se mueven solas → llevan al CTA.
+ * Respetan prefers-reduced-motion vía CSS (clases .mk-*).
+ * ──────────────────────────────────────────────────────────────────────────*/
+
+/** Fila de iconos grandes con "encendido" al pasar el cursor. */
+function IconRow({ p }) {
+  const items = p.items || []
+  return (
+    <div className="mk-iconrow">
+      {p.title ? <h4 className="mk-iconrow-title">{p.title}</h4> : null}
+      <div className="mk-iconrow-grid">
+        {items.map((it, i) => (
+          <div className="mk-iconrow-item" key={i} style={{ '--i': i }}>
+            <span className="mk-iconrow-icon"><VintageIcon name={it.icon || 'note'} size={44} strokeWidth={1.4} /></span>
+            <span className="mk-iconrow-label">{it.label || ''}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** Tocadiscos: la portada gira al pulsar (o auto). Aguja que baja al reproducir. */
+function VinylPlayer({ p, onCta, editable }) {
+  const [spinning, setSpinning] = useState(!!p.autospin)
+  useEffect(() => { setSpinning(!!p.autospin) }, [p.autospin])
+  const toggle = (e) => { e.stopPropagation(); setSpinning(s => !s) }
+  return (
+    <div className="mk-vinyl">
+      <div className="mk-vinyl-deck">
+        <div className={`mk-vinyl-disc ${spinning ? 'is-spinning' : ''}`}>
+          {p.coverUrl ? <img className="mk-vinyl-cover" src={p.coverUrl} alt={p.title || ''} /> : <span className="mk-vinyl-cover mk-vinyl-cover--ph"><VintageIcon name="vinyl" size={40} /></span>}
+          <span className="mk-vinyl-hole" />
+        </div>
+        <span className={`mk-vinyl-arm ${spinning ? 'is-playing' : ''}`} aria-hidden="true" />
+      </div>
+      <div className="mk-vinyl-info">
+        <span className="mk-vinyl-title">{p.title || ''}</span>
+        <span className="mk-vinyl-sub">{p.subtitle || ''}</span>
+      </div>
+      <button type="button" className="mk-vinyl-btn" onClick={toggle} onPointerDown={(e) => e.stopPropagation()}>
+        <VintageIcon name={spinning ? 'pause' : 'play'} size={16} /> {spinning ? 'Parar' : 'Girar'}
+      </button>
+      {p.url && !editable ? <a className="mk-vinyl-link" href={p.url} target="_blank" rel="noopener noreferrer" onClick={() => onCta?.(p.url)}>Escuchar</a> : null}
+    </div>
+  )
+}
+
+/** Slider revelador: arrastra el tirador para descubrir la imagen "después". */
+function RevealSlider({ p }) {
+  const [pos, setPos] = useState(50) // % visible de "después"
+  const wrapRef = useRef(null)
+  const dragging = useRef(false)
+  const setFromClientX = (clientX) => {
+    const el = wrapRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    const pct = ((clientX - r.left) / r.width) * 100
+    setPos(Math.max(0, Math.min(100, pct)))
+  }
+  const onDown = (e) => { e.stopPropagation(); dragging.current = true; setFromClientX(e.clientX ?? e.touches?.[0]?.clientX) }
+  useEffect(() => {
+    const move = (e) => { if (dragging.current) setFromClientX(e.clientX ?? e.touches?.[0]?.clientX) }
+    const up = () => { dragging.current = false }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+    return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up) }
+  }, [])
+  return (
+    <div className="mk-reveal" ref={wrapRef}>
+      <div className="mk-reveal-img mk-reveal-before">
+        {p.beforeUrl ? <img src={p.beforeUrl} alt={p.labelBefore || 'Antes'} /> : <span className="mk-reveal-ph"><VintageIcon name="waveform" size={28} /></span>}
+        <span className="mk-reveal-tag mk-reveal-tag--before">{p.labelBefore || 'Antes'}</span>
+      </div>
+      <div className="mk-reveal-img mk-reveal-after" style={{ clipPath: `inset(0 0 0 ${pos}%)` }}>
+        {p.afterUrl ? <img src={p.afterUrl} alt={p.labelAfter || 'Después'} /> : <span className="mk-reveal-ph"><VintageIcon name="signal" size={28} /></span>}
+        <span className="mk-reveal-tag mk-reveal-tag--after">{p.labelAfter || 'Después'}</span>
+      </div>
+      <div className="mk-reveal-handle" style={{ left: `${pos}%` }} onPointerDown={onDown} role="slider" aria-valuenow={Math.round(pos)} aria-label={p.label || 'Revelar'}>
+        <span className="mk-reveal-grip"><VintageIcon name="sliders" size={16} /></span>
+      </div>
+      {p.label ? <span className="mk-reveal-hint">{p.label}</span> : null}
+    </div>
+  )
+}
+
+/** Ticker marquesina: texto que se desplaza en bucle (velocidad configurable). */
+function MarqueeTicker({ p }) {
+  const speed = Math.max(6, Math.min(120, Number(p.speed) || 30))
+  const sep = p.separator || '✦'
+  const chunk = (p.text || '').trim() || 'MEZCLA · MASTER · PRODUCCIÓN'
+  const unit = `${chunk}   ${sep}   `
+  return (
+    <div className="mk-marquee" aria-label={chunk}>
+      <div className="mk-marquee-track" style={{ animationDuration: `${Math.max(6, 1200 / speed)}s` }}>
+        <span className="mk-marquee-unit">{unit.repeat(4)}</span>
+        <span className="mk-marquee-unit" aria-hidden="true">{unit.repeat(4)}</span>
+      </div>
+    </div>
+  )
+}
+
+/** Tabla de precios (3 niveles). Hover glow; el "featured" resalta. */
+function PriceTiers({ p, onCta, editable }) {
+  const tiers = p.tiers || []
+  return (
+    <div className="mk-tiers">
+      {tiers.map((t, i) => (
+        <div className={`mk-tier ${t.featured ? 'is-featured' : ''}`} key={i}>
+          {t.featured ? <span className="mk-tier-badge">Popular</span> : null}
+          <span className="mk-tier-name">{t.name || ''}</span>
+          <span className="mk-tier-price"><b>${t.price || '0'}</b><em>{t.period || ''}</em></span>
+          <ul className="mk-tier-features">
+            {(t.features || []).map((f, j) => <li key={j}><VintageIcon name="signal" size={13} /> {f}</li>)}
+          </ul>
+          {t.url && !editable
+            ? <a className="mk-tier-cta" href={t.url} target="_blank" rel="noopener noreferrer" onClick={() => onCta?.(t.url)}>{t.ctaLabel || 'Elegir'}</a>
+            : <span className="mk-tier-cta mk-tier-cta--dim">{t.ctaLabel || 'Elegir'}</span>}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** Acordeón de preguntas frecuentes. Abre/cierra con clic. */
+function FaqAccordion({ p }) {
+  const [open, setOpen] = useState(0)
+  const items = p.items || []
+  return (
+    <div className="mk-faq">
+      {p.title ? <h4 className="mk-faq-title">{p.title}</h4> : null}
+      {items.map((it, i) => (
+        <div className={`mk-faq-item ${open === i ? 'is-open' : ''}`} key={i}>
+          <button type="button" className="mk-faq-q" onClick={(e) => { e.stopPropagation(); setOpen(open === i ? -1 : i) }} onPointerDown={(e) => e.stopPropagation()}>
+            <span>{it.q || ''}</span>
+            <span className="mk-faq-chevron" aria-hidden="true">＋</span>
+          </button>
+          <div className="mk-faq-a"><p>{it.a || ''}</p></div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** Pasos del proceso 1→2→3→4 con línea conectora y numeración. */
+function ProcessSteps({ p }) {
+  const steps = p.steps || []
+  return (
+    <div className="mk-steps">
+      {steps.map((s, i) => (
+        <div className="mk-step" key={i} style={{ '--i': i }}>
+          <span className="mk-step-num">{i + 1}</span>
+          <span className="mk-step-icon"><VintageIcon name={s.icon || 'note'} size={26} /></span>
+          <span className="mk-step-title">{s.title || ''}</span>
+          <span className="mk-step-desc">{s.desc || ''}</span>
+          {i < steps.length - 1 ? <span className="mk-step-link" aria-hidden="true" /> : null}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** Cuenta atrás de oferta → urgencia → CTA. Se actualiza cada segundo. */
+function CountdownOffer({ p, onCta, editable }) {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
+  const target = p.deadline ? Date.parse(p.deadline) : NaN
+  const hasDeadline = Number.isFinite(target)
+  const diff = hasDeadline ? target - now : NaN
+  const expired = hasDeadline && diff <= 0
+  const parts = (() => {
+    if (!hasDeadline || expired) return null
+    const s = Math.floor(diff / 1000)
+    return {
+      d: Math.floor(s / 86400),
+      h: Math.floor((s % 86400) / 3600),
+      m: Math.floor((s % 3600) / 60),
+      s: s % 60,
+    }
+  })()
+  const pad = (n) => String(n).padStart(2, '0')
+  return (
+    <div className={`mk-countdown ${expired ? 'is-expired' : ''}`}>
+      <span className="mk-countdown-text">{expired ? (p.expiredText || 'La oferta terminó') : (p.text || 'Oferta por tiempo limitado')}</span>
+      {parts ? (
+        <div className="mk-countdown-clock">
+          {[['d', parts.d], ['h', parts.h], ['m', parts.m], ['s', parts.s]].map(([k, v]) => (
+            <span className="mk-countdown-cell" key={k}><b>{pad(v)}</b><em>{k}</em></span>
+          ))}
+        </div>
+      ) : (!hasDeadline ? <div className="mk-countdown-clock mk-countdown-clock--ph"><span className="mk-countdown-cell"><b>--</b><em>d</em></span><span className="mk-countdown-cell"><b>--</b><em>h</em></span><span className="mk-countdown-cell"><b>--</b><em>m</em></span><span className="mk-countdown-cell"><b>--</b><em>s</em></span></div> : null)}
+      {p.url && !editable && !expired
+        ? <a className="mk-countdown-btn" href={p.url} target="_blank" rel="noopener noreferrer" onClick={() => onCta?.(p.url)}>{p.buttonLabel || 'Aprovechar'}</a>
+        : <span className="mk-countdown-btn mk-countdown-btn--dim">{p.buttonLabel || 'Aprovechar'}</span>}
+    </div>
+  )
+}
+
+/** Tarjetas de audio: portada + botón play decorativo (pulso al pulsar). */
+function AudioCards({ p, onCta, editable }) {
+  const [active, setActive] = useState(-1)
+  const items = p.items || []
+  return (
+    <div className="mk-audiocards">
+      {p.title ? <h4 className="mk-audiocards-title">{p.title}</h4> : null}
+      <div className="mk-audiocards-grid">
+        {items.map((it, i) => (
+          <div className={`mk-audiocard ${active === i ? 'is-active' : ''}`} key={i}>
+            <div className="mk-audiocard-cover">
+              {it.coverUrl ? <img src={it.coverUrl} alt={it.title || ''} /> : <span className="mk-audiocard-ph"><VintageIcon name="disc" size={30} /></span>}
+              <button type="button" className="mk-audiocard-play" onClick={(e) => { e.stopPropagation(); setActive(active === i ? -1 : i) }} onPointerDown={(e) => e.stopPropagation()} aria-label={active === i ? 'Pausar' : 'Reproducir'}>
+                <VintageIcon name={active === i ? 'pause' : 'play'} size={18} />
+              </button>
+            </div>
+            <span className="mk-audiocard-title">{it.title || ''}</span>
+            <span className="mk-audiocard-sub">{it.subtitle || ''}</span>
+            {it.url && !editable ? <a className="mk-audiocard-link" href={it.url} target="_blank" rel="noopener noreferrer" onClick={() => onCta?.(it.url)}>Abrir</a> : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** Banner CTA con glow neón pulsante. Empuja al clic. */
+function CtaBannerNeon({ p, onCta, editable }) {
+  return (
+    <div className={`mk-neon mk-neon--${p.color || 'amber'}`}>
+      <span className="mk-neon-text">{p.text || ''}</span>
+      {p.url && !editable
+        ? <a className="mk-neon-btn" href={p.url} target="_blank" rel="noopener noreferrer" onClick={() => onCta?.(p.url)}>{p.buttonLabel || 'Contáctame'}</a>
+        : <span className="mk-neon-btn mk-neon-btn--dim">{p.buttonLabel || 'Contáctame'}</span>}
+    </div>
+  )
 }
 
 /** Mapea un nombre de color de props a un token de la paleta. */

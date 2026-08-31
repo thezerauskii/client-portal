@@ -397,6 +397,9 @@ export const MODULE_TYPES = [
   // audio (envuelven componentes existentes)
   'comparator', 'library-track', 'fx-rack', 'synth', 'workbench', 'gig',
   'soundcloud', 'video', 'testimonial', 'socials',
+  // Fase 14 — módulos interactivos vintage (diseño, no audio real)
+  'icon-row', 'vinyl-player', 'reveal-slider', 'marquee-ticker', 'price-tiers',
+  'faq-accordion', 'process-steps', 'countdown-offer', 'audio-cards', 'cta-banner-neon',
   // patchbay físico
   'cable', 'jack',
 ]
@@ -431,6 +434,53 @@ const MODULE_DEFAULTS = {
   video: { w: 560, h: 320, props: {} },
   testimonial: { w: 360, h: 180, props: {} },
   socials: { w: 480, h: 120, props: { style: 'patchbay' } },
+  // ── Fase 14 — módulos interactivos vintage ──
+  // Fila de iconos grandes (como en la primera imagen de referencia).
+  'icon-row': { w: 1104, h: 180, props: {
+    title: '',
+    items: [
+      { icon: 'vinyl', label: 'Producción' },
+      { icon: 'sliders', label: 'Mezcla' },
+      { icon: 'knob', label: 'Master' },
+      { icon: 'mic', label: 'Grabación' },
+      { icon: 'headphones', label: 'Escucha' },
+    ],
+  } },
+  // Tocadiscos: la portada gira al pulsar (diseño, no audio real).
+  'vinyl-player': { w: 360, h: 400, props: { coverUrl: '', title: 'Mi último single', subtitle: 'Escúchalo', url: '', autospin: false } },
+  // Slider revelador: arrastra para descubrir la imagen "después".
+  'reveal-slider': { w: 560, h: 360, props: { beforeUrl: '', afterUrl: '', label: 'Arrastra para revelar', labelBefore: 'Antes', labelAfter: 'Después' } },
+  // Ticker marquesina: texto que se desplaza solo.
+  'marquee-ticker': { w: 1104, h: 72, props: { text: 'MEZCLA · MASTER · PRODUCCIÓN · SOUND DESIGN', speed: 30, separator: '✦' } },
+  // Tabla de precios (3 niveles) con hover glow.
+  'price-tiers': { w: 1104, h: 420, props: { tiers: [
+    { name: 'Básico', price: '30', period: '/track', features: ['Mezcla estéreo', '1 revisión', 'WAV'], ctaLabel: 'Elegir', url: '', featured: false },
+    { name: 'Pro', price: '60', period: '/track', features: ['Mezcla + master', '2 revisiones', 'WAV + MP3'], ctaLabel: 'Elegir', url: '', featured: true },
+    { name: 'Deluxe', price: '150', period: '/proyecto', features: ['Producción', 'Mezcla + master', '3 revisiones'], ctaLabel: 'Elegir', url: '', featured: false },
+  ] } },
+  // Acordeón de preguntas frecuentes.
+  'faq-accordion': { w: 760, h: 340, props: { title: 'Preguntas frecuentes', items: [
+    { q: '¿Cuánto tarda?', a: 'Entre 3 y 5 días según el paquete.' },
+    { q: '¿Formatos de entrega?', a: 'WAV 24-bit y MP3 320. Stems opcionales.' },
+    { q: '¿Cuántas revisiones?', a: 'Depende del paquete: de 1 a 3 revisiones.' },
+  ] } },
+  // Pasos del proceso (1→2→3→4) con línea que conecta.
+  'process-steps': { w: 1104, h: 240, props: { steps: [
+    { icon: 'mic', title: 'Envías', desc: 'Mándame tu pista o stems.' },
+    { icon: 'sliders', title: 'Mezclo', desc: 'Balance, espacio y color.' },
+    { icon: 'knob', title: 'Masterizo', desc: 'Volumen competitivo.' },
+    { icon: 'disc', title: 'Recibes', desc: 'Listo para publicar.' },
+  ] } },
+  // Cuenta atrás de oferta (urgencia → CTA).
+  'countdown-offer': { w: 760, h: 200, props: { deadline: '', text: 'Oferta por tiempo limitado', buttonLabel: 'Aprovechar', url: '', expiredText: 'La oferta terminó' } },
+  // Tarjetas de audio (portada + título + botón play decorativo).
+  'audio-cards': { w: 1104, h: 320, props: { title: 'Escucha mi trabajo', items: [
+    { coverUrl: '', title: 'Track 1', subtitle: 'Master', url: '' },
+    { coverUrl: '', title: 'Track 2', subtitle: 'Mezcla', url: '' },
+    { coverUrl: '', title: 'Track 3', subtitle: 'Producción', url: '' },
+  ] } },
+  // Banner CTA con glow neón pulsante.
+  'cta-banner-neon': { w: 1104, h: 200, props: { text: '¿LISTO PARA SONAR PRO?', buttonLabel: 'Contrátame ahora', url: '', color: 'amber' } },
   cable: { w: 0, h: 0, props: { ax: 0.2, ay: 0.3, bx: 0.7, by: 0.5, endAJack: null, endBJack: null } },
   jack: { w: 40, h: 40, props: { label: '' } },
 }
@@ -525,6 +575,47 @@ export function resizeModule(mod, w, h, { grid = 24, snap = false } = {}) {
   return { ...mod, w: nw, h: nh }
 }
 
+/** Tipos que NO ocupan caja rectangular (se excluyen de la detección de solapes). */
+const NON_BOX_TYPES = new Set(['cable', 'jack'])
+
+/** ¿Dos rectángulos {x,y,w,h} se intersectan? (bordes que se tocan NO cuentan). */
+export function rectsOverlap(a, b, tolerance = 0) {
+  const ax2 = a.x + a.w, ay2 = a.y + a.h
+  const bx2 = b.x + b.w, by2 = b.y + b.h
+  // Separados si uno está completamente a un lado del otro (con tolerancia).
+  if (ax2 - tolerance <= b.x) return false
+  if (bx2 - tolerance <= a.x) return false
+  if (ay2 - tolerance <= b.y) return false
+  if (by2 - tolerance <= a.y) return false
+  return true
+}
+
+/**
+ * layoutHasOverlaps(modules) — función pura y testeable. Devuelve la lista de
+ * pares [i, j] de módulos cuyas cajas se solapan (ignora cable/jack que no son
+ * cajas). `tolerance` permite considerar “no solape” a bordes que se tocan por
+ * <= tolerance px (útil por redondeos de snap). Devuelve [] si no hay solapes.
+ */
+export function layoutOverlaps(modules, { tolerance = 1 } = {}) {
+  const boxes = (Array.isArray(modules) ? modules : [])
+    .map((m, idx) => ({ idx, m }))
+    .filter(({ m }) => m && !NON_BOX_TYPES.has(m.type) && m.w > 0 && m.h > 0)
+  const pairs = []
+  for (let i = 0; i < boxes.length; i++) {
+    for (let j = i + 1; j < boxes.length; j++) {
+      if (rectsOverlap(boxes[i].m, boxes[j].m, tolerance)) {
+        pairs.push([boxes[i].idx, boxes[j].idx])
+      }
+    }
+  }
+  return pairs
+}
+
+/** ¿El layout tiene algún solape entre módulos-caja? (boolean de conveniencia). */
+export function layoutHasOverlaps(modules, opts) {
+  return layoutOverlaps(modules, opts).length > 0
+}
+
 /**
  * makeExampleLayout — un layout de DEMOSTRACIÓN listo para mostrar (modo libre),
  * inspirado en un portfolio (hero + avatar + métricas + servicios + skills +
@@ -533,55 +624,136 @@ export function resizeModule(mod, w, h, { grid = 24, snap = false } = {}) {
  * enabled:true para que se vea de inmediato. Puro y testeable.
  */
 export function makeExampleLayout(assets = {}) {
-  // `assets` opcional: { header, project1, project2, avatar } con URLs de R2
-  // (las sube el botón "Cargar ejemplo con imágenes"). Si no hay, quedan vacías.
-  const m = (type, x, y, w, h, extra = {}) => ({ ...makeModule(type, x, y), w, h, ...extra })
+  // `assets` opcional: { header, project1, project2, avatar, vinyl, revealBefore,
+  // revealAfter, card1, card2, card3 } con URLs de R2 (las sube el botón
+  // "Cargar ejemplo con imágenes"). Si no hay, quedan vacías.
+  //
+  // Layout en flujo VERTICAL sin solapes: mantengo un cursor `y` y coloco cada
+  // bloque debajo del anterior. Las filas de columnas comparten `y` pero nunca
+  // se solapan en x. GAP entre bloques = 32px.
+  const PAD = 48
+  const COL = 1104 // 1200 - PAD*2
+  const GAP = 32
+  const mods = []
+  let y = 32
+  let z = 1
+  // Bloque a ancho completo.
+  const full = (type, h, extra = {}) => {
+    mods.push({ ...makeModule(type, PAD, y), w: COL, h, z: z++, ...extra })
+    y += h + GAP
+  }
+  // Fila de columnas [{type,w,h,extra}]. Avanza `y` por la más alta.
+  const row = (cols, { gap = 24 } = {}) => {
+    let x = PAD
+    let maxH = 0
+    for (const c of cols) {
+      mods.push({ ...makeModule(c.type, x, y), w: c.w, h: c.h, z: z++, ...(c.extra || {}) })
+      x += c.w + gap
+      if (c.h > maxH) maxH = c.h
+    }
+    y += maxH + GAP
+  }
+
+  // ── Cabecera (imagen alargada editable con crop) ──
+  full('image', 300, { props: { url: assets.header || '', alt: 'Header', fit: 'cover', shape: 'rect', radius: 16 } })
+  // Hero combinado.
+  full('hero-combo', 280, { props: {
+    headline: 'Muevo ideas con sonido', tagline: 'Mezcla y masterización con oído profesional.', align: 'center',
+    metrics: [{ value: '8+', label: 'Años' }, { value: '120+', label: 'Proyectos' }, { value: '★ 4.9', label: 'Rating' }],
+    ctaLabel: 'Contrátame en Fiverr', ctaUrl: '',
+  } })
+  // Ticker que se mueve solo (recuerda al VU / cinta rodando).
+  full('marquee-ticker', 72, { props: { text: 'MEZCLA · MASTER · PRODUCCIÓN · SOUND DESIGN', speed: 26, separator: '✦' } })
+  // Fila de iconos grandes (la "primera imagen" de referencia).
+  full('icon-row', 180, { props: { title: 'Lo que hago', items: [
+    { icon: 'vinyl', label: 'Producción' },
+    { icon: 'sliders', label: 'Mezcla' },
+    { icon: 'knob', label: 'Master' },
+    { icon: 'mic', label: 'Grabación' },
+    { icon: 'headphones', label: 'Escucha' },
+  ] } })
+  full('divider', 24, { props: { style: 'orange-rule' } })
+
+  // ── Servicios (ancho completo) ──
+  full('services', 200, { props: { items: [
+    { icon: 'waveform', title: 'Mezcla', desc: 'Balance, espacio y claridad.' },
+    { icon: 'knob', title: 'Master', desc: 'Volumen competitivo y pegada.' },
+    { icon: 'note', title: 'Producción', desc: 'De la idea al track final.' },
+  ] } })
+
+  // ── Pasos del proceso (animación de conexión) ──
+  full('process-steps', 240, {})
+
+  // ── Skills (izq) + Comparador consola (der) ──
+  row([
+    { type: 'skills', w: 528, h: 520, extra: { props: { items: [
+      { label: 'Mezcla', pct: 92 }, { label: 'Master', pct: 88 }, { label: 'Sound design', pct: 80 },
+    ] } } },
+    // Comparador = consola vintage con VU + botones REW/PLAY/PAUSE/STOP/FF.
+    { type: 'comparator', w: 552, h: 520, extra: { dataRef: null } },
+  ])
+
+  // ── Reveal slider (arrastra para revelar) a ancho medio + vinilo ──
+  row([
+    { type: 'reveal-slider', w: 704, h: 360, extra: { props: {
+      beforeUrl: assets.revealBefore || '', afterUrl: assets.revealAfter || '',
+      label: 'Arrastra para revelar', labelBefore: 'Demo', labelAfter: 'Master',
+    } } },
+    { type: 'vinyl-player', w: 376, h: 360, extra: { props: {
+      coverUrl: assets.vinyl || '', title: 'Último single', subtitle: 'Pulsa para girar', url: '', autospin: false,
+    } } },
+  ])
+
+  // ── Prueba de efectos + mini-Korg ──
+  row([
+    { type: 'fx-rack', w: 540, h: 340 },
+    { type: 'synth', w: 540, h: 340, extra: { props: { octaves: 2 } } },
+  ])
+
+  // ── Tarjetas de audio (portadas + play decorativo) ──
+  full('audio-cards', 320, { props: { title: 'Escucha mi trabajo', items: [
+    { coverUrl: assets.card1 || '', title: 'EP — Neon', subtitle: 'Mezcla + master', url: '' },
+    { coverUrl: assets.card2 || '', title: 'Single — Río', subtitle: 'Master', url: '' },
+    { coverUrl: assets.card3 || '', title: 'Beat — Lo-fi', subtitle: 'Producción', url: '' },
+  ] } })
+
+  // ── Proyectos (izq) + paquete/gig (der) ──
+  row([
+    { type: 'projects', w: 704, h: 420, extra: { props: { items: [
+      { imageUrl: assets.project1 || '', title: 'EP — Neon', subtitle: 'Mezcla + master', url: '' },
+      { imageUrl: assets.project2 || '', title: 'Single — Río', subtitle: 'Master', url: '' },
+    ] } } },
+    { type: 'gig', w: 376, h: 420, extra: { dataRef: null } },
+  ])
+  row([
+    { type: 'video', w: 704, h: 320 },
+    { type: 'soundcloud', w: 376, h: 80 },
+  ])
+
+  // ── Precios (3 niveles con hover glow) ──
+  full('price-tiers', 420, {})
+
+  // ── FAQ (izq) + testimonio (der) ──
+  row([
+    { type: 'faq-accordion', w: 704, h: 340 },
+    { type: 'testimonial', w: 376, h: 340, extra: { dataRef: null } },
+  ])
+
+  // ── Cuenta atrás de oferta ──
+  full('countdown-offer', 200, { props: { text: 'Oferta de lanzamiento', buttonLabel: 'Aprovechar', url: '' } })
+
+  // ── Redes (espejo del editor) ──
+  full('socials', 150, { props: { style: 'patchbay' } })
+
+  // ── CTA final con glow neón ──
+  full('cta-banner-neon', 200, { props: { text: '¿LISTO PARA SONAR PRO?', buttonLabel: 'Contrátame en Fiverr', url: '', color: 'amber' } })
+
+  const height = Math.ceil((y + 40) / 24) * 24 // margen inferior, múltiplo de grid
   return normalizeLayout({
     enabled: true,
     mode: 'free',
-    canvas: { width: 1200, height: 2560, grid: 24, snap: true, showGrid: true, bg: 'river-styx' },
-    modules: [
-      // ── Cabecera ──
-      m('image', 48, 32, 1104, 300, { z: 1, props: { url: assets.header || '', alt: 'Header', fit: 'cover', shape: 'rect', radius: 16 } }),
-      m('hero-combo', 48, 360, 1104, 280, { z: 3, props: {
-        headline: 'Muevo ideas con sonido', tagline: 'Mezcla y masterización con oído profesional.', align: 'center',
-        metrics: [{ value: '8+', label: 'Años' }, { value: '120+', label: 'Proyectos' }, { value: '★ 4.9', label: 'Rating' }],
-        ctaLabel: 'Contrátame en Fiverr', ctaUrl: '',
-      } }),
-      m('divider', 48, 660, 1104, 24, { z: 1, props: { style: 'orange-rule' } }),
-
-      // ── Servicios + skills + comparador (transporte) ──
-      m('services', 48, 704, 1104, 200, { z: 2, props: { items: [
-        { icon: 'waveform', title: 'Mezcla', desc: 'Balance, espacio y claridad.' },
-        { icon: 'knob', title: 'Master', desc: 'Volumen competitivo y pegada.' },
-        { icon: 'play', title: 'Producción', desc: 'De la idea al track final.' },
-      ] } }),
-      m('skills', 48, 928, 520, 200, { z: 2, props: { items: [{ label: 'Mezcla', pct: 92 }, { label: 'Master', pct: 88 }, { label: 'Sound design', pct: 80 }] } }),
-      // Comparador = consola vintage con VU + botones REW/PLAY/PAUSE/STOP/FF.
-      m('comparator', 600, 928, 552, 520, { z: 2, dataRef: null }),
-
-      // ── Prueba de efectos + mini-Korg ──
-      m('text', 48, 1160, 520, 60, { z: 2, props: { text: 'Prueba mis efectos', size: 'lg', color: 'amber', align: 'left' } }),
-      m('fx-rack', 48, 1224, 520, 220, { z: 2 }),
-      m('text', 48, 1470, 520, 60, { z: 2, props: { text: 'Toca mi sonido', size: 'lg', color: 'amber', align: 'left' } }),
-      m('synth', 48, 1534, 552, 340, { z: 2, props: { octaves: 2 } }),
-
-      // ── Proyectos + paquete + video ──
-      m('projects', 620, 1420, 532, 300, { z: 2, props: { items: [
-        { imageUrl: assets.project1 || '', title: 'EP — Neon', subtitle: 'Mezcla + master', url: '' },
-        { imageUrl: assets.project2 || '', title: 'Single — Río', subtitle: 'Master', url: '' },
-      ] } }),
-      m('gig', 620, 1740, 300, 380, { z: 2, dataRef: null }),
-      m('video', 936, 1740, 216, 200, { z: 2 }),
-      m('soundcloud', 936, 1956, 216, 80, { z: 2 }),
-
-      // ── Testimonio + redes ──
-      m('testimonial', 48, 1912, 520, 180, { z: 2, dataRef: null }),
-      m('socials', 48, 2116, 1104, 150, { z: 2, props: { style: 'patchbay' } }),
-
-      // ── CTA final ──
-      m('banner-cta', 48, 2300, 1104, 170, { z: 2, props: { text: '¿LISTO PARA EMPEZAR?', buttonLabel: 'Contrátame en Fiverr', url: '' } }),
-    ],
+    canvas: { width: 1200, height, grid: 24, snap: true, showGrid: true, bg: 'river-styx' },
+    modules: mods,
   })
 }
 

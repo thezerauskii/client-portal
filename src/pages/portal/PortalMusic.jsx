@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { usePortalContext } from '../../components/portal/PortalDataProvider.jsx'
-import { normalizeMusicStudio } from '../../shared/domain/musicStudio.js'
+import { normalizeMusicStudio, makeExampleLayout } from '../../shared/domain/musicStudio.js'
 import SpectrogramCompare from '../../components/portal/music/SpectrogramCompare.jsx'
 import PatchbayCompare from '../../components/portal/music/PatchbayCompare.jsx'
 import WaveformPlayer from '../../components/portal/music/WaveformPlayer.jsx'
@@ -100,6 +100,8 @@ export default function PortalMusic() {
   const { artistId, studioName, accentColor, musicStudio, socialLinks, platformConnections } = usePortalContext()
   const accent = accentColor || '#22C55E'
   const real = useMemo(() => normalizeMusicStudio(musicStudio || {}), [musicStudio])
+  // Preset global: layout de ejemplo para páginas sin lienzo propio.
+  const exampleLayout = useMemo(() => makeExampleLayout(), [])
   const data = useMemo(() => buildPreviewModel(real), [real])
 
   const [likedTracks, setLikedTracks] = useState(() => {
@@ -162,10 +164,15 @@ export default function PortalMusic() {
   // Parallax del contenido del hero (capa al frente, sutil) en modo vintage.
   const [heroRef, heroParallax] = useParallax({ speed: 0.15, enabled: isVintage, max: 60 })
 
-  // ── Constructor de módulos: si el artista activó el lienzo, renderiza ESE ──
-  // (usa `real`, no `data`: el layout no pasa por el fallback de ejemplo).
-  const layout = real.layout
-  if (layout?.enabled && layout.modules?.length > 0) {
+  // ── Constructor de módulos ──────────────────────────────────────────────
+  // PRESET GLOBAL: si el artista tiene su propio lienzo, se muestra el SUYO
+  // (cada usuario su propia web). Si NO tiene layout propio, se muestra el
+  // layout de EJEMPLO (makeExampleLayout) como preset por defecto para todas
+  // las páginas de Vercel. Usa `real`, no `data` (no pasa por el preview).
+  const ownLayout = real.layout
+  const hasOwnLayout = !!(ownLayout?.enabled && ownLayout.modules?.length > 0)
+  const layout = hasOwnLayout ? ownLayout : exampleLayout
+  if (layout?.modules?.length > 0) {
     const handlers = { onFiverr, onPlay, toggleLike, likedTracks }
     return (
       <div className="pm-root pm-root--canvas" style={{ '--accent': accent }}>

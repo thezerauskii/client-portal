@@ -7,6 +7,9 @@ import './modules.css'
 const CONTENT_TYPES = new Set([
   'hero-combo', 'text', 'image', 'metrics', 'services', 'skills', 'projects', 'list',
   'banner-cta', 'avatar', 'divider',
+  // Fase 14 — módulos interactivos vintage (los renderiza ModuleContent).
+  'icon-row', 'vinyl-player', 'reveal-slider', 'marquee-ticker', 'price-tiers',
+  'faq-accordion', 'process-steps', 'countdown-offer', 'audio-cards', 'cta-banner-neon',
 ])
 const CABLE_TYPES = new Set(['cable', 'jack'])
 
