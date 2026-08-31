@@ -1755,14 +1755,16 @@
 /* Push the stats to the far right of the identity row */
 .portal-identity-row .portal-stats-bar { margin-left: auto; }
 .portal-identity-avatar {
-  width: 88px;
-  height: 88px;
+  width: 132px;                  /* 50% más grande (antes 88px) */
+  height: 132px;
   border-radius: 6px;            /* square with slight rounding, FurAffinity-style */
   overflow: hidden;
   border: 2px solid var(--green, #22C55E);
   background: var(--surface, #1a1a1e);
   flex-shrink: 0;
-  margin-top: -34px;             /* overlap up onto the banner like FA */
+  margin-top: -50px;             /* overlap up onto the banner like FA */
+  position: relative;            /* necesario para que z-index aplique */
+  z-index: 300;                  /* POR ENCIMA del banner (banner es z-index 200) */
   box-shadow: 0 4px 14px rgba(0,0,0,0.45);
 }
 .portal-identity-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -1791,6 +1793,6 @@
 
 @media (max-width: 767px) {
   .portal-identity-row { padding: 0.75rem 1rem 1rem; gap: 0.7rem; }
-  .portal-identity-avatar { width: 64px; height: 64px; margin-top: -24px; }
+  .portal-identity-avatar { width: 96px; height: 96px; margin-top: -36px; }
   .portal-identity-name { font-size: 1.25rem; }
 }

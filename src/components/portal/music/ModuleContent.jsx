@@ -228,7 +228,7 @@ function VinylPlayer({ p, onCta, editable }) {
           {p.coverUrl ? <img className="mk-vinyl-cover" src={p.coverUrl} alt={p.title || ''} /> : <span className="mk-vinyl-cover mk-vinyl-cover--ph"><VintageIcon name="vinyl" size={40} /></span>}
           <span className="mk-vinyl-hole" />
         </div>
-        <span className={`mk-vinyl-arm ${playing ? 'is-playing' : ''}`} aria-hidden="true" />
+        <span className={`mk-vinyl-arm ${spinning ? 'is-playing' : ''}`} aria-hidden="true" />
       </div>
       <div className="mk-vinyl-info">
         <span className="mk-vinyl-title">{p.title || ''}</span>

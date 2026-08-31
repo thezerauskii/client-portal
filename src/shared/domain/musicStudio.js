@@ -118,8 +118,13 @@ export function videoEmbed(url) {
  */
 export function spotifyEmbedUrl(url) {
   if (typeof url !== 'string' || !url) return null
-  // open.spotify.com/track/ID  (con o sin locale /intl-xx/)
-  let m = url.match(/open\.spotify\.com\/(?:intl-[a-z]{2}\/)?(track|album|artist|playlist|episode|show)\/([A-Za-z0-9]+)/)
+  // Acepta CUALQUIERA de estas entradas y extrae tipo + ID:
+  //  1. Link normal:      https://open.spotify.com/track/ID  (con o sin /intl-xx/)
+  //  2. URL de embed:     https://open.spotify.com/embed/track/ID?...  ("Insertar canción")
+  //  3. Iframe pegado:    <iframe src="https://open.spotify.com/embed/track/ID?...">
+  //  4. URI:              spotify:track:ID
+  // Un solo regex cubre 1-3 gracias al /embed/ opcional; ignora locale y query.
+  let m = url.match(/open\.spotify\.com\/(?:embed\/)?(?:intl-[a-z]{2}\/)?(track|album|artist|playlist|episode|show)\/([A-Za-z0-9]+)/)
   if (m) return `https://open.spotify.com/embed/${m[1]}/${m[2]}`
   // URI: spotify:track:ID
   m = url.match(/spotify:(track|album|artist|playlist|episode|show):([A-Za-z0-9]+)/)
@@ -133,8 +138,22 @@ export function spotifyEmbedUrl(url) {
  * devuelve el embed del perfil. Devuelve null si no hay nada usable.
  */
 export function soundcloudEmbedUrl({ url, user } = {}) {
-  const target = (typeof url === 'string' && url.trim())
-    ? url.trim()
+  const raw = (typeof url === 'string' && url.trim()) ? url.trim() : ''
+
+  // Si pegan un iframe de "Insertar" o una URL de player ya hecha
+  // (w.soundcloud.com/player/?url=...), usamos ese player tal cual.
+  if (raw) {
+    // Iframe pegado → extraer el src.
+    const iframeSrc = raw.match(/<iframe[^>]*\ssrc="([^"]+)"/i)
+    const candidate = iframeSrc ? iframeSrc[1] : raw
+    if (/w\.soundcloud\.com\/player/i.test(candidate)) {
+      // Decodifica entidades básicas del iframe (&amp;) y devuelve el player.
+      return candidate.replace(/&amp;/g, '&')
+    }
+  }
+
+  const target = raw
+    ? raw
     : (typeof user === 'string' && user.trim() ? `https://soundcloud.com/${user.trim().replace(/^@/, '')}` : '')
   if (!target) return null
   const enc = encodeURIComponent(target)
@@ -1371,8 +1390,46 @@ export function makeExampleGigs() {
   ]
 }
 
+/**
+ * makeDefaultLayout — layout de ejemplo POR DEFECTO para nuevos usuarios del
+ * Estudio de Audio. Exportado por el autor desde el editor. El usuario lo puede
+ * editar libremente; su edición se guarda por-usuario (profiles.music_studio),
+ * así que cada artista tiene su propio estudio independiente.
+ */
+export function makeDefaultLayout() {
+  return {
+    enabled: true,
+    mode: 'free',
+    canvas: { width: 1200, height: 4416, grid: 24, snap: true, showGrid: true, parallax: true, bg: 'ember' },
+    modules: [
+      { id: 'mod_rqcls4a', type: 'glow-light', x: 0, y: 40, w: 620, h: 620, z: 1, rotation: 0, layer: 'back', parallax: 0.6, props: { color: '#EE8814', intensity: 0.5, shape: 'radial', on: true, flicker: true, blend: 'screen' }, dataRef: null },
+      { id: 'mod_fwtcokh', type: 'glow-light', x: 700, y: 700, w: 620, h: 620, z: 2, rotation: 0, layer: 'back', parallax: 0.45, props: { color: '#E02E0B', intensity: 0.42, shape: 'radial', on: true, flicker: false, blend: 'screen' }, dataRef: null },
+      { id: 'mod_8ldzck4', type: 'panel-frame', x: 24, y: 700, w: 1152, h: 384, z: 3, rotation: 0, layer: 'back', parallax: 0.65, props: { variant: 'frame', color: '#2B2F2E', border: '#594C3D', radius: 20, screws: true, shape: 'rounded', label: 'STUDIO RACK' }, dataRef: null },
+      { id: 'mod_g5jbp4l', type: 'image', x: 48, y: 24, w: 1104, h: 300, z: 4, rotation: 0, layer: 'mid', parallax: 0.85, props: { url: 'https://pub-cfdb41a0636f400c85099a679732f4c0.r2.dev/9347035e-7364-4852-a8bd-5f3c3792fd50/music-modules/1788201194181_rb7rx.jpg', alt: 'Header', fit: 'cover', radius: 16, shape: 'rect' }, dataRef: null },
+      { id: 'mod_mk6nkwv', type: 'hero-combo', x: 48, y: 336, w: 1104, h: 280, z: 5, rotation: 0, layer: 'mid', parallax: 0, props: { headline: 'Muevo ideas con sonido', tagline: 'Todo mi arsenal en una página.', align: 'center', metrics: [{ label: 'Años', value: '8+' }, { label: 'Proyectos', value: '120+' }, { label: 'Rating', value: '★ 4.9' }], ctaLabel: 'Contrátame en Fiverr', ctaUrl: '' }, dataRef: null },
+      { id: 'mod_psmhod2', type: 'marquee-ticker', x: 48, y: 600, w: 1104, h: 72, z: 6, rotation: 0, layer: 'mid', parallax: 0, props: { text: 'MEZCLA · MASTER · PRODUCCIÓN · SOUND DESIGN', speed: 26, separator: '✦' }, dataRef: null },
+      { id: 'mod_e4qs4vu', type: 'icon-row', x: 48, y: 696, w: 1104, h: 180, z: 7, rotation: 0, layer: 'mid', parallax: 0, props: { title: 'Lo que hago', items: [{ url: '', icon: 'vinyl', label: 'Producción' }, { url: '', icon: 'sliders', label: 'Mezcla' }, { url: '', icon: 'knob', label: 'Master' }, { url: '', icon: 'mic', label: 'Grabación' }, { url: '', icon: 'headphones', label: 'Escucha' }] }, dataRef: null },
+      { id: 'mod_e8gn815', type: 'process-steps', x: 24, y: 864, w: 1104, h: 240, z: 8, rotation: 0, layer: 'mid', parallax: 0, props: { steps: [{ desc: 'Mándame tu pista o stems.', icon: 'mic', title: 'Envías' }, { desc: 'Balance, espacio y color.', icon: 'sliders', title: 'Mezclo' }, { desc: 'Volumen competitivo.', icon: 'knob', title: 'Masterizo' }, { desc: 'Listo para publicar.', icon: 'disc', title: 'Recibes' }] }, dataRef: null },
+      { id: 'mod_pun2his', type: 'comparator', x: 216, y: 1104, w: 744, h: 312, z: 9, rotation: 0, layer: 'mid', parallax: 0, props: {}, dataRef: null },
+      { id: 'mod_kro7cf2', type: 'reveal-slider', x: 24, y: 1656, w: 720, h: 384, z: 10, rotation: 0, layer: 'mid', parallax: 0, props: { beforeUrl: 'https://pub-cfdb41a0636f400c85099a679732f4c0.r2.dev/9347035e-7364-4852-a8bd-5f3c3792fd50/music-modules/1788201352446_kqbeh.jpg', afterUrl: 'https://pub-cfdb41a0636f400c85099a679732f4c0.r2.dev/9347035e-7364-4852-a8bd-5f3c3792fd50/music-modules/1788201354688_xdain.jpg', label: 'Arrastra', labelBefore: 'Demo', labelAfter: 'Master' }, dataRef: null },
+      { id: 'mod_pnlacqi', type: 'vinyl-player', x: 792, y: 1680, w: 376, h: 360, z: 11, rotation: 0, layer: 'mid', parallax: 0, props: { coverUrl: 'https://pub-cfdb41a0636f400c85099a679732f4c0.r2.dev/9347035e-7364-4852-a8bd-5f3c3792fd50/music-modules/1788201262582_zgphc.jpg', title: 'possum summer', subtitle: 'freshh freshh', url: '', audio: { url: 'https://pub-cfdb41a0636f400c85099a679732f4c0.r2.dev/9347035e-7364-4852-a8bd-5f3c3792fd50/music/1788201259280_i561n.mp3', name: 'bro learns how to use tempo properly.mp3', storageKey: '9347035e-7364-4852-a8bd-5f3c3792fd50/music/1788201259280_i561n.mp3' }, autospin: false }, dataRef: null },
+      { id: 'mod_bzxyki9', type: 'fx-rack', x: 48, y: 2112, w: 576, h: 288, z: 12, rotation: 0, layer: 'mid', parallax: 0, props: {}, dataRef: null },
+      { id: 'mod_hnvp8wv', type: 'synth', x: 672, y: 2112, w: 504, h: 288, z: 13, rotation: 0, layer: 'mid', parallax: 0, props: { octaves: 2 }, dataRef: null },
+      { id: 'mod_bd46idl', type: 'audio-cards', x: 48, y: 2620, w: 1104, h: 340, z: 14, rotation: 0, layer: 'mid', parallax: 0, props: { title: 'Escucha mi trabajo', items: [{ url: '', audio: { url: 'https://pub-cfdb41a0636f400c85099a679732f4c0.r2.dev/9347035e-7364-4852-a8bd-5f3c3792fd50/music/1788201429363_9esa9.mp3', name: '6. A CYBERS WORLD.mp3', storageKey: '9347035e-7364-4852-a8bd-5f3c3792fd50/music/1788201429363_9esa9.mp3' }, title: 'EP — Neon', coverUrl: 'https://pub-cfdb41a0636f400c85099a679732f4c0.r2.dev/9347035e-7364-4852-a8bd-5f3c3792fd50/music-modules/1788201435018_gs1r4.jpg', subtitle: 'Mezcla + master' }, { url: '', audio: null, title: 'Single — Río', coverUrl: 'https://pub-cfdb41a0636f400c85099a679732f4c0.r2.dev/9347035e-7364-4852-a8bd-5f3c3792fd50/music-modules/1788201442522_c03bv.jpg', subtitle: 'Master' }, { url: '', audio: null, title: 'Beat — Lo-fi', coverUrl: 'https://pub-cfdb41a0636f400c85099a679732f4c0.r2.dev/9347035e-7364-4852-a8bd-5f3c3792fd50/music-modules/1788201450056_9bybj.jpg', subtitle: 'Producción' }] }, dataRef: null },
+      { id: 'mod_2z2zyy5', type: 'spotify', x: 48, y: 2992, w: 540, h: 200, z: 15, rotation: 0, layer: 'mid', parallax: 0, props: { url: '', title: 'En Spotify' }, dataRef: null },
+      { id: 'mod_pp7kso7', type: 'soundcloud', x: 612, y: 2992, w: 540, h: 200, z: 16, rotation: 0, layer: 'mid', parallax: 0, props: { user: '', url: '', title: 'En SoundCloud' }, dataRef: null },
+      { id: 'mod_noo0krg', type: 'price-tiers', x: 48, y: 3224, w: 1104, h: 340, z: 17, rotation: 0, layer: 'mid', parallax: 0, props: { tiers: [{ url: '', name: 'Básico', price: '30', period: '/track', ctaLabel: 'Elegir', featured: false, features: ['Mezcla estéreo', '1 revisión', 'WAV'] }, { url: '', name: 'Pro', price: '60', period: '/track', ctaLabel: 'Elegir', featured: true, features: ['Mezcla + master', '2 revisiones', 'WAV + MP3'] }, { url: '', name: 'Deluxe', price: '150', period: '/proyecto', ctaLabel: 'Elegir', featured: false, features: ['Producción', 'Mezcla + master', '3 revisiones'] }] }, dataRef: null },
+      { id: 'mod_fsdn3ok', type: 'faq-accordion', x: 48, y: 3596, w: 704, h: 340, z: 18, rotation: 0, layer: 'mid', parallax: 0, props: { title: 'Preguntas frecuentes', items: [{ a: 'Entre 3 y 5 días según el paquete.', q: '¿Cuánto tarda?' }, { a: 'WAV 24-bit y MP3 320. Stems opcionales.', q: '¿Formatos de entrega?' }, { a: 'Depende del paquete: de 1 a 3 revisiones.', q: '¿Cuántas revisiones?' }] }, dataRef: null },
+      { id: 'mod_ayo3ezo', type: 'countdown-offer', x: 776, y: 3596, w: 376, h: 340, z: 19, rotation: 0, layer: 'mid', parallax: 0, props: { deadline: '2026-09-22T18:37:00.000Z', text: 'Oferta de lanzamiento', buttonLabel: 'Aprovechar', url: '', expiredText: 'La oferta terminó' }, dataRef: null },
+      { id: 'mod_ap6v4sb', type: 'socials', x: 48, y: 3840, w: 168, h: 72, z: 20, rotation: 0, layer: 'mid', parallax: 0, props: { style: 'icons', links: [{ url: '', platform: 'spotify' }, { url: 'https://www.youtube.com/@zerauskii', platform: 'youtube' }, { url: '', platform: 'soundcloud' }, { url: '', platform: 'instagram' }] }, dataRef: null },
+      { id: 'mod_9aiwu6f', type: 'cta-banner-neon', x: 48, y: 3960, w: 1104, h: 200, z: 21, rotation: 0, layer: 'mid', parallax: 0, props: { text: '¿LISTO PARA SONAR PRO?', buttonLabel: 'Contrátame ahora', url: '', color: 'orange' }, dataRef: null },
+    ],
+  }
+}
+
 export function makeDefaultMusicStudio() {
   return normalizeMusicStudio({
+    layout: makeDefaultLayout(),
     intro: 'Producción, mezcla y masterización. Escucha la diferencia.',
     hero: {
       headline: 'Haz que tus canciones suenen profesionales',

@@ -113,6 +113,8 @@ export default function WebAudioSynth({
         heldKeys.current.add(midi)
         press(midi)
       } else {
+        // Armonías al teclear: solo en el portal (no en el editor).
+        if (editable) return
         if (e.repeat) return
         const ch = e.key
         if (!ch || ch.length !== 1) return
@@ -130,7 +132,7 @@ export default function WebAudioSynth({
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
     return () => { window.removeEventListener('keydown', onKeyDown); window.removeEventListener('keyup', onKeyUp) }
-  }, [unsupported, baseMidi, press, release, activated, playHarmony])
+  }, [unsupported, baseMidi, press, release, activated, playHarmony, editable])
 
   useEffect(() => {
     if (!activated) return
