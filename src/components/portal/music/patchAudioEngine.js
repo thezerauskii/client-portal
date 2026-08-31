@@ -44,19 +44,30 @@ export class PatchAudioEngine {
     this._levelBuf = new Float32Array(this.analyser.fftSize)
     this.master.connect(this.analyser)
     this.master.connect(this.ctx.destination)
+    // Cargamos cada pista de forma INDEPENDIENTE (allSettled): un fallo de una
+    // no tumba la otra ni deja el comparador mudo.
     const jobs = []
-    if (original) jobs.push(loadAudioBuffer(original).then(b => { this.buffers['src-original'] = b }))
-    if (master) jobs.push(loadAudioBuffer(master).then(b => { this.buffers['src-master'] = b }))
-    await Promise.all(jobs)
-    // Si NO hay pistas reales, generamos audio de DEMO para que la consola
-    // (VU, casete, tiempo) funcione y se pueda ver/oír. Original = tono seco;
-    // Master = el mismo tono con más cuerpo/armónicos (simula "mejorado").
+    if (original) jobs.push(loadAudioBuffer(original)
+      .then(b => { this.buffers['src-original'] = b })
+      .catch(e => { console.warn('[patchEngine] no se pudo cargar Original:', e?.message || e); this.loadErrorA = e?.message || String(e) }))
+    if (master) jobs.push(loadAudioBuffer(master)
+      .then(b => { this.buffers['src-master'] = b })
+      .catch(e => { console.warn('[patchEngine] no se pudo cargar Master:', e?.message || e); this.loadErrorB = e?.message || String(e) }))
+    await Promise.allSettled(jobs)
     if (!this.buffers['src-original'] && !this.buffers['src-master']) {
       this.buffers['src-original'] = this._makeDemoBuffer('original')
       this.buffers['src-master'] = this._makeDemoBuffer('master')
       this.isDemo = true
+    } else {
+      if (!this.buffers['src-original']) this.buffers['src-original'] = this._makeSilentBuffer()
+      if (!this.buffers['src-master']) this.buffers['src-master'] = this._makeSilentBuffer()
     }
     return true
+  }
+
+  _makeSilentBuffer() {
+    const ctx = this.ctx
+    return ctx.createBuffer(1, Math.floor(0.2 * ctx.sampleRate), ctx.sampleRate)
   }
 
   /** Genera un buffer musical sintético (demo) — loop de ~8s con dinámica. */
