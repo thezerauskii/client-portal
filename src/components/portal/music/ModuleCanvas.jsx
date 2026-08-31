@@ -37,6 +37,11 @@ export default function ModuleCanvas({ canvas = {}, modules = [], accent = '#22c
   const mode = canvas.mode || 'free'
   const boardRef = useRef(null)
   const [scale, setScale] = useState(1)
+  // Overrides LOCALES del cable (el visitante puede jugar: arrastrar/conectar).
+  // No persiste — es sólo interacción divertida en la página publicada.
+  const [cableOverrides, setCableOverrides] = useState({}) // { [id]: { ax,ay,bx,by,endAJack,endBJack } }
+  const [grab, setGrab] = useState(null) // { id, end:'A'|'B' }
+  const grabRef = useRef(null)
 
   // Escala: ancho real / ancho lógico. El alto del lienzo = alto lógico * scale.
   useEffect(() => {
@@ -58,7 +63,10 @@ export default function ModuleCanvas({ canvas = {}, modules = [], accent = '#22c
 
   const sorted = [...modules].sort((a, b) => (a.z || 0) - (b.z || 0))
   const jacks = modules.filter(m => m.type === 'jack')
-  const cables = modules.filter(m => m.type === 'cable')
+  // Aplica overrides locales del visitante encima de las props originales.
+  const cables = modules.filter(m => m.type === 'cable').map(m => (
+    cableOverrides[m.id] ? { ...m, props: { ...(m.props || {}), ...cableOverrides[m.id] } } : m
+  ))
 
   // Centro (px lógicos) de un jack por id.
   const jackCenter = (jackId) => {
@@ -75,6 +83,66 @@ export default function ModuleCanvas({ canvas = {}, modules = [], accent = '#22c
     const rx = which === 'A' ? (cab.props?.ax ?? 0.2) : (cab.props?.bx ?? 0.7)
     const ry = which === 'A' ? (cab.props?.ay ?? 0.3) : (cab.props?.by ?? 0.5)
     return { x: rx * width, y: ry * logicalHeight }
+  }
+
+  // ── Arrastre de un extremo de cable (jugable en la página publicada) ──
+  const pointToLogical = (clientX, clientY) => {
+    const stage = boardRef.current?.querySelector('.mk-stage')
+    const r = stage?.getBoundingClientRect()
+    if (!r) return { x: 0, y: 0 }
+    const s = (r.width || width) / width
+    return { x: (clientX - r.left) / s, y: (clientY - r.top) / s }
+  }
+  const nearestJack = (lx, ly) => {
+    let best = null, bestD = 46 // radio de enganche (px lógicos)
+    for (const j of jacks) {
+      const cx = (j.x || 0) + (j.w || 40) / 2, cy = (j.y || 0) + (j.h || 40) / 2
+      const d = Math.hypot(cx - lx, cy - ly)
+      if (d < bestD) { bestD = d; best = j }
+    }
+    return best
+  }
+  const onCableGrab = (e, cableId, end) => {
+    e.preventDefault(); e.stopPropagation()
+    grabRef.current = { id: cableId, end }
+    setGrab({ id: cableId, end })
+    window.addEventListener('pointermove', onCableMove)
+    window.addEventListener('pointerup', onCableUp)
+  }
+  const onCableMove = (e) => {
+    const g = grabRef.current
+    if (!g) return
+    const { x, y } = pointToLogical(e.clientX, e.clientY)
+    const rx = Math.max(0, Math.min(1, x / width))
+    const ry = Math.max(0, Math.min(1, y / logicalHeight))
+    setCableOverrides(prev => {
+      const base = prev[g.id] || {}
+      const patch = g.end === 'A'
+        ? { ax: rx, ay: ry, endAJack: null }  // al arrastrar, se desconecta
+        : { bx: rx, by: ry, endBJack: null }
+      return { ...prev, [g.id]: { ...base, ...patch } }
+    })
+  }
+  const onCableUp = (e) => {
+    const g = grabRef.current
+    window.removeEventListener('pointermove', onCableMove)
+    window.removeEventListener('pointerup', onCableUp)
+    grabRef.current = null
+    setGrab(null)
+    if (!g) return
+    const { x, y } = pointToLogical(e.clientX, e.clientY)
+    const j = nearestJack(x, y)
+    if (j) {
+      // Encaja en el agujero más cercano (conectar).
+      const cx = (j.x || 0) + (j.w || 40) / 2, cy = (j.y || 0) + (j.h || 40) / 2
+      setCableOverrides(prev => {
+        const base = prev[g.id] || {}
+        const patch = g.end === 'A'
+          ? { endAJack: j.id, ax: cx / width, ay: cy / logicalHeight }
+          : { endBJack: j.id, bx: cx / width, by: cy / logicalHeight }
+        return { ...prev, [g.id]: { ...base, ...patch } }
+      })
+    }
   }
 
   // ── Modo APILADO: los módulos fluyen en una columna vertical por orden ──
@@ -106,13 +174,23 @@ export default function ModuleCanvas({ canvas = {}, modules = [], accent = '#22c
       style={{ '--accent': accent, '--mk-grid': `${grid}px`, height: logicalHeight * scale }}
     >
       <div className="mk-stage" style={{ width, height: logicalHeight, transform: `scale(${scale})`, transformOrigin: 'top left' }}>
-        {/* Capa de cables (SVG) sobre todo el lienzo */}
+        {/* Capa de cables (SVG) sobre todo el lienzo — jugable: arrastra las puntas */}
         {cables.length > 0 && (
-          <svg className="mk-cables" viewBox={`0 0 ${width} ${logicalHeight}`} width={width} height={logicalHeight} aria-hidden="true">
+          <svg className="mk-cables mk-cables--interactive" viewBox={`0 0 ${width} ${logicalHeight}`} width={width} height={logicalHeight}>
             {cables.map(cab => {
               const a = cableEnd(cab, 'A'); const b = cableEnd(cab, 'B')
               const plugged = { A: !!cab.props?.endAJack, B: !!cab.props?.endBJack }
-              return <SynthCable key={cab.id} from={a} to={b} color="#2a2a2e" restLength={340} plugged={plugged} />
+              const grabbed = grab?.id === cab.id ? grab.end : null
+              return (
+                <React.Fragment key={cab.id}>
+                  <SynthCable from={a} to={b} color="#2a2a2e" restLength={340} plugged={plugged} grabbed={grabbed} />
+                  {/* Zonas de agarre invisibles en cada punta */}
+                  <circle className="mk-cable-grab" cx={a.x} cy={a.y} r="16" fill="transparent"
+                    onPointerDown={(e) => onCableGrab(e, cab.id, 'A')} />
+                  <circle className="mk-cable-grab" cx={b.x} cy={b.y} r="16" fill="transparent"
+                    onPointerDown={(e) => onCableGrab(e, cab.id, 'B')} />
+                </React.Fragment>
+              )
             })}
           </svg>
         )}

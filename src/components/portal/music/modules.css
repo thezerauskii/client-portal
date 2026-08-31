@@ -15,10 +15,46 @@
   --mk-font-display: 'Oswald', 'Archivo Black', 'Arial Narrow', system-ui, sans-serif;
   position: relative; width: 100%; overflow: hidden; border-radius: 14px;
 }
-.mk-bg--river-styx { background: radial-gradient(120% 90% at 50% 0%, #1a222b, var(--mk-river-styx)); }
-.mk-bg--carbon { background: var(--mk-carbon); }
-.mk-bg--tea { background: var(--mk-tea); }
-.mk-bg--wood { background: linear-gradient(180deg, #a17e56, var(--mk-wood)); }
+/* Fondos con PROFUNDIDAD analógica: blooms cálidos (ámbar/naranja/wood) sobre
+ * la base fría, para romper la homogeneidad. */
+.mk-bg--river-styx {
+  background:
+    radial-gradient(60% 40% at 15% 12%, rgba(202,156,104,0.16), transparent 60%),
+    radial-gradient(55% 38% at 85% 42%, rgba(210,104,61,0.14), transparent 62%),
+    radial-gradient(70% 50% at 50% 100%, rgba(144,109,75,0.18), transparent 70%),
+    radial-gradient(120% 90% at 50% 0%, #1a222b, var(--mk-river-styx));
+}
+.mk-bg--carbon {
+  background:
+    radial-gradient(50% 40% at 80% 10%, rgba(210,104,61,0.14), transparent 60%),
+    radial-gradient(60% 45% at 15% 80%, rgba(202,156,104,0.12), transparent 65%),
+    linear-gradient(160deg, #34322b, var(--mk-carbon) 60%, #23231f);
+}
+.mk-bg--tea {
+  background:
+    radial-gradient(55% 40% at 20% 15%, rgba(202,156,104,0.22), transparent 60%),
+    radial-gradient(60% 45% at 85% 90%, rgba(19,25,31,0.35), transparent 65%),
+    linear-gradient(165deg, #6a5b46, var(--mk-tea) 55%, #4a3f31);
+}
+.mk-bg--wood {
+  background:
+    radial-gradient(60% 40% at 50% 8%, rgba(224,138,92,0.28), transparent 60%),
+    linear-gradient(180deg, #a17e56, var(--mk-wood) 60%, #6f5334);
+}
+/* Capa VHS: viñeta + líneas de escaneo sutiles (analógico). */
+.mk-canvas::before {
+  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(130% 100% at 50% 40%, transparent 55%, rgba(0,0,0,0.35) 100%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.018) 0 1px, transparent 1px 3px);
+  mix-blend-mode: soft-light;
+}
+/* Grano de película muy tenue. */
+.mk-canvas::after {
+  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.mk-stage { z-index: 1; }
 
 /* Grid visible (solo editor) */
 .mk-canvas--grid .mk-stage {
@@ -38,6 +74,8 @@
 
 /* Capa de cables + jacks (patchbay físico) */
 .mk-cables { position: absolute; inset: 0; pointer-events: none; overflow: visible; z-index: 60; }
+.mk-cable-grab { pointer-events: all; cursor: grab; touch-action: none; }
+.mk-cable-grab:active { cursor: grabbing; }
 .mk-jack { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 3px; z-index: 6; }
 .mk-jack-ring { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #4a4a52, #1a1a1e); border: 2px solid #6b6b72; box-shadow: inset 0 0 4px rgba(0,0,0,0.6); }
 .mk-jack-hole { width: 12px; height: 12px; border-radius: 50%; background: #0c0c0f; box-shadow: inset 0 0 4px rgba(0,0,0,0.9); }
@@ -183,7 +221,9 @@
 .mk-vinyl { display: flex; flex-direction: column; align-items: center; gap: 10px; height: 100%; justify-content: center; padding: 8px; }
 .mk-vinyl-deck { position: relative; width: 190px; height: 190px; }
 .mk-vinyl-disc { position: absolute; inset: 0; border-radius: 50%; background: repeating-radial-gradient(circle at center, #14100c 0 3px, #1c1712 3px 6px); box-shadow: 0 6px 20px rgba(0,0,0,0.5), inset 0 0 0 6px #0b0906; display: grid; place-items: center; overflow: hidden; }
-.mk-vinyl-disc.is-spinning { animation: mk-spin 3.2s linear infinite; }
+/* Brillo diagonal que rompe la simetría → se NOTA el giro. */
+.mk-vinyl-disc::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.10) 48%, rgba(255,255,255,0.02) 52%, transparent 60%); pointer-events: none; }
+.mk-vinyl-disc.is-spinning { animation: mk-spin 2.4s linear infinite; }
 .mk-vinyl-cover { width: 64%; height: 64%; border-radius: 50%; object-fit: cover; border: 2px solid var(--mk-wood); }
 .mk-vinyl-cover--ph { display: grid; place-items: center; background: var(--mk-tea); color: var(--mk-amber); }
 .mk-vinyl-hole { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #0b0906; box-shadow: inset 0 0 3px rgba(255,255,255,0.15); }

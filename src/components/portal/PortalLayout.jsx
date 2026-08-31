@@ -157,11 +157,32 @@ export default function PortalLayout({ children }) {
   // Profile picture: only an actual image URL counts (no emoji placeholder).
   const avatarUrl = projectAvatarUrl || (typeof projectIcon === 'string' && projectIcon.startsWith('http') ? projectIcon : null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  // Al hacer scroll, el banner (nombre + stats) se repliega hacia arriba y sólo
+  // queda la barra de navegación (que ya es sticky). rAF-throttled + passive.
+  const [headerCollapsed, setHeaderCollapsed] = useState(false)
 
   // Close mobile menu on route change
   useEffect(() => {
     setMobileMenuOpen(false)
   }, [slug])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    let ticking = false
+    let raf = 0
+    const THRESHOLD = 90
+    const onScroll = () => {
+      if (ticking) return
+      ticking = true
+      raf = requestAnimationFrame(() => {
+        ticking = false
+        setHeaderCollapsed((window.scrollY || 0) > THRESHOLD)
+      })
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('scroll', onScroll) }
+  }, [])
 
   const displayName = studioName || 'Estudio'
 
@@ -246,7 +267,7 @@ export default function PortalLayout({ children }) {
 
       {/* ─── Content column ─── */}
       <div className="portal-layout-right portal-layout-right--top">
-        <header className="portal-layout-header">
+        <header className={`portal-layout-header ${headerCollapsed ? 'is-collapsed' : ''}`}>
           {/* Banner image only — clean, nothing overlaid.
               Hidden on the Services page when a services-specific banner exists. */}
           {!hideGlobalBanner && (

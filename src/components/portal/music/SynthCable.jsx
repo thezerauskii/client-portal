@@ -59,7 +59,7 @@ export default function SynthCable({
  *  - collar / alivio de tensión (donde entra el cable)
  * Orientado por `angle` (grados) para que "salga" del cable hacia el agujero.
  */
-function Jack25({ x, y, angle = 0, color = '#c9ccd2', grabbed = false, plugged = false }) {
+function Jack25({ x, y, angle = 0, color = '#cdd0d6', grabbed = false, plugged = false }) {
   return (
     <g
       className={`sc-jack ${grabbed ? 'is-grabbed' : ''} ${plugged ? 'is-plugged' : ''}`}
@@ -67,21 +67,24 @@ function Jack25({ x, y, angle = 0, color = '#c9ccd2', grabbed = false, plugged =
     >
       {/* halo al agarrar / encajar */}
       {(grabbed || plugged) && (
-        <circle className="sc-jack-halo" cx="0" cy="0" r="14"
-          fill="none" stroke={grabbed ? '#D2683D' : '#CA9C68'} strokeWidth="2" opacity="0.8" />
+        <circle className="sc-jack-halo" cx="0" cy="0" r="15"
+          fill="none" stroke={grabbed ? '#D2683D' : '#CA9C68'} strokeWidth="2" opacity="0.85" />
       )}
       {/* La punta apunta en +x local (hacia afuera del cable). */}
-      {/* collar / alivio de tensión (más cerca del cable, en -x) */}
-      <rect x="-16" y="-5" width="8" height="10" rx="2" fill="#2a2a2e" stroke="#4a4a52" strokeWidth="0.6" />
-      {/* manguito metálico (sleeve) */}
-      <rect x="-9" y="-4" width="9" height="8" rx="1.5" fill={color} stroke="#7c7f87" strokeWidth="0.6" />
-      {/* anillo aislante negro */}
-      <rect x="0" y="-3.4" width="2.4" height="6.8" fill="#111114" />
-      {/* punta (tip) */}
-      <rect x="2.4" y="-3" width="7" height="6" rx="1" fill={color} stroke="#7c7f87" strokeWidth="0.6" />
-      <circle cx="9.4" cy="0" r="3" fill={color} stroke="#7c7f87" strokeWidth="0.6" />
-      {/* brillo metálico */}
-      <rect x="2.6" y="-2.4" width="6.5" height="1.4" rx="0.7" fill="rgba(255,255,255,0.5)" />
+      {/* Funda de goma / alivio de tensión (donde entra el cable). */}
+      <rect x="-20" y="-5.5" width="12" height="11" rx="4" fill="#1c1c20" stroke="#3a3a42" strokeWidth="0.8" />
+      <rect x="-20" y="-5.5" width="4" height="11" rx="2" fill="#2c2c32" />
+      {/* Cuerpo metálico (manguito) con degradado simulado por capas. */}
+      <rect x="-9" y="-5" width="11" height="10" rx="2.5" fill={color} stroke="#8b8e96" strokeWidth="0.8" />
+      <rect x="-9" y="-5" width="11" height="3" rx="2" fill="rgba(255,255,255,0.35)" />
+      <rect x="-9" y="2.4" width="11" height="2.6" rx="1.3" fill="rgba(0,0,0,0.25)" />
+      {/* Anillo aislante negro (separa manguito y punta). */}
+      <rect x="2" y="-4" width="2.6" height="8" rx="0.5" fill="#0e0e10" />
+      {/* Punta (tip) cónica redondeada. */}
+      <rect x="4.6" y="-3.4" width="6" height="6.8" rx="1" fill={color} stroke="#8b8e96" strokeWidth="0.8" />
+      <path d="M 10.6 -3.4 Q 14.5 0 10.6 3.4 Z" fill={color} stroke="#8b8e96" strokeWidth="0.8" strokeLinejoin="round" />
+      {/* Brillo metálico longitudinal. */}
+      <rect x="-8" y="-3.2" width="18" height="1.3" rx="0.6" fill="rgba(255,255,255,0.55)" />
     </g>
   )
 }

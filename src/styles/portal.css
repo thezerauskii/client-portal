@@ -1158,6 +1158,21 @@
 .portal-layout-header {
   position: relative;
   z-index: 200;
+  overflow: hidden;
+  /* Se repliega hacia arriba al hacer scroll (queda sólo la barra de nav). */
+  max-height: 640px;
+  transform: translateY(0);
+  opacity: 1;
+  transition: max-height 360ms ease, transform 360ms ease, opacity 260ms ease;
+}
+.portal-layout-header.is-collapsed {
+  max-height: 0;
+  transform: translateY(-24px);
+  opacity: 0;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .portal-layout-header { transition: none; }
 }
 
 .portal-banner {
