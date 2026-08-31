@@ -99,7 +99,7 @@ export default function ModuleCanvas({ canvas = {}, modules = [], accent = '#22c
   return (
     <div
       ref={boardRef}
-      className={`mk-canvas mk-bg--${bg} ${showGrid ? 'mk-canvas--grid' : ''}`}
+      className={`mk-canvas mk-bg--${bg} ${(showGrid || canvas.showGrid) ? 'mk-canvas--grid' : ''}`}
       style={{ '--accent': accent, '--mk-grid': `${grid}px`, height: logicalHeight * scale }}
     >
       <div className="mk-stage" style={{ width, height: logicalHeight, transform: `scale(${scale})`, transformOrigin: 'top left' }}>

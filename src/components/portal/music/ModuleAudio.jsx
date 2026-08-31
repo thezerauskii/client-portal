@@ -30,7 +30,10 @@ export default function ModuleAudio({ mod, data = {}, accent = '#22c55e', handle
     case 'comparator': {
       const cmp = byId(data.comparisons, mod.dataRef) || data.comparisons?.[0] || {}
       const has = !!(cmp.trackA?.url && cmp.trackB?.url)
-      if (data.patchbay?.enabled || !has) {
+      // variant 'transport' → SIEMPRE reproductor con transporte + waveform.
+      const forceTransport = p.variant === 'transport'
+      const forcePatchbay = p.variant === 'patchbay'
+      if (!forceTransport && (forcePatchbay || data.patchbay?.enabled || !has)) {
         return <PatchbayCompare trackA={cmp.trackA} trackB={cmp.trackB} labelA={cmp.labelA} labelB={cmp.labelB} accent={accent} patchbay={data.patchbay} />
       }
       return <SpectrogramCompare trackA={cmp.trackA} trackB={cmp.trackB} labelA={cmp.labelA} labelB={cmp.labelB} accent={accent} />

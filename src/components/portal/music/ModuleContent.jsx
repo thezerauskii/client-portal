@@ -49,7 +49,7 @@ export default function ModuleContent({ mod, accent = '#22c55e', onCta }) {
       return (
         <div className={`mk-image mk-image--${p.shape || 'rect'}`} style={{ borderRadius: p.shape === 'circle' ? '50%' : (p.radius || 12) }}>
           {p.url
-            ? <img src={p.url} alt={p.alt || ''} style={{ objectFit: p.fit || 'cover' }} />
+            ? <img src={p.url} alt={p.alt || ''} style={{ objectFit: p.fit || 'cover', transform: `${p.flipH ? 'scaleX(-1) ' : ''}${p.flipV ? 'scaleY(-1)' : ''}`.trim() || undefined }} />
             : <span className="mk-image-ph"><VintageIcon name="waveform" size={28} /></span>}
         </div>
       )
