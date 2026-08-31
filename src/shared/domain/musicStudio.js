@@ -392,7 +392,7 @@ export function normalizeWorkbench(w) {
 /** Tipos de módulo del lienzo. */
 export const MODULE_TYPES = [
   // contenido
-  'text', 'image', 'metrics', 'services', 'skills', 'projects', 'list',
+  'hero-combo', 'text', 'image', 'metrics', 'services', 'skills', 'projects', 'list',
   'banner-cta', 'avatar', 'divider',
   // audio (envuelven componentes existentes)
   'comparator', 'library-track', 'fx-rack', 'synth', 'workbench', 'gig',
@@ -403,6 +403,14 @@ export const MODULE_TYPES = [
 
 /** Tamaños/props por defecto por tipo (w,h en px lógicos). */
 const MODULE_DEFAULTS = {
+  'hero-combo': { w: 1104, h: 380, props: {
+    headline: 'Haz que tus canciones suenen profesionales',
+    tagline: 'Mezcla y masterización con oído profesional.',
+    align: 'center',
+    metrics: [{ value: '120+', label: 'Pistas mezcladas' }, { value: '★ 4.9', label: 'en Fiverr' }, { value: '48h', label: 'Entrega promedio' }],
+    ctaLabel: 'Contrátame en Fiverr',
+    ctaUrl: '',
+  } },
   text: { w: 420, h: 120, props: { text: 'Texto', size: 'lg', weight: 700, color: 'ink', align: 'left' } },
   image: { w: 320, h: 240, props: { url: '', alt: '', fit: 'cover', radius: 12, shape: 'rect' } },
   metrics: { w: 460, h: 120, props: { items: [{ value: '10+', label: 'Proyectos' }], style: 'dial' } },
@@ -513,6 +521,44 @@ export function resizeModule(mod, w, h, { grid = 24, snap = false } = {}) {
   let nh = Math.max(16, Number(h) || mod.h)
   if (snap) { nw = snapToGrid(nw, grid); nh = snapToGrid(nh, grid) }
   return { ...mod, w: nw, h: nh }
+}
+
+/**
+ * makeExampleLayout — un layout de DEMOSTRACIÓN listo para mostrar (modo libre),
+ * inspirado en un portfolio (hero + avatar + métricas + servicios + skills +
+ * proyectos + banner CTA + comparador + testimonio + redes). Referencia dataRef
+ * a los primeros elementos existentes (comparador/testimonio) cuando aplica.
+ * enabled:true para que se vea de inmediato. Puro y testeable.
+ */
+export function makeExampleLayout() {
+  const m = (type, x, y, w, h, extra = {}) => ({ ...makeModule(type, x, y), w, h, ...extra })
+  return normalizeLayout({
+    enabled: true,
+    mode: 'free',
+    canvas: { width: 1200, grid: 24, snap: true, bg: 'river-styx' },
+    modules: [
+      m('hero-combo', 48, 40, 1104, 300, { z: 2, props: {
+        headline: 'Muevo ideas con sonido', tagline: 'Mezcla y masterización con oído profesional.', align: 'center',
+        metrics: [{ value: '8+', label: 'Años' }, { value: '120+', label: 'Proyectos' }, { value: '★ 4.9', label: 'Rating' }],
+        ctaLabel: 'Contrátame en Fiverr', ctaUrl: '',
+      } }),
+      m('divider', 48, 356, 1104, 24, { z: 1, props: { style: 'orange-rule' } }),
+      m('services', 48, 400, 1104, 200, { z: 2, props: { items: [
+        { icon: 'waveform', title: 'Mezcla', desc: 'Balance, espacio y claridad.' },
+        { icon: 'knob', title: 'Master', desc: 'Volumen competitivo y pegada.' },
+        { icon: 'play', title: 'Producción', desc: 'De la idea al track final.' },
+      ] } }),
+      m('skills', 48, 608, 520, 200, { z: 2, props: { items: [{ label: 'Mezcla', pct: 92 }, { label: 'Master', pct: 88 }, { label: 'Sound design', pct: 80 }] } }),
+      m('comparator', 600, 608, 552, 460, { z: 2, dataRef: null }),
+      m('projects', 48, 832, 520, 260, { z: 2, props: { items: [
+        { imageUrl: '', title: 'EP — Neon', subtitle: 'Mezcla + master', url: '' },
+        { imageUrl: '', title: 'Single — Río', subtitle: 'Master', url: '' },
+      ] } }),
+      m('testimonial', 48, 1116, 520, 180, { z: 2, dataRef: null }),
+      m('socials', 600, 1092, 552, 130, { z: 2, props: { style: 'patchbay' } }),
+      m('banner-cta', 48, 1320, 1104, 160, { z: 2, props: { text: '¿LISTO PARA EMPEZAR?', buttonLabel: 'Contrátame en Fiverr', url: '' } }),
+    ],
+  })
 }
 
 /** Conecta un extremo del cable (endA|endB) a un jack, o lo desconecta (jackId=null). */

@@ -14,6 +14,29 @@ import VintageIcon from './VintageIcon.jsx'
 export default function ModuleContent({ mod, accent = '#22c55e', onCta }) {
   const p = mod.props || {}
   switch (mod.type) {
+    case 'hero-combo':
+      return (
+        <div className={`mk-hero mk-hero--${p.align || 'center'}`}>
+          <h1 className="mk-hero-title">{p.headline || ''}</h1>
+          {p.tagline && <p className="mk-hero-tagline">{p.tagline}</p>}
+          {(p.metrics || []).length > 0 && (
+            <div className="mk-hero-metrics">
+              {(p.metrics || []).map((m, i) => (
+                <div className="mk-hero-metric" key={i}>
+                  <span className="mk-hero-metric-val">{m.value}</span>
+                  <span className="mk-hero-metric-label">{m.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {p.ctaLabel && (
+            p.ctaUrl
+              ? <a className="mk-hero-cta" href={p.ctaUrl} target="_blank" rel="noopener noreferrer" onClick={() => onCta?.(p.ctaUrl)}>{p.ctaLabel}</a>
+              : <span className="mk-hero-cta mk-hero-cta--dim">{p.ctaLabel}</span>
+          )}
+        </div>
+      )
+
     case 'text':
       return (
         <div className={`mk-text mk-text--${p.size || 'lg'} mk-text--${p.align || 'left'}`}

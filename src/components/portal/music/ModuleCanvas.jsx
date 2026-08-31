@@ -5,7 +5,7 @@ import { cablePath } from '../../../shared/domain/musicStudio.js'
 import './modules.css'
 
 const CONTENT_TYPES = new Set([
-  'text', 'image', 'metrics', 'services', 'skills', 'projects', 'list',
+  'hero-combo', 'text', 'image', 'metrics', 'services', 'skills', 'projects', 'list',
   'banner-cta', 'avatar', 'divider',
 ])
 const CABLE_TYPES = new Set(['cable', 'jack'])
