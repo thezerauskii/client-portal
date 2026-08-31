@@ -557,8 +557,8 @@ export function makeExampleLayout(assets = {}) {
         { icon: 'play', title: 'Producción', desc: 'De la idea al track final.' },
       ] } }),
       m('skills', 48, 928, 520, 200, { z: 2, props: { items: [{ label: 'Mezcla', pct: 92 }, { label: 'Master', pct: 88 }, { label: 'Sound design', pct: 80 }] } }),
-      // Comparador de masters con TRANSPORTE (nunca cables).
-      m('comparator', 600, 928, 552, 470, { z: 2, dataRef: null, props: { variant: 'transport' } }),
+      // Comparador = consola vintage con VU + botones REW/PLAY/PAUSE/STOP/FF.
+      m('comparator', 600, 928, 552, 520, { z: 2, dataRef: null }),
 
       // ── Prueba de efectos + mini-Korg ──
       m('text', 48, 1160, 520, 60, { z: 2, props: { text: 'Prueba mis efectos', size: 'lg', color: 'amber', align: 'left' } }),

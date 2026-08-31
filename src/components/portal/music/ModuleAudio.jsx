@@ -29,12 +29,13 @@ export default function ModuleAudio({ mod, data = {}, accent = '#22c55e', handle
   switch (mod.type) {
     case 'comparator': {
       const cmp = byId(data.comparisons, mod.dataRef) || data.comparisons?.[0] || {}
-      // DEFAULT = reproductor con botón de play + waveform + perilla.
-      // La consola de cables SOLO si variant==='patchbay'.
-      if (p.variant === 'patchbay') {
-        return <PatchbayCompare trackA={cmp.trackA} trackB={cmp.trackB} labelA={cmp.labelA} labelB={cmp.labelB} accent={accent} patchbay={data.patchbay} />
+      // DEFAULT = la CONSOLA VINTAGE con VU, foquitos, casete, perilla y los 5
+      // botones REW/PLAY/PAUSE/STOP/FF (PatchbayCompare, el que se ve en Vercel).
+      // variant 'spectrogram' → el comparador simple (solo si se pide expreso).
+      if (p.variant === 'spectrogram') {
+        return <SpectrogramCompare trackA={cmp.trackA} trackB={cmp.trackB} labelA={cmp.labelA} labelB={cmp.labelB} accent={accent} />
       }
-      return <SpectrogramCompare trackA={cmp.trackA} trackB={cmp.trackB} labelA={cmp.labelA} labelB={cmp.labelB} accent={accent} />
+      return <PatchbayCompare trackA={cmp.trackA} trackB={cmp.trackB} labelA={cmp.labelA} labelB={cmp.labelB} accent={accent} patchbay={{ ...(data.patchbay || {}), enabled: true }} />
     }
 
     case 'library-track': {
