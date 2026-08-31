@@ -684,14 +684,13 @@ export function makeExampleLayout(assets = {}) {
   // ── Pasos del proceso (animación de conexión) ──
   full('process-steps', 240, {})
 
-  // ── Skills (izq) + Comparador consola (der) ──
-  row([
-    { type: 'skills', w: 528, h: 520, extra: { props: { items: [
-      { label: 'Mezcla', pct: 92 }, { label: 'Master', pct: 88 }, { label: 'Sound design', pct: 80 },
-    ] } } },
-    // Comparador = consola vintage con VU + botones REW/PLAY/PAUSE/STOP/FF.
-    { type: 'comparator', w: 552, h: 520, extra: { dataRef: null } },
-  ])
+  // ── Skills (ancho completo) ──
+  full('skills', 200, { props: { items: [
+    { label: 'Mezcla', pct: 92 }, { label: 'Master', pct: 88 }, { label: 'Sound design', pct: 80 },
+  ] } })
+  // ── Comparador = consola vintage a ANCHO COMPLETO (VU + racks + transporte).
+  // Necesita todo el ancho: con racks laterales, si es angosto se recorta.
+  full('comparator', 560, { dataRef: null })
 
   // ── Reveal slider (arrastra para revelar) a ancho medio + vinilo ──
   row([
