@@ -544,3 +544,7 @@
 .wb-module--synth { width: min(520px, 92%); }
 .wb-module--synth .synth-panel { padding: 12px; }
 .wb-module--synth .synth-keys { height: 110px; }
+
+/* Constructor de módulos (Fase 7): contenedor del lienzo a ancho completo */
+.pm-root--canvas { display: block; padding: 0; background: var(--mk-river-styx, #13191F); }
+.pm-root--canvas .mk-canvas { border-radius: 0; min-height: 100vh; }

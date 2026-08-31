@@ -13,6 +13,8 @@ import ContactPatch from '../../components/portal/music/ContactPatch.jsx'
 import WebAudioSynth from '../../components/portal/music/WebAudioSynth.jsx'
 import TubeGlow from '../../components/portal/music/TubeGlow.jsx'
 import Workbench from '../../components/portal/music/Workbench.jsx'
+import ModuleCanvas from '../../components/portal/music/ModuleCanvas.jsx'
+import ModuleAudio from '../../components/portal/music/ModuleAudio.jsx'
 import { useScrollReveal } from '../../components/portal/music/useScrollReveal.js'
 import { useTapeProgress } from '../../components/portal/music/useTapeProgress.js'
 import { useParallax } from '../../components/portal/music/useParallax.js'
@@ -159,6 +161,29 @@ export default function PortalMusic() {
   const pageHeader = data.page?.header || {}
   // Parallax del contenido del hero (capa al frente, sutil) en modo vintage.
   const [heroRef, heroParallax] = useParallax({ speed: 0.15, enabled: isVintage, max: 60 })
+
+  // ── Constructor de módulos: si el artista activó el lienzo, renderiza ESE ──
+  // (usa `real`, no `data`: el layout no pasa por el fallback de ejemplo).
+  const layout = real.layout
+  if (layout?.enabled && layout.modules?.length > 0) {
+    const handlers = { onFiverr, onPlay, toggleLike, likedTracks }
+    return (
+      <div className="pm-root pm-root--canvas" style={{ '--accent': accent }}>
+        <ModuleCanvas
+          canvas={layout.canvas}
+          modules={layout.modules}
+          accent={accent}
+          onCta={() => onFiverr('cta', false)}
+          renderAudioModule={(mod) => (
+            <ModuleAudio
+              mod={mod} data={data} accent={accent} handlers={handlers}
+              socialLinks={socialLinks} platformConnections={platformConnections}
+            />
+          )}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className={`pm-root ${isAnalog ? 'pm-root--analog' : ''} ${isVintage ? 'pm-root--vintage' : ''}`} style={{ '--accent': accent }}>

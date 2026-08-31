@@ -388,6 +388,136 @@ export function normalizeWorkbench(w) {
   }
 }
 
+// ── Constructor de página por MÓDULOS (canvas libre) ────────────────────────
+/** Tipos de módulo del lienzo. */
+export const MODULE_TYPES = [
+  // contenido
+  'text', 'image', 'metrics', 'services', 'skills', 'projects', 'list',
+  'banner-cta', 'avatar', 'divider',
+  // audio (envuelven componentes existentes)
+  'comparator', 'library-track', 'fx-rack', 'synth', 'workbench', 'gig',
+  'soundcloud', 'video', 'testimonial', 'socials',
+  // patchbay físico
+  'cable', 'jack',
+]
+
+/** Tamaños/props por defecto por tipo (w,h en px lógicos). */
+const MODULE_DEFAULTS = {
+  text: { w: 420, h: 120, props: { text: 'Texto', size: 'lg', weight: 700, color: 'ink', align: 'left' } },
+  image: { w: 320, h: 240, props: { url: '', alt: '', fit: 'cover', radius: 12, shape: 'rect' } },
+  metrics: { w: 460, h: 120, props: { items: [{ value: '10+', label: 'Proyectos' }], style: 'dial' } },
+  services: { w: 720, h: 220, props: { items: [{ icon: 'waveform', title: 'Servicio', desc: '' }] } },
+  skills: { w: 420, h: 200, props: { items: [{ label: 'Mezcla', pct: 90 }] } },
+  projects: { w: 760, h: 260, props: { items: [{ imageUrl: '', title: 'Proyecto', subtitle: '', url: '' }] } },
+  list: { w: 320, h: 200, props: { title: 'Lista', items: ['Ítem'] } },
+  'banner-cta': { w: 760, h: 160, props: { text: '¿Listo para empezar?', buttonLabel: 'Contáctame', url: '' } },
+  avatar: { w: 260, h: 120, props: { url: '', name: 'Nombre', role: '' } },
+  divider: { w: 600, h: 24, props: { style: 'orange-rule' } },
+  comparator: { w: 760, h: 460, props: {} },
+  'library-track': { w: 560, h: 140, props: {} },
+  'fx-rack': { w: 520, h: 220, props: {} },
+  synth: { w: 520, h: 320, props: { octaves: 2 } },
+  workbench: { w: 760, h: 480, props: {} },
+  gig: { w: 300, h: 380, props: {} },
+  soundcloud: { w: 360, h: 80, props: {} },
+  video: { w: 560, h: 320, props: {} },
+  testimonial: { w: 360, h: 180, props: {} },
+  socials: { w: 480, h: 120, props: { style: 'patchbay' } },
+  cable: { w: 0, h: 0, props: { ax: 0.2, ay: 0.3, bx: 0.7, by: 0.5, endAJack: null, endBJack: null } },
+  jack: { w: 40, h: 40, props: { label: '' } },
+}
+
+/** Factory de un módulo nuevo colocado en (x,y). */
+export function makeModule(type = 'text', x = 40, y = 40) {
+  const t = MODULE_TYPES.includes(type) ? type : 'text'
+  const def = MODULE_DEFAULTS[t] || MODULE_DEFAULTS.text
+  return {
+    id: makeId('mod'), type: t,
+    x, y, w: def.w, h: def.h, z: 1, rotation: 0,
+    props: JSON.parse(JSON.stringify(def.props)),
+    dataRef: null,
+  }
+}
+
+/** Normaliza un módulo a forma segura. Permite x/y fuera de la caja (canvas libre). */
+export function normalizeModule(m) {
+  const d = (m && typeof m === 'object') ? m : {}
+  const type = MODULE_TYPES.includes(d.type) ? d.type : null
+  if (!type) return null // tipo desconocido → se descarta en normalizeLayout
+  const def = MODULE_DEFAULTS[type] || MODULE_DEFAULTS.text
+  const num = (v, dflt) => (Number.isFinite(Number(v)) ? Number(v) : dflt)
+  return {
+    id: (typeof d.id === 'string' && d.id) ? d.id : makeId('mod'),
+    type,
+    x: num(d.x, 40),
+    y: num(d.y, 40),
+    w: Math.max(24, num(d.w, def.w)),
+    h: Math.max(16, num(d.h, def.h)),
+    z: Math.round(num(d.z, 1)),
+    rotation: num(d.rotation, 0),
+    props: (d.props && typeof d.props === 'object') ? { ...def.props, ...d.props } : JSON.parse(JSON.stringify(def.props)),
+    dataRef: (typeof d.dataRef === 'string' && d.dataRef) ? d.dataRef : null,
+  }
+}
+
+const CANVAS_BG = ['river-styx', 'carbon', 'tea', 'wood']
+
+/**
+ * Normaliza el bloque `layout` (constructor de módulos). Aditivo: ausente →
+ * enabled:false + sin módulos → la página se renderiza en modo clásico.
+ */
+export function normalizeLayout(l) {
+  const d = (l && typeof l === 'object') ? l : {}
+  const c = d.canvas || {}
+  const num = (v, dflt) => (Number.isFinite(Number(v)) ? Number(v) : dflt)
+  return {
+    enabled: typeof d.enabled === 'boolean' ? d.enabled : false,
+    canvas: {
+      width: Math.max(320, Math.min(3000, num(c.width, 1200))),
+      grid: Math.max(8, Math.min(80, num(c.grid, 24))),
+      snap: typeof c.snap === 'boolean' ? c.snap : true,
+      bg: CANVAS_BG.includes(c.bg) ? c.bg : 'river-styx',
+    },
+    modules: (Array.isArray(d.modules) ? d.modules : []).map(normalizeModule).filter(Boolean),
+  }
+}
+
+// ── Geometría pura del lienzo (testeable) ────────────────────────────────────
+/** Redondea un valor al múltiplo de grid más cercano. */
+export function snapToGrid(v, grid) {
+  const g = Math.max(1, Number(grid) || 1)
+  return Math.round((Number(v) || 0) / g) * g
+}
+
+/**
+ * Nueva posición del módulo tras arrastrar (dx,dy). Permite salir de la caja,
+ * pero con límites sanos (no perder el módulo demasiado lejos). snap opcional.
+ */
+export function moveModule(mod, dx, dy, { grid = 24, snap = false, canvasWidth = 1200 } = {}) {
+  let x = (mod.x || 0) + dx
+  let y = (mod.y || 0) + dy
+  if (snap) { x = snapToGrid(x, grid); y = snapToGrid(y, grid) }
+  // límites sanos: puede salirse, pero no más de un módulo de ancho fuera.
+  const minX = -(mod.w || 0), maxX = canvasWidth + (mod.w || 0)
+  x = Math.max(minX, Math.min(maxX, x))
+  y = Math.max(-(mod.h || 0), y)
+  return { ...mod, x, y }
+}
+
+/** Redimensiona con mínimos por tipo. snap opcional. */
+export function resizeModule(mod, w, h, { grid = 24, snap = false } = {}) {
+  let nw = Math.max(24, Number(w) || mod.w)
+  let nh = Math.max(16, Number(h) || mod.h)
+  if (snap) { nw = snapToGrid(nw, grid); nh = snapToGrid(nh, grid) }
+  return { ...mod, w: nw, h: nh }
+}
+
+/** Conecta un extremo del cable (endA|endB) a un jack, o lo desconecta (jackId=null). */
+export function plugConnect(cableMod, end, jackId) {
+  const key = end === 'B' ? 'endBJack' : 'endAJack'
+  return { ...cableMod, props: { ...(cableMod.props || {}), [key]: jackId || null } }
+}
+
 // ── Normalize the whole jsonb blob to a safe shape ───────────────────────────
 export function normalizeMusicStudio(data) {
   const d = (data && typeof data === 'object') ? data : {}
@@ -418,6 +548,7 @@ export function normalizeMusicStudio(data) {
     page: normalizePage(d.page),
     synth: normalizeSynth(d.synth),
     workbench: normalizeWorkbench(d.workbench),
+    layout: normalizeLayout(d.layout),
     fxDemo: {
       audio: d.fxDemo?.audio || null,
       enabledDefaults: {
