@@ -157,6 +157,8 @@ export default function SpectrogramCompare({ trackA, trackB, labelA = 'Original'
     )
   }
 
+  const empty = !urlA || !urlB
+
   return (
     <div className="sc-compare">
       <div className="sc-legend">
@@ -164,12 +166,20 @@ export default function SpectrogramCompare({ trackA, trackB, labelA = 'Original'
         <span className="sc-legend-b" style={{ color: accent }}>{labelB}</span>
       </div>
       <div className="sc-canvas-wrap">
-        {loading && <div className="wf-status">Cargando pistas…</div>}
+        {loading && !empty && <div className="wf-status">Cargando pistas…</div>}
         {error && <div className="wf-status wf-status--err">{error}</div>}
-        <canvas ref={canvasRef} className="sc-canvas" style={{ height: 150, display: loading || error ? 'none' : 'block' }} onClick={handleCanvasClick} />
+        {empty ? (
+          <div className="sc-wave-ph" aria-hidden="true">
+            {Array.from({ length: 56 }).map((_, i) => (
+              <span key={i} style={{ height: `${18 + Math.abs(Math.sin(i * 0.5)) * 70}%`, background: i % 2 ? accent : 'rgba(255,255,255,0.35)' }} />
+            ))}
+          </div>
+        ) : (
+          <canvas ref={canvasRef} className="sc-canvas" style={{ height: 150, display: loading || error ? 'none' : 'block' }} onClick={handleCanvasClick} />
+        )}
       </div>
       <div className="sc-controls">
-        <button className="wf-play-btn" onClick={toggle} disabled={loading || !!error} aria-label={playing ? 'Pausar' : 'Reproducir'} style={{ '--accent': accent }}>
+        <button className="wf-play-btn" onClick={toggle} disabled={empty || loading || !!error} aria-label={playing ? 'Pausar' : 'Reproducir'} style={{ '--accent': accent }}>
           {playing
             ? <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
             : <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>}
@@ -177,7 +187,9 @@ export default function SpectrogramCompare({ trackA, trackB, labelA = 'Original'
         <Knob value={mix} onChange={handleKnob} accent={accent} label="Original ↔ Master" leftLabel={labelA} rightLabel={labelB} size={92} />
         <span className="wf-time">{fmt(current)} / {fmt(duration)}</span>
       </div>
-      <p className="sc-hint">Ambas pistas suenan a la vez. Gira la perilla para escuchar el progreso del master en tiempo real.</p>
+      <p className="sc-hint">{empty
+        ? 'Sube tu Original y tu Master (clic derecho → subir pista). Sonarán a la vez y la perilla compara en tiempo real.'
+        : 'Ambas pistas suenan a la vez. Gira la perilla para escuchar el progreso del master en tiempo real.'}</p>
     </div>
   )
 }
