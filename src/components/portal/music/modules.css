@@ -219,15 +219,16 @@
 
 /* ── vinyl-player: tocadiscos ── */
 .mk-vinyl { display: flex; flex-direction: column; align-items: center; gap: 10px; height: 100%; justify-content: center; padding: 12px; box-sizing: border-box; min-height: 0; overflow: hidden; }
-/* El deck es SIEMPRE círculo perfecto: sólo fijamos width y dejamos que
- * aspect-ratio derive el height (así NUNCA se ovala). flex-shrink:0 evita que
- * el layout column lo comprima. */
-.mk-vinyl-deck { position: relative; width: 200px; max-width: 78%; aspect-ratio: 1 / 1; height: auto; flex: 0 0 auto; }
-.mk-vinyl-disc { position: absolute; inset: 0; border-radius: 50%; background: repeating-radial-gradient(circle at center, #14100c 0 3px, #1c1712 3px 6px); box-shadow: 0 6px 20px rgba(0,0,0,0.5), inset 0 0 0 6px #0b0906; display: grid; place-items: center; overflow: hidden; }
+/* Deck: círculo perfecto. width fijo, altura derivada por aspect-ratio. */
+.mk-vinyl-deck { position: relative; width: min(200px, 78%); aspect-ratio: 1 / 1; height: auto; flex: 0 0 auto; display: grid; place-items: center; }
+/* El disco es un cuadrado propio centrado en el deck (aspect-ratio, NO inset),
+ * así NUNCA se estira a elipse aunque el deck no fuera exactamente cuadrado. */
+.mk-vinyl-disc { position: relative; width: 100%; aspect-ratio: 1 / 1; height: auto; border-radius: 50%; background: repeating-radial-gradient(circle at center, #14100c 0 3px, #1c1712 3px 6px); box-shadow: 0 6px 20px rgba(0,0,0,0.5), inset 0 0 0 6px #0b0906; display: grid; place-items: center; overflow: hidden; }
 /* Brillo diagonal que rompe la simetría → se NOTA el giro. */
 .mk-vinyl-disc::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.10) 48%, rgba(255,255,255,0.02) 52%, transparent 60%); pointer-events: none; }
 .mk-vinyl-disc.is-spinning { animation: mk-spin 2.4s linear infinite; }
-.mk-vinyl-cover { width: 64%; height: 64%; border-radius: 50%; object-fit: cover; border: 2px solid var(--mk-wood); }
+/* Portada: círculo garantizado por aspect-ratio (width + height:auto). */
+.mk-vinyl-cover { width: 64%; height: auto; aspect-ratio: 1 / 1; border-radius: 50%; object-fit: cover; border: 2px solid var(--mk-wood); }
 .mk-vinyl-cover--ph { display: grid; place-items: center; background: var(--mk-tea); color: var(--mk-amber); }
 .mk-vinyl-hole { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #0b0906; box-shadow: inset 0 0 3px rgba(255,255,255,0.15); }
 .mk-vinyl-arm { position: absolute; top: -4px; right: 6px; width: 5px; height: 46%; background: linear-gradient(180deg, #cbc3b5, #6d6255); border-radius: 3px; transform-origin: top center; transform: rotate(18deg); transition: transform 0.5s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
